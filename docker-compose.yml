@@ -531,6 +531,16 @@ volumes:
   devilbox-mariadb-10.8:
   devilbox-mariadb-10.9:
   devilbox-mariadb-10.10:
+  devilbox-mariadb-10.11:
+  devilbox-mariadb-11.0:
+  devilbox-mariadb-11.1:
+  devilbox-mariadb-11.2:
+  devilbox-mariadb-11.3:
+  devilbox-mariadb-11.4:
+  devilbox-mariadb-11.5:
+  devilbox-mariadb-11.6:
+  devilbox-mariadb-11.7:
+  devilbox-mariadb-11.8:
   devilbox-percona-5.5:
   devilbox-percona-5.6:
   devilbox-percona-5.7:
@@ -563,6 +573,12 @@ volumes:
   devilbox-pgsql-14-alpine:
   devilbox-pgsql-15:
   devilbox-pgsql-15-alpine:
+  devilbox-pgsql-16:
+  devilbox-pgsql-16-alpine:
+  devilbox-pgsql-17:
+  devilbox-pgsql-17-alpine:
+  devilbox-pgsql-18:
+  devilbox-pgsql-18-alpine:
   devilbox-pgsql-latest:
   devilbox-pgsql-alpine:
 
@@ -578,4 +594,7 @@ volumes:
   devilbox-mongo-4.2:
   devilbox-mongo-4.4:
   devilbox-mongo-5.0:
+  devilbox-mongo-6.0:
+  devilbox-mongo-7.0:
+  devilbox-mongo-8.0:
   devilbox-mongo-latest:
