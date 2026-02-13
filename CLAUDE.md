@@ -225,12 +225,37 @@ This installation has been updated with the latest service versions available as
 - **Memcached**: 1.6 (no major changes needed)
 
 ### PHP 8.3 and 8.4 Support
-Configuration directories have been prepared for PHP 8.3 and 8.4:
+
+**Configuration**: Ready for PHP 8.3 and 8.4
 - `cfg/php-ini-8.3/` and `cfg/php-ini-8.4/`
 - `cfg/php-fpm-8.3/` and `cfg/php-fpm-8.4/`
 - `cfg/php-startup-8.3/` and `cfg/php-startup-8.4/`
 
-These can be used once Devilbox releases official Docker images for these PHP versions.
+**Custom Docker Images**: Since official Devilbox images aren't available yet for PHP 8.3+, custom Dockerfiles are provided in `docker-images/`:
+
+```bash
+# Build PHP 8.3 image
+./docker-images/build-php.sh 8.3
+
+# Configure to use it
+# Edit docker-compose.override.yml and uncomment the php service override
+# Or modify docker-compose.yml directly
+
+# Set in .env
+PHP_SERVER=8.3
+
+# Restart
+docker-compose stop && docker-compose rm -f && docker-compose up httpd php mysql
+```
+
+The custom images extend official `php:8.3-fpm` and `php:8.4-fpm` with essential tools:
+- All major PHP extensions (XDebug, Redis, PDO, GD, Intl, etc.)
+- Composer (latest)
+- Node.js LTS via NVM + yarn, npm, webpack
+- Git, vim, and common utilities
+- User/group mapping to match host UID/GID
+
+See `docker-images/USAGE.md` for detailed instructions.
 
 ### Database Volumes
 Docker Compose volumes have been added for:
