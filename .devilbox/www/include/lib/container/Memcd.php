@@ -43,40 +43,46 @@ class Memcd extends BaseClass implements BaseInterface
 		}
 
 		if (class_exists('Memcached')) {
-			$memcd = new \Memcached('_devilbox');
-			$list = $memcd->getServerList();
+			try {
+				$memcd = new \Memcached('_devilbox');
+				$list = $memcd->getServerList();
 
-			if (empty($list)) {
-				$memcd->setOption(\Memcached::OPT_LIBKETAMA_COMPATIBLE, true);
-				$memcd->setOption(\Memcached::OPT_BINARY_PROTOCOL, true);
-				$memcd->addServer($hostname, 11211);
-			}
+				if (empty($list)) {
+					$memcd->setOption(\Memcached::OPT_LIBKETAMA_COMPATIBLE, true);
+					$memcd->setOption(\Memcached::OPT_BINARY_PROTOCOL, true);
+					$memcd->addServer($hostname, 11211);
+				}
 
-			$err = false;
-			$stats = $memcd->getStats();
-			if (!isset($stats[$hostname.':11211'])) {
-				$memcd->quit();
-				$this->_connect_error = 'Failed to connect to Memcached host on '.$hostname.' (no connection array)';
-				$this->_connect_errno = 1;
+				$err = false;
+				$stats = $memcd->getStats();
+				if (!isset($stats[$hostname.':11211'])) {
+					$memcd->quit();
+					$this->_connect_error = 'Failed to connect to Memcached host on '.$hostname.' (no connection array)';
+					$this->_connect_errno = 1;
+					return;
+				}
+				else if (!isset($stats[$hostname.':11211']['pid'])) {
+					$memcd->quit();
+					$this->_connect_error = 'Failed to connect to Memcached host on '.$hostname.' (no pid)';
+					$this->_connect_errno = 2;
+					return;
+				}
+				else if ($stats[$hostname.':11211']['pid'] < 1) {
+					$memcd->quit();
+					$this->_connect_error = 'Failed to connect to Memcached host on '.$hostname.' (invalid pid)';
+					$this->_connect_errno = 3;
+					return;
+				}
+				$memcd->getDelayed(array('devilbox-version'));
+				if (!$memcd->fetchAll()) {
+					$memcd->set('devilbox-version', $GLOBALS['DEVILBOX_VERSION'].' ('.$GLOBALS['DEVILBOX_DATE'].')');
+				}
+				$this->_memcached = $memcd;
+			} catch (\Exception $e) {
+				$this->_connect_error = 'Failed to connect to Memcached host on '.$hostname.': '.$e->getMessage();
+				$this->_connect_errno = 4;
 				return;
 			}
-			else if (!isset($stats[$hostname.':11211']['pid'])) {
-				$memcd->quit();
-				$this->_connect_error = 'Failed to connect to Memcached host on '.$hostname.' (no pid)';
-				$this->_connect_errno = 2;
-				return;
-			}
-			else if ($stats[$hostname.':11211']['pid'] < 1) {
-				$memcd->quit();
-				$this->_connect_error = 'Failed to connect to Memcached host on '.$hostname.' (invalid pid)';
-				$this->_connect_errno = 3;
-				return;
-			}
-			$memcd->getDelayed(array('devilbox-version'));
-			if (!$memcd->fetchAll()) {
-				$memcd->set('devilbox-version', $GLOBALS['DEVILBOX_VERSION'].' ('.$GLOBALS['DEVILBOX_DATE'].')');
-			}
-			$this->_memcached = $memcd;
 		} else {
 
 			$ret = 0;

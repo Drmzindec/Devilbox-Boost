@@ -127,6 +127,14 @@ define('MAIL_MBOX_ERROR_MSG_INVALID', 2112);
 class Mail_Mbox extends PEAR
 {
     /**
+     * Mbox filename
+     *
+     * @var      string
+     * @access   protected
+     */
+    var $_file = null;
+
+    /**
      * File resource / handle
      *
      * @var      resource

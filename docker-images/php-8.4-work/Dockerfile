@@ -32,6 +32,9 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libpq-dev \
     libsqlite3-dev \
+    libmemcached-dev \
+    libssl-dev \
+    zlib1g-dev \
     # Database clients
     default-mysql-client \
     postgresql-client \
@@ -51,6 +54,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     pdo \
     pdo_mysql \
     pdo_pgsql \
+    pgsql \
     mysqli \
     mbstring \
     zip \
@@ -66,9 +70,11 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
 
-# Install Redis extension
+# Install PECL extensions
 RUN pecl install redis \
-    && docker-php-ext-enable redis
+    && pecl install memcached \
+    && pecl install mongodb \
+    && docker-php-ext-enable redis memcached mongodb
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer

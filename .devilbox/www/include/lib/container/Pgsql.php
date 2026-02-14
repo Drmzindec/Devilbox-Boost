@@ -47,21 +47,28 @@ class Pgsql extends BaseClass implements BaseInterface
 		$pass = $data['pass'];
 		$db = isset($data['db']) ? $data['db'] : null;
 
-		// Silence errors and try to connect
-		error_reporting(0);
-		if ($db !== null) {
-			$link = @pg_connect('host='.$hostname.' dbname='.$db.' user='.$user.' password='.$pass);
-		} else {
-			$link = @pg_connect('host='.$hostname.' user='.$user.' password='.$pass);
-		}
-		error_reporting(-1);
+		// Try to connect (PHP 8.4+ throws exceptions on connection failure)
+		$link = false;
+		try {
+			error_reporting(0);
+			if ($db !== null) {
+				$link = @pg_connect('host='.$hostname.' dbname='.$db.' user='.$user.' password='.$pass);
+			} else {
+				$link = @pg_connect('host='.$hostname.' user='.$user.' password='.$pass);
+			}
+			error_reporting(-1);
 
-		if (!$link || pg_connection_status($link) !== PGSQL_CONNECTION_OK) {
-			$this->setConnectError('Failed to connect to '.$user.'@'.$hostname);
+			if (!$link || pg_connection_status($link) !== PGSQL_CONNECTION_OK) {
+				$this->setConnectError('Failed to connect to '.$user.'@'.$hostname);
+				$this->setConnectErrno(1);
+				//loadClass('Logger')->error($this->_connect_error);
+			} else {
+				$this->_link = $link;
+			}
+		} catch (\Exception $e) {
+			error_reporting(-1);
+			$this->setConnectError('Failed to connect to '.$user.'@'.$hostname.': '.$e->getMessage());
 			$this->setConnectErrno(1);
-			//loadClass('Logger')->error($this->_connect_error);
-		} else {
-			$this->_link = $link;
 		}
 	}
 
@@ -303,17 +310,25 @@ class Pgsql extends BaseClass implements BaseInterface
 			return $this->_can_connect[$hostname];
 		}
 
-		// Silence errors and try to connect
-		error_reporting(0);
-		$link = pg_connect('host='.$hostname.' user='.$data['user'].' password='.$data['pass']);
-		error_reporting(-1);
+		// Try to connect (PHP 8.4+ throws exceptions on connection failure)
+		$link = false;
+		try {
+			error_reporting(0);
+			$link = pg_connect('host='.$hostname.' user='.$data['user'].' password='.$data['pass']);
+			error_reporting(-1);
 
-		if (!$link || pg_connection_status($link) !== PGSQL_CONNECTION_OK) {
-			$err = 'Failed to connect to host: '.$hostname;
+			if (!$link || pg_connection_status($link) !== PGSQL_CONNECTION_OK) {
+				$err = 'Failed to connect to host: '.$hostname;
+				$this->_can_connect[$hostname] = false;
+			} else {
+				$this->_can_connect[$hostname] = true;
+			}
+		} catch (\Exception $e) {
+			error_reporting(-1);
+			$err = 'Failed to connect to host: '.$hostname.': '.$e->getMessage();
 			$this->_can_connect[$hostname] = false;
-		} else {
-			$this->_can_connect[$hostname] = true;
 		}
+
 		if ($link) {
 			pg_close($link);
 		}

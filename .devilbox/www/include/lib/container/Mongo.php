@@ -174,26 +174,31 @@ class Mongo extends BaseClass implements BaseInterface
 			return $this->_can_connect[$hostname];
 		}
 
-		$manager = new \MongoDB\Driver\Manager('mongodb://'.$hostname);
+		try {
+			$manager = new \MongoDB\Driver\Manager('mongodb://'.$hostname);
 
-		// MongoDB uses lazy loading of server list
-		// so just execute an arbitrary command in order
-		// to make it populate the server list
-		$command = new \MongoDB\Driver\Command(array('ping' => 1));
-		$manager->executeCommand('admin', $command);
+			// MongoDB uses lazy loading of server list
+			// so just execute an arbitrary command in order
+			// to make it populate the server list
+			$command = new \MongoDB\Driver\Command(array('ping' => 1));
+			$manager->executeCommand('admin', $command);
 
-		// retrieve server list
-		$servers = $manager->getServers();
+			// retrieve server list
+			$servers = $manager->getServers();
 
-		if (!isset($servers[0])) {
-			$err = 'Failed to connect to MongoDB host on '.$hostname.' (No host info available)';
+			if (!isset($servers[0])) {
+				$err = 'Failed to connect to MongoDB host on '.$hostname.' (No host info available)';
+				$this->_can_connect[$hostname] = false;
+			} else if ($servers[0]->getHost() != $hostname) {
+				$err = 'Failed to connect to MongoDB host on '.$hostname.' (servername does not match: '.$servers[0]->getHost().')';
+				$this->_can_connect[$hostname] = false;
+			}
+			else {
+				$this->_can_connect[$hostname] = true;
+			}
+		} catch (\MongoDB\Driver\Exception\Exception $e) {
+			$err = 'Failed to connect to MongoDB host on '.$hostname.': '.$e->getMessage();
 			$this->_can_connect[$hostname] = false;
-		} else if ($servers[0]->getHost() != $hostname) {
-			$err = 'Failed to connect to MongoDB host on '.$hostname.' (servername does not match: '.$servers[0]->getHost().')';
-			$this->_can_connect[$hostname] = false;
-		}
-		else {
-			$this->_can_connect[$hostname] = true;
 		}
 
 		$this->_can_connect_err[$hostname] = $err;
