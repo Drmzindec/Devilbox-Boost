@@ -1,0 +1,23 @@
+{
+  "name": "devilbox",
+  "version": "1.0.0",
+  "description": "AI-powered assistant for Devilbox development environment",
+  "command": "node",
+  "args": [
+    "/Users/johanpretorius/devilbox/mcp-server/index.js"
+  ],
+  "env": {},
+  "icon": "🐳",
+  "homepage": "https://github.com/cytopia/devilbox",
+  "tags": ["docker", "development", "lamp", "lemp", "devops"],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "Path to Devilbox installation",
+        "default": "/Users/johanpretorius/devilbox"
+      }
+    }
+  }
+}

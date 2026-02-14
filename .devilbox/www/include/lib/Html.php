@@ -121,22 +121,14 @@ class Html
 					'target' => '_blank'
 				),
 				array(
-					'name' => 'PHPRedMin',
-					'path' => '/vendor/phpredmin/public/index.php',
+					'name' => 'phpCacheAdmin',
+					'path' => '/vendor/phpcacheadmin-2.4.1/index.php',
 					'target' => '_blank'
 				),
 				array(
-					'name' => 'PHPMemcachedAdmin',
-					'path' => '/vendor/phpmemcachedadmin-1.3.0/index.php',
+					'name' => 'OpCache GUI',
+					'path' => '/vendor/opcache-gui-3.6.0.php',
 					'target' => '_blank'
-				),
-				array(
-					'name' => 'Opcache GUI',
-					'path' => '/opcache.php'
-				),
-				array(
-					'name' => 'Opcache Control Panel',
-					'path' => '/vendor/ocp.php'
 				)
 			)
 		)
@@ -424,7 +416,7 @@ HTML;
 						} elseif (version_compare(loadClass('Php')->getVersion(), '7.1', '<')) {
 							$el['path'] = '/vendor/phpmyadmin-4.9.7/index.php';
 						} else {
-							$el['path'] = '/vendor/phpmyadmin-5.1.3/index.php';
+							$el['path'] = '/vendor/phpmyadmin-5.2.3/index.php';
 						}
 					}
 					if ($el['path'] == '__PHPPGADMIN__') {
@@ -440,9 +432,9 @@ HTML;
 						if (version_compare(loadClass('Php')->getVersion(), '5.4', '<')) {
 							$el['path'] = '/vendor/adminer-4.6.3-en.php';
 						} elseif (version_compare(loadClass('Php')->getVersion(), '8.0', '<')){
-							$el['path'] = '/vendor/adminer-4.8.1-en.php';
+							$el['path'] = '/vendor/adminer-5.4.2-devilbox.php';
 						} else {
-							$el['path'] = '/vendor/adminer-4.8.1-en.php';
+							$el['path'] = '/vendor/adminer-5.4.2-devilbox.php';
 						}
 					}
 

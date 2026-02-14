@@ -1,0 +1,64 @@
+{
+  "name": "robinn/phpcacheadmin",
+  "description": "A web dashboard for your favorite caching system.",
+  "license": "MIT",
+  "type": "project",
+  "keywords": [
+    "redis",
+    "memcache",
+    "memcached",
+    "opcache",
+    "apcu",
+    "realpath",
+    "cache",
+    "admin",
+    "dashboard",
+    "gui",
+    "phpcacheadmin"
+  ],
+  "authors": [
+    {
+      "name": "Róbert Kelčák",
+      "email": "robo@kelcak.com",
+      "homepage": "https://kelcak.com"
+    }
+  ],
+  "require": {
+    "php": ">=8.2",
+    "twig/twig": "^3.23"
+  },
+  "require-dev": {
+    "clue/phar-composer": "^1.4",
+    "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^11 || ^12.5 || ^13.0"
+  },
+  "suggest": {
+    "ext-apcu": "Required for the APCu dashboard.",
+    "ext-redis": "Required for use the Redis dashboard.",
+    "ext-sqlite3": "Required for metrics.",
+    "ext-zend-opcache": "Required for use the OPCache dashboard.",
+    "ext-zlib": "Required for encoding/decoding with gz* functions.",
+    "predis/predis": "Required for use the Redis dashboard, when Redis extension is not installed."
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "autoload": {
+    "psr-4": {
+      "RobiNN\\Pca\\": "src/"
+    },
+    "files": [
+      "src/functions.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "phar:predis": "phar-composer build predis/predis",
+    "phar:twig": "phar-composer build twig/twig",
+    "phpstan": "phpstan --ansi",
+    "test": "phpunit --colors=always --display-skipped"
+  }
+}

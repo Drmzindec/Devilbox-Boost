@@ -1,0 +1,54 @@
+{% import 'components/macros.twig' as components %}
+<div class="mb-2 text-lg font-semibold break-all dark:text-gray-300">{{ key }}</div>
+<div class="mb-4 lg:flex lg:gap-2 lg:items-center dark:text-gray-300">
+    {% if type %}
+        <span>Type {{ components.key_type(type) }}</span>
+    {% endif %}
+
+    {% if ttl %}
+        <span>TTL {{ components.badge(ttl == -1 ? 'Doesn\'t expire' : ttl, 'indigo', 'uppercase') }}</span>
+    {% endif %}
+
+    {% if size %}
+        <span>Size {{ components.badge(size, 'sky') }}</span>
+    {% endif %}
+
+    {% if encode_fn %}
+        <span>Encoded with {{ components.badge(encode_fn, 'blue', 'uppercase') }}</span>
+        {% set encode_url = '&encoder=' ~ encode_fn %}
+    {% endif %}
+
+    {% if formatted == true %}
+        {{ components.badge('Formatted', 'blue', 'uppercase') }}
+    {% endif %}
+
+    <span>
+        {% if export_url %}
+            <a href="{{ export_url }}" class="inline-flex gap-1 items-center font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                {{ svg('export', 16) }} Export
+            </a>
+        {% endif %}
+
+        {% if delete_url %}
+            <a href="{{ delete_url }}" class="inline-flex gap-1 items-center font-semibold text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+               onclick="return confirm('Are you sure you want to remove this item?');">
+                {{ svg('trash', 16) }} Delete
+            </a>
+        {% endif %}
+    </span>
+</div>
+
+{% if value is iterable %}
+    {{ include('partials/view_key_array.twig') }}
+{% else %}
+    {% if edit_url %}
+        <a href="{{ edit_url ~ encode_url }}" class="inline-flex gap-1 items-center mr-3 mb-4 font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+            {{ svg('edit', 16) }} Edit
+        </a>
+    {% endif %}
+    <div class="bg-white rounded-md border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+        <div class="overflow-y-auto p-4 dark:text-gray-300">
+            {{ value|raw }}
+        </div>
+    </div>
+{% endif %}

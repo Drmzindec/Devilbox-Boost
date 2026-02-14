@@ -349,19 +349,125 @@ All features tested and working on macOS with Docker Desktop.
 
 ---
 
+---
+
+### 🔧 Admin Tools Modernization
+**Status**: Complete
+**Date**: February 14, 2026
+
+Updated all web-based admin tools to latest versions with full PHP 8.4 compatibility.
+
+**Tools Updated:**
+- **phpMyAdmin** → 5.2.3 (from 5.1.3)
+- **Adminer** → 5.4.2 (from 4.8.1)
+- **phpCacheAdmin** → 2.4.1 (NEW - replaces phpMemcachedAdmin + phpRedMin)
+- **OpCache GUI** → 3.6.0 (from ocp.php)
+- **phpPgAdmin** → 7.13.0 (already current)
+
+**Major Changes:**
+- Replaced **phpMemcachedAdmin** (2014) and **phpRedMin** (2017) with modern **phpCacheAdmin**
+- phpCacheAdmin manages Redis, Memcached, APCu, OPcache, and Realpath in one tool
+- All tools tested and working with PHP 8.4 without deprecation warnings
+- Modern dark mode support in phpCacheAdmin
+- No more outdated 2014-2017 era tools
+
+**Files Modified:**
+- `.devilbox/www/include/lib/Html.php` (menu structure)
+- `.devilbox/www/htdocs/vendor/phpcacheadmin-2.4.1/config.php` (connection config)
+- `.devilbox/www/htdocs/vendor/phpmyadmin-5.2.3/config.inc.php` (copied from 5.1.3)
+- `.devilbox/www/htdocs/vendor/adminer-5.4.2-devilbox.php` (wrapper with prefilled 127.0.0.1)
+
+**Configuration:**
+- phpCacheAdmin configured to use `/tmp` for cache directories to avoid permission issues with Docker volumes
+- Adminer wrapper prefills server field with `127.0.0.1` to use port forwarding (no need to remember container IPs)
+
+---
+
+### 🤖 AI Integration - MCP Server
+**Status**: Complete
+**Date**: February 14, 2026
+
+Built comprehensive MCP (Model Context Protocol) server for Claude Code integration, enabling AI-powered Devilbox management.
+
+**Features:**
+- 10 tools for complete Devilbox control via natural language
+- Service management (start/stop/restart/status)
+- Log viewing and analysis
+- Command execution in containers
+- Configuration management (.env)
+- Database operations (MySQL/PostgreSQL)
+- Health monitoring
+- Vhost listing and detection
+
+**Tools Implemented:**
+1. `devilbox_status` - Show running containers
+2. `devilbox_start` - Start services
+3. `devilbox_stop` - Stop services
+4. `devilbox_restart` - Restart services
+5. `devilbox_logs` - View container logs
+6. `devilbox_exec` - Execute commands in containers
+7. `devilbox_vhosts` - List projects and configurations
+8. `devilbox_config` - Read/write .env configuration
+9. `devilbox_databases` - List MySQL/PostgreSQL databases
+10. `devilbox_health` - Comprehensive health check
+
+**Example Usage:**
+```
+You: "What's the status of my Devilbox?"
+Claude: *uses devilbox_status* → Shows 8 running containers
+
+You: "Show me the last 50 PHP logs"
+Claude: *uses devilbox_logs* → Displays recent PHP container logs
+
+You: "List all databases"
+Claude: *uses devilbox_databases* → Shows 10 MySQL databases
+```
+
+**Installation:**
+One-line automated installer (like laravel-boost):
+```bash
+cd /path/to/devilbox/mcp-server && ./install.sh
+```
+
+The installer automatically:
+- Installs npm dependencies (91 packages)
+- Makes index.js executable
+- Adds Devilbox MCP server to Claude Code configuration
+- Verifies Docker and Devilbox are running
+- No manual configuration needed!
+
+**Files:**
+- `mcp-server/index.js` - MCP server implementation (439 lines)
+- `mcp-server/install.sh` - Automated installer with Claude Code integration
+- `mcp-server/package.json` - Dependencies (@modelcontextprotocol/sdk)
+- `mcp-server/mcp.json` - MCP catalog configuration
+- `mcp-server/README.md` - Installation and usage guide
+- `mcp-server/USAGE-EXAMPLES.md` - Comprehensive usage examples
+
+**Testing:**
+- All 10 tools tested and verified working
+- 13 projects detected correctly
+- 10 databases listed successfully
+- Commands executed properly
+- Health checks operational
+- Fixed MySQL SSL issue (added --skip-ssl flag)
+
+**Documentation:** `mcp-server/README.md` and `mcp-server/USAGE-EXAMPLES.md`
+
+---
+
 ## Future Enhancements (ROADMAP-MODERNIZATION.md)
 
-### Phase 1: Setup Wizard (Next)
+### Phase 3: Setup Wizard (Next)
 Interactive TUI for easy Devilbox configuration.
-
-### Phase 2: Update Admin Tools
-Fix PHP 8.4 warnings in phpMyAdmin, phpPgAdmin, etc.
-
-### Phase 3: MCP Server
-Claude Code integration for AI-powered development (like laravel-boost).
 
 ### Phase 4: Devilbox Boost Package
 Package everything as an easy-to-install enhancement layer.
+
+**Completed Phases:**
+- ✅ Phase 1: Smart Vhost Auto-Detection (Feb 2026)
+- ✅ Phase 2: Admin Tools Modernization (Feb 14, 2026)
+- ✅ Phase 4: MCP Server (Feb 14, 2026) - Built before Phase 3 for proper testing
 
 ---
 

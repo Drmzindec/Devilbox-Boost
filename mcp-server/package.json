@@ -1,0 +1,25 @@
+{
+  "name": "@devilbox/mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Devilbox - AI-powered development environment assistant",
+  "type": "module",
+  "bin": {
+    "devilbox-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "devilbox",
+    "mcp",
+    "docker",
+    "development",
+    "lamp",
+    "lemp"
+  ],
+  "author": "Johan Pretorius",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  }
+}

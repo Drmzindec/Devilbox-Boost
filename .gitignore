@@ -153,6 +153,15 @@
 !/bash/bashrc.sh-example
 !/bash/README.md
 
+# Ignore MCP server dependencies and build artifacts
+/mcp-server/node_modules/
+/mcp-server/package-lock.json
+
+# Ignore downloaded admin tool archives
+/.devilbox/www/htdocs/vendor/*.tar.gz
+/.devilbox/www/htdocs/vendor/*.zip
+/.devilbox/www/htdocs/vendor/*.tgz
+
 # Ignore documentation sphinx build
 /docs/_build/
 /docs/make.bat
