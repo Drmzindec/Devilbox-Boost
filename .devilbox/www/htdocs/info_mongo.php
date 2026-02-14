@@ -24,15 +24,15 @@
 						<table class="table table-striped">
 							<thead class="thead-inverse">
 								<tr>
-									<th>Variable</th>
-									<th>Value</th>
+									<th style="width: 25%;">Variable</th>
+									<th style="width: 75%;">Value</th>
 								</tr>
 							</thead>
 							<tbody>
 								<?php foreach (loadClass('Mongo')->getInfo() as $key => $val): ?>
 									<tr>
 										<td><?php print_r($key);?></td>
-										<td class="break-word"><pre><?php print_r($val);?></pre></td>
+										<td class="break-word" style="max-width: 600px; overflow-x: auto;"><pre style="white-space: pre-wrap; word-wrap: break-word;"><?php print_r($val);?></pre></td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>

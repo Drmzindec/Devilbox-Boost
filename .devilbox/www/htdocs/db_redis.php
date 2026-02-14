@@ -54,20 +54,18 @@ if (isset($_GET['redisdb'])) {
 								<?php $redisKeys = loadClass('Redis')->getKeys(); ?>
 								<?php if (count($redisKeys)): ?>
 									<?php foreach ($redisKeys as $db_name => $keys): ?>
-										<tr class="thead-inverse ">
+										<tr class="thead-inverse">
 											<th colspan="5">
 												Database: <?php echo $db_name; ?>&nbsp;&nbsp;&nbsp;&nbsp;
 												Items: <?php echo count($keys); ?>
 											</th>
-										</th>
+										</tr>
 										<tr class="table-info">
-											<tr>
-												<th>DB</th>
-												<th>Key</th>
-												<th>Expires</th>
-												<th>Type</th>
-												<th>Value</th>
-											</th>
+											<th>DB</th>
+											<th>Key</th>
+											<th>Expires</th>
+											<th>Type</th>
+											<th>Value</th>
 										</tr>
 										<?php foreach ($keys as $key): ?>
 											<tr>

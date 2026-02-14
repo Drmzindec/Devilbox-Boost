@@ -327,10 +327,10 @@ $HEALTH_PERCENT = 100 - ceil(100 * $HEALTH_FAILS / $HEALTH_TOTAL);
 			<div class="row">
 				<div class="col-lg-4 col-md-6 col-sm-12 col-xs-12 col-margin">
 					<div class="dash-box">
-						<div class="dash-box-head"><i class="fa fa-info-circle" aria-hidden="true"></i> Available CLI Tools</div>
+						<div class="dash-box-head"><i class="fa fa-terminal" aria-hidden="true"></i> Available CLI Tools</div>
 						<div class="dash-box-body">
 							<p><small>You can also enter the php container via <code style="background-color:#3d3d3d;">./shell.sh</code> and use the following cli tools:</small></p>
-							<table class="table table-striped table-hover table-bordered table-sm font-small">
+							<table class="table table-striped table-hover table-bordered table-sm font-small" style="margin-bottom: 0;">
 								<thead class="thead-inverse">
 									<tr>
 										<th colspan="2">Tools</th>
@@ -338,82 +338,87 @@ $HEALTH_PERCENT = 100 - ceil(100 * $HEALTH_FAILS / $HEALTH_TOTAL);
 								</thead>
 								<tbody>
 									<!-- Core Tools -->
+									<tr style="background-color: #2a2a2a;">
+										<th colspan="2" style="color: #9ccc65; font-weight: bold; padding: 8px;"><i class="fa fa-cogs" aria-hidden="true"></i> Core & PHP</th>
+									</tr>
 									<tr>
-										<th style="width: 50%;">Git</th>
+										<th style="width: 50%; padding-left: 20px;">Git</th>
 										<td id="app_git"></td>
 									</tr>
 									<tr>
-										<th>Composer</th>
+										<th style="padding-left: 20px;">Composer</th>
 										<td id="app_composer"></td>
 									</tr>
-									<!-- PHP Frameworks & Tools -->
 									<tr>
-										<th>Laravel Installer</th>
+										<th style="padding-left: 20px;">Laravel Installer</th>
 										<td id="app_laravel_installer"></td>
 									</tr>
 									<tr>
-										<th>WordPress CLI</th>
+										<th style="padding-left: 20px;">WordPress CLI</th>
 										<td id="app_wpcli"></td>
 									</tr>
 									<tr>
-										<th>Pest (Testing)</th>
+										<th style="padding-left: 20px;">Pest (Testing)</th>
 										<td id="app_pest"></td>
 									</tr>
-									<!-- JavaScript Runtimes -->
+									<!-- JavaScript & Runtimes -->
+									<tr style="background-color: #2a2a2a;">
+										<th colspan="2" style="color: #ffc107; font-weight: bold; padding: 8px;"><i class="fa fa-code" aria-hidden="true"></i> JavaScript & Build</th>
+									</tr>
 									<tr>
-										<th>Node.js</th>
+										<th style="padding-left: 20px;">Node.js</th>
 										<td id="app_node"></td>
 									</tr>
 									<tr>
-										<th>Bun</th>
+										<th style="padding-left: 20px;">Bun</th>
 										<td id="app_bun"></td>
 									</tr>
-									<!-- Package Managers -->
 									<tr>
-										<th>NPM</th>
+										<th style="padding-left: 20px;">NPM</th>
 										<td id="app_npm"></td>
 									</tr>
 									<tr>
-										<th>Yarn</th>
+										<th style="padding-left: 20px;">Yarn</th>
 										<td id="app_yarn"></td>
 									</tr>
-									<!-- Build Tools -->
 									<tr>
-										<th>Vite</th>
+										<th style="padding-left: 20px;">Vite</th>
 										<td id="app_vite"></td>
 									</tr>
 									<tr>
-										<th>Webpack</th>
+										<th style="padding-left: 20px;">Webpack</th>
 										<td id="app_webpack_cli"></td>
 									</tr>
 									<tr>
-										<th>Gulp</th>
+										<th style="padding-left: 20px;">Gulp</th>
 										<td id="app_gulp"></td>
 									</tr>
 									<tr>
-										<th>Grunt</th>
+										<th style="padding-left: 20px;">Grunt</th>
 										<td id="app_grunt_cli"></td>
 									</tr>
-									<!-- Code Quality -->
+									<!-- Code Quality & Frameworks -->
+									<tr style="background-color: #2a2a2a;">
+										<th colspan="2" style="color: #64b5f6; font-weight: bold; padding: 8px;"><i class="fa fa-check-circle" aria-hidden="true"></i> Quality & Frameworks</th>
+									</tr>
 									<tr>
-										<th>Prettier</th>
+										<th style="padding-left: 20px;">Prettier</th>
 										<td id="app_prettier"></td>
 									</tr>
 									<tr>
-										<th>ESLint</th>
+										<th style="padding-left: 20px;">ESLint</th>
 										<td id="app_eslint"></td>
 									</tr>
-									<!-- Framework CLIs -->
 									<tr>
-										<th>Vue CLI</th>
+										<th style="padding-left: 20px;">Vue CLI</th>
 										<td id="app_vue_cli"></td>
 									</tr>
 									<tr>
-										<th>React CLI</th>
+										<th style="padding-left: 20px;">React CLI</th>
 										<td id="app_react_cli"></td>
 									</tr>
 									<tr>
-										<th>Angular CLI</th>
+										<th style="padding-left: 20px;">Angular CLI</th>
 										<td id="app_angular_cli"></td>
 									</tr>
 								</tbody>
