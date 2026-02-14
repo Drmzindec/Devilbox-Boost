@@ -1,266 +1,133 @@
-# Contributing
+# Contributing to Devilbox Boost
 
+Thank you for considering contributing to Devilbox Boost! This document provides guidelines and information for contributors.
 
-**Abstract**
+---
 
-The Devilbox is currently being developed in my spare time and mostly reflects the features that I
-am using for all the web projects I have to handle. In order to better present it to the majority
-of other software developers I do require support to cope with all the feature requests.
+## Table of Contents
 
+- [Code of Conduct](#code-of-conduct)
+- [How Can I Contribute?](#how-can-i-contribute)
+- [Development Setup](#development-setup)
+- [Coding Standards](#coding-standards)
+- [Pull Request Process](#pull-request-process)
 
-So first of all, If the Devilbox makes your life easier, **star it on GitHub**!
+---
 
-**Table of Contents**
+## Code of Conduct
 
-1. [How to contribute](#how-to-contribute)
-    1. [Documentation](#documentation)
-    2. [Docker Container](#docker-container)
-    3. [New Features](#new-features)
-    4. [Intranet](#intranet)
-    5. [Vendors](#vendors)
-    6. [Tests](#tests)
-2. [Joining the Devilbox GitHub Organization](#joining-the-devilbox-github-organization)
-3. [Important](#important)
+This project adheres to a simple code of conduct:
 
+- **Be respectful** - Treat everyone with respect
+- **Be constructive** - Provide helpful feedback  
+- **Be collaborative** - Work together to improve the project
+- **Be inclusive** - Welcome contributors of all skill levels
 
-## 1. How to contribute
+---
 
-There are various areas that need support. If you are willing to help, pick a topic below and start
-contributing. If you are unclear about anything, let me know and I will clarify.
+## How Can I Contribute?
 
-See the general [ROADMAP](https://github.com/cytopia/devilbox/issues/23) for what is planned.
+### Reporting Bugs
+
+Before creating bug reports, please check existing issues to avoid duplicates.
+
+**Good bug reports** include:
+- Clear, descriptive title
+- Exact steps to reproduce
+- Expected vs actual behavior
+- Environment details (OS, Docker version, PHP version)
+
+### Suggesting Enhancements
+
+Enhancement suggestions are welcome! Please include:
+- Clear use case
+- Why this would be useful
+- How it should work
+
+---
+
+## Development Setup
+
+### Prerequisites
+
+- Docker Desktop installed and running
+- Git
+- Basic understanding of Docker, PHP, and Bash
+
+### Getting Started
+
+1. Fork the repository
+2. Clone your fork: `git clone https://github.com/YOUR-USERNAME/devilbox-boost.git`
+3. Create a feature branch: `git checkout -b feature/my-new-feature`
+4. Make your changes
+5. Test thoroughly
+6. Commit with clear messages
+7. Push and create a Pull Request
+
+---
+
+## Coding Standards
+
+### Shell Scripts (Bash)
+
+```bash
+#!/usr/bin/env bash
+set -e  # Exit on error
+
+# Use clear variable names
+MY_VARIABLE="value"
+
+# Add comments for complex logic
+function my_function() {
+    local param="$1"
+    # Function logic
+}
+```
+
+### PHP
+
+Follow PSR-12 coding standards
 
 ### Documentation
 
-**Required knowledge:** [Sphinx](http://www.sphinx-doc.org/en/stable/)
+- Use Markdown for all documentation
+- Keep line length under 100 characters
+- Include code examples where applicable
 
-* General improvement of the documentation (typos, grammar, etc)
-* Better documentation for setting up Xdebug
-* More how to's on how to setup a specific framework or CMS
-* General how to's and blog posts
+---
 
-### Docker Container
+## Pull Request Process
 
-**Required knowledge:** Docker, [Ansible](https://www.ansible.com/), Apache, Nginx, MySQL, PHP-FPM
+### Before Submitting
 
-* Consolidate MySQL, PerconaDB and MariaDB into one repository for easier change management
-* Consolidate Nginx and Apache into one repository for easier change management
-* Performance improvements on Apache/Nginx and PHP-FPM
-* Add new container to the stack
+- [ ] Code follows project standards
+- [ ] Changes tested locally
+- [ ] Documentation updated
+- [ ] Commit messages are clear
 
-### New Features
+### PR Guidelines
 
-**Required knowledge:** Various
+1. **Clear Title** - Use prefixes: `feat:`, `fix:`, `docs:`, `refactor:`
+2. **Detailed Description** - What, why, and how
+3. **Link Related Issues** - Use `Fixes #123`
+4. **Small, Focused PRs** - One feature/fix per PR
 
-Have a look at the GitHub issues and see if you can implement any features requested
+---
 
-### Intranet
+## Questions?
 
-**Required knowledge:** PHP, HTML, CSS and Javascript
+If you have questions:
+1. Check existing documentation
+2. Search closed issues
+3. Ask in GitHub Discussions
+4. Open a new issue with the `question` label
 
-* [ ] Fix email view: https://github.com/cytopia/devilbox/issues/337
-* [ ] Better and more modern layout
-* [ ] Try to remove as much vendor dependencies as possible
+---
 
+## License
 
-### Vendors
+By contributing to Devilbox Boost, you agree that your contributions will be licensed under the MIT License.
 
-#### Upgrade Adminer
+---
 
-Adminer requires some adjustments to work with the Devilbox intranet. See below for files to adjust:
-
-`adminer-x.y.z-en.php`
-```diff
-- login($_e,$E){if($E=="")return
-+ login($_e,$E){return true;if($E=="")return
-```
-
-#### Upgrade phpMyAdmin
-
-phpMyAdmin requires some adjustments to work with the Devilbox intranet. See below for files to adjust:
-
-`config.inc.php`
-```diff
-+ error_reporting(0);
-
-- $cfg['blowfish_secret'] = ''; /* YOU MUST FILL IN THIS FOR COOKIE AUTH! */
-+ $cfg['TempDir'] = '/tmp';
-+ $cfg['CheckConfigurationPermissions'] = false;
-+ $cfg['blowfish_secret'] = 'a;guurOrep[[hoge7p[jgde7reouHoy5590hjgffuJ676FGd434&%*09UJHogfT%$#F64';
-
-
-
-- /* Authentication type */
-- $cfg['Servers'][$i]['auth_type'] = 'cookie';
-- /* Server parameters */
-- $cfg['Servers'][$i]['host'] = 'localhost';
-- $cfg['Servers'][$i]['compress'] = false;
-- $cfg['Servers'][$i]['AllowNoPassword'] = false;
-+ /* Authentication type */
-+ if (getenv('DEVILBOX_VENDOR_PHPMYADMIN_AUTOLOGIN') == 1) {
-+     $cfg['Servers'][$i]['auth_type'] = 'config';
-+     $cfg['Servers'][$i]['user'] = 'root';
-+     $cfg['Servers'][$i]['password'] = getenv('MYSQL_ROOT_PASSWORD');
-+ } else {
-+ $cfg['Servers'][$i]['auth_type'] = 'cookie';
-+ }
-+ /* Server parameters */
-+ $cfg['Servers'][$i]['host'] = 'mysql';
-+ $cfg['Servers'][$i]['connect_type'] = 'tcp';
-+ $cfg['Servers'][$i]['compress'] = false;
-+ $cfg['Servers'][$i]['AllowNoPassword'] = true;
-
-- //$cfg['SendErrorReports'] = 'always';
-+ $cfg['SendErrorReports'] = 'never';
-```
-
-#### Upgrade phpRedmin
-
-phpRedmin requires some adjustments to work with the Devilbox intranet. See below for files to adjust:
-
-`config.dist.php`
-```diff
-+ // Check if redis is using a password
-+ $REDIS_ROOT_PASSWORD = '';
-+ 
-+ $_REDIS_ARGS = getenv('REDIS_ARGS');
-+ $_REDIS_PASS = preg_split("/--requirepass\s+/",  $_REDIS_ARGS);
-+ if (is_array($_REDIS_PASS) && count($_REDIS_PASS)) {
-+   // In case the option is specified multiple times, use the last effective one.
-+   $_REDIS_PASS = $_REDIS_PASS[count($_REDIS_PASS)-1];
-+   if (strlen($_REDIS_PASS) > 0) {
-+     $REDIS_ROOT_PASSWORD = $_REDIS_PASS;
-+   }
-+ }
-
-- 'database'  => array(
--     'driver' => 'redis',
--     'mysql'  => array(
--         'host'     => 'localhost',
--         'username' => 'root',
--         'password' => 'root'
--     ),
--     'redis' => array(
--         array(
--             'host'     => 'localhost',
--             'port'     => '6379',
--             'password' => null,
--             'database' => 0,
--             'max_databases' => 16, /* Manual configuration of max databases for Redis < 2.6 */
--             'stats'    => array(
--                 'enable'   => 1,
--                 'database' => 0,
--             ),
--             'dbNames' => array( /* Name databases. key should be database id and value is the name */
--             ),
--         ),
--     ),
-- ),
-+ 'database'  => array(
-+     'driver' => 'redis',
-+     'mysql'  => array(
-+         'host'     => 'mysql',
-+         'username' => 'root',
-+         'password' => getenv('MYSQL_ROOT_PASSWORD')
-+     ),
-+     'redis' => array(
-+         array(
-+             'host'     => 'redis',
-+             'port'     => '6379',
-+             'password' => $REDIS_ROOT_PASSWORD,
-+             'database' => 0,
-+             'max_databases' => 16, /* Manual configuration of max databases for Redis < 2.6 */
-+             'stats'    => array(
-+                 'enable'   => 1,
-+                 'database' => 0,
-+             ),
-+             'dbNames' => array( /* Name databases. key should be database id and value is the name */
-+             ),
-+         ),
-+     ),
-+ ),
-```
-
-`libraries/drivers/db/redis.php`
-```diff
-- if (isset($config['password'])) {
--     $this->auth($config['password']);
-- }
-+ if (isset($config['password']) && strlen($config['password'])>0) {
-+     $this->auth($config['password']);
-+ }
-```
-
-#### Upgrade phpPgAdmin
-
-phpPgAdmin requires some adjustments to work with the Devilbox intranet. See below for files to adjust:
-
-`conf/config.inc.php`
-```diff
-- $conf['servers'][0]['host'] = '';
-+ $conf['servers'][0]['host'] = 'pgsql';
-
-- $conf['extra_login_security'] = true;
-+ $conf['extra_login_security'] = false;
-
-+ // ---- Auto-login
-+ if (getenv('DEVILBOX_VENDOR_PHPPGADMIN_AUTOLOGIN') == 1) {
-+   $_REQUEST['server']= 'pgsql:5432:allow';
-+   if(session_id() == ''){
-+     //session has not started
-+     session_name('PPA_ID');
-+     session_start();
-+   }
-+   $_SESSION['sharedUsername'] = getenv('PGSQL_ROOT_USER');
-+   $_SESSION['sharedPassword'] = getenv('PGSQL_ROOT_PASSWORD');
-+ }
-+ // ---- end of Auto-login
-```
-`libraries/lib.inc.php`
-```diff
-- error_reporting(E_ALL);
-+ error_reporting(E_ERROR | E_WARNING | E_PARSE);
-
-- if (!ini_get('session.auto_start')) {
--   session_name('PPA_ID');
--   session_start();
-- }
-+ if (!strlen(session_id()) > 0) {
-+   session_name('PPA_ID');
-+   session_start();
-+ }
-```
-`libraries/adodb/drivers/adodb-postgres64.inc.php`
-```diff
-- function ADODB_postgres64()
-+ function __construct()
-```
-
-`libraries/adodb/drivers/adodb-postgres7.inc.php`
-```diff
-- function ADODB_postgres7()
-+ public function __construct()
-     {
--        $this->ADODB_postgres64();
-+        parent::__construct();
-```
-
-### Tests
-
-**Required knowledge:** [Travis-CI](https://docs.travis-ci.com/)
-
-* Shorten CI test time for faster releases
-* Rewrite current tests, write new tests
-
-
-## Joining the Devilbox GitHub Organization
-
-If you want to contribute on a regular base and take care about major feature development you can
-be invited to the GitHub organization.
-
-This however requires some prerequisites:
-
-1. Willing to dedicate a regular amount of time to invest in this project
-2. Already spent a decent amount of time in improving the Devilbox
-3. A good understanding about the Devilbox
-4. A good understanding about the PHP-FPM container (and how it is built with Ansible)
+**Thank you for contributing!** 🚀
