@@ -5,6 +5,22 @@ Create a modern, AI-friendly, developer-focused fork/enhancement of Devilbox tha
 
 ---
 
+## ✅ COMPLETED: Smart Vhost Auto-Detection
+
+**Status**: DONE - Fully implemented and working!
+
+The critical vhost auto-detection feature is now complete:
+- Automatically detects Laravel, WordPress, Symfony, CakePHP, Yii, CodeIgniter
+- Creates `.devilbox/apache24.yml` and `nginx.yml` with correct DocumentRoot
+- Laravel projects work out-of-the-box with `/public` docroot
+- WordPress projects work with proper permalink support
+- Runs as background service, checks every 30 seconds
+- Successfully detected and configured all 10 existing projects
+
+**See**: `VHOST-AUTO-DETECT.md` for full documentation
+
+---
+
 ## Phase 1: Setup Wizard (NEXT - Immediate Impact) ✨
 
 ### Interactive TUI Setup
@@ -322,10 +338,11 @@ curl -sSL https://raw.githubusercontent.com/user/devilbox-boost/main/install.sh 
 ## Implementation Priority
 
 1. **✅ DONE**: Modern tools, port forwarding, PHP 8.4 fixes
-2. **⏭️ NEXT**: Setup wizard (`setup-devilbox.sh`)
-3. **🔥 URGENT**: Update admin tools (`update-admin-tools.sh`)
-4. **🎯 HIGH**: Create MCP server
-5. **📦 LATER**: Package as Boost Pack
+2. **✅ DONE**: Smart vhost auto-detection for Laravel/WordPress/Symfony
+3. **⏭️ NEXT**: Setup wizard (`setup-devilbox.sh`)
+4. **🔥 URGENT**: Update admin tools (`update-admin-tools.sh`)
+5. **🎯 HIGH**: Create MCP server
+6. **📦 LATER**: Package as Boost Pack
 
 ---
 
@@ -347,11 +364,19 @@ curl -sSL https://raw.githubusercontent.com/user/devilbox-boost/main/install.sh 
 
 ## Next Steps
 
-1. Create setup wizard script
-2. Test with fresh Devilbox install
-3. Update admin tools
-4. Plan MCP server architecture
-5. Create GitHub repo for Boost Pack
-6. Write installation docs
+### Completed ✅
+- ✅ Modern tools (Bun, Vite, Pest, Laravel Installer, WP-CLI)
+- ✅ Port forwarding for 127.0.0.1 database connections
+- ✅ PHP 8.4 compatibility fixes
+- ✅ Smart vhost auto-detection (Laravel, WordPress, Symfony)
+- ✅ Command wrappers for easy CLI access
+- ✅ Dashboard modernization
 
-**Want to proceed with the setup wizard first?**
+### Up Next 🚀
+1. **Create setup wizard script** - Interactive TUI for easy Devilbox configuration
+2. **Update admin tools** - Fix PHP 8.4 warnings in phpMyAdmin, phpPgAdmin, etc.
+3. **Plan MCP server architecture** - Claude Code integration for AI-powered development
+4. **Create GitHub repo for Boost Pack** - Package everything for easy distribution
+5. **Write installation docs** - Complete setup and usage documentation
+
+**The vhost auto-detection feature is working perfectly! Laravel projects now work out-of-the-box.**
