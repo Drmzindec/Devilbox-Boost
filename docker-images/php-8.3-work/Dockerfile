@@ -107,12 +107,18 @@ RUN npm install -g \
     eslint \
     @vue/cli \
     @angular/cli \
+    create-react-app \
     create-next-app
 
 # Install Bun (faster alternative to Node.js)
 RUN curl -fsSL https://bun.sh/install | bash \
     && ln -s /root/.bun/bin/bun /usr/local/bin/bun \
     && ln -s /root/.bun/bin/bunx /usr/local/bin/bunx
+
+# Make root's .composer and .bun accessible to PHP-FPM (runs as devilbox user)
+# This allows the dashboard to detect installed tools
+RUN chmod o+rx /root \
+    && chmod -R o+rx /root/.composer /root/.bun
 
 # Install sudo first (before modifying sudoers)
 RUN apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*

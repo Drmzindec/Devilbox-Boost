@@ -157,8 +157,13 @@ class Php extends BaseClass implements BaseInterface
 	}
 	public function getPestVersion()
 	{
-		// Pest requires a test directory, so check composer global instead
-		$output = loadClass('Helper')->exec('composer global show pestphp/pest 2>/dev/null | grep "versions"', $output);
+		// Check if pest binary exists and is executable
+		$output = loadClass('Helper')->exec('pest --version 2>&1 | head -1', $output);
+		if (strpos($output, 'Pest') !== false) {
+			return loadClass('Helper')->egrep('/[0-9.]+/', $output);
+		}
+		// Fallback: check in root's composer (use COMPOSER_HOME)
+		$output = loadClass('Helper')->exec('COMPOSER_HOME=/root/.composer composer global show pestphp/pest 2>/dev/null | grep "versions"', $output);
 		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
 	}
 	public function getViteVersion()
