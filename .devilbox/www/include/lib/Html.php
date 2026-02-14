@@ -66,6 +66,27 @@ class Html
 			)
 		),
 		array(
+			'name' => 'Modern Services',
+			'menu' => array(
+				array(
+					'name' => 'Meilisearch',
+					'path' => '__MEILISEARCH__'
+				),
+				array(
+					'name' => 'Mailpit',
+					'path' => '__MAILPIT__'
+				),
+				array(
+					'name' => 'RabbitMQ',
+					'path' => '__RABBITMQ__'
+				),
+				array(
+					'name' => 'MinIO Console',
+					'path' => '__MINIO__'
+				)
+			)
+		),
+		array(
 			'name' => 'Info',
 			'menu' => array(
 				array(
@@ -436,6 +457,24 @@ HTML;
 						} else {
 							$el['path'] = '/vendor/adminer-5.4.2-devilbox.php';
 						}
+					}
+
+					// Modern Services - External URLs
+					if ($el['path'] == '__MEILISEARCH__') {
+						$el['path'] = 'http://localhost:7700';
+						$el['target'] = '_blank';
+					}
+					if ($el['path'] == '__MAILPIT__') {
+						$el['path'] = 'http://localhost:8025';
+						$el['target'] = '_blank';
+					}
+					if ($el['path'] == '__RABBITMQ__') {
+						$el['path'] = 'http://localhost:15672';
+						$el['target'] = '_blank';
+					}
+					if ($el['path'] == '__MINIO__') {
+						$el['path'] = 'http://localhost:9001';
+						$el['target'] = '_blank';
 					}
 
 					$target = isset($el['target']) ? 'target="'.$el['target'].'"' : '';
