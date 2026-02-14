@@ -409,6 +409,10 @@ $HEALTH_PERCENT = 100 - ceil(100 * $HEALTH_FAILS / $HEALTH_TOTAL);
 										<td id="app_vue_cli"></td>
 									</tr>
 									<tr>
+										<th>React CLI</th>
+										<td id="app_react_cli"></td>
+									</tr>
+									<tr>
 										<th>Angular CLI</th>
 										<td id="app_angular_cli"></td>
 									</tr>
@@ -952,6 +956,7 @@ $HEALTH_PERCENT = 100 - ceil(100 * $HEALTH_FAILS / $HEALTH_TOTAL);
 			updateVersions('eslint');
 			// Framework CLIs
 			updateVersions('vue_cli');
+			updateVersions('react_cli');
 			updateVersions('angular_cli');
 		})();
 		</script>

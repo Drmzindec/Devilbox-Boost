@@ -140,6 +140,11 @@ if (loadClass('Helper')->isLoggedIn()) {
 				$_GET['software'] => (($version = loadClass('Php')->getVueCliVersion()) !== false) ? $version : $no
 			));
 		}
+		else if ($_GET['software'] == 'react_cli') {
+			echo json_encode(array(
+				$_GET['software'] => (($version = loadClass('Php')->getReactCliVersion()) !== false) ? $version : $no
+			));
+		}
 		else if ($_GET['software'] == 'webpack_cli') {
 			echo json_encode(array(
 				$_GET['software'] => (($version = loadClass('Php')->getWebpackCliVersion()) !== false) ? $version : $no

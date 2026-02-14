@@ -130,6 +130,11 @@ class Php extends BaseClass implements BaseInterface
 		$output = loadClass('Helper')->exec('vue --version 2>/dev/null', $output);
 		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
 	}
+	public function getReactCliVersion()
+	{
+		$output = loadClass('Helper')->exec('create-react-app --version 2>/dev/null', $output);
+		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
+	}
 	public function getWebpackCliVersion()
 	{
 		$output = loadClass('Helper')->exec('webpack-cli --version --no-stats --no-target --no-watch --no-color 2>/dev/null | grep webpack-cli', $output);
