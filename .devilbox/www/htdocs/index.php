@@ -206,6 +206,75 @@ foreach ($connection as $docker) {
 $HEALTH_PERCENT = 100 - ceil(100 * $HEALTH_FAILS / $HEALTH_TOTAL);
 
 
+/*************************************************************
+ * Check Modern Services
+ *************************************************************/
+function checkServicePort($host, $port, $timeout = 1) {
+	$fp = @fsockopen($host, $port, $errno, $errstr, $timeout);
+	if ($fp) {
+		fclose($fp);
+		return true;
+	}
+	return false;
+}
+
+$modern_services = array(
+	'meilisearch' => array(
+		'name' => 'Meilisearch',
+		'port' => 7700,
+		'url' => 'http://localhost:7700',
+		'master_key' => loadClass('Helper')->getEnv('MEILI_MASTER_KEY') ?: 'masterKey',
+		'config' => array(
+			'Laravel Scout' => "SCOUT_DRIVER=meilisearch\nMEILISEARCH_HOST=http://127.0.0.1:7700\nMEILISEARCH_KEY=masterKey",
+			'PHP' => "\$client = new \\MeiliSearch\\Client('http://127.0.0.1:7700', 'masterKey');"
+		)
+	),
+	'mailpit' => array(
+		'name' => 'Mailpit',
+		'port' => 8025,
+		'url' => 'http://localhost:8025',
+		'smtp' => array(
+			'host' => '127.0.0.1',
+			'port' => 1025,
+			'auth' => false
+		),
+		'config' => array(
+			'Laravel' => "MAIL_MAILER=smtp\nMAIL_HOST=127.0.0.1\nMAIL_PORT=1025\nMAIL_USERNAME=null\nMAIL_PASSWORD=null\nMAIL_ENCRYPTION=null",
+			'WordPress' => "define('SMTP_HOST', '127.0.0.1');\ndefine('SMTP_PORT', 1025);\ndefine('SMTP_AUTH', false);"
+		)
+	),
+	'rabbit' => array(
+		'name' => 'RabbitMQ',
+		'port' => 15672,
+		'url' => 'http://localhost:15672',
+		'username' => loadClass('Helper')->getEnv('RABBIT_DEFAULT_USER') ?: 'guest',
+		'password' => loadClass('Helper')->getEnv('RABBIT_DEFAULT_PASS') ?: 'guest',
+		'amqp_port' => 5672,
+		'config' => array(
+			'Laravel' => "QUEUE_CONNECTION=rabbitmq\nRABBITMQ_HOST=127.0.0.1\nRABBITMQ_PORT=5672\nRABBITMQ_USER=guest\nRABBITMQ_PASSWORD=guest",
+			'PHP' => "\$connection = new \\PhpAmqpLib\\Connection\\AMQPStreamConnection('127.0.0.1', 5672, 'guest', 'guest');"
+		)
+	),
+	'minio' => array(
+		'name' => 'MinIO',
+		'port' => 9001,
+		'url' => 'http://localhost:9001',
+		'username' => loadClass('Helper')->getEnv('MINIO_ROOT_USER') ?: 'minioadmin',
+		'password' => loadClass('Helper')->getEnv('MINIO_ROOT_PASSWORD') ?: 'minioadmin',
+		'api_port' => 9000,
+		'config' => array(
+			'Laravel' => "AWS_ACCESS_KEY_ID=minioadmin\nAWS_SECRET_ACCESS_KEY=minioadmin\nAWS_DEFAULT_REGION=us-east-1\nAWS_BUCKET=my-bucket\nAWS_ENDPOINT=http://127.0.0.1:9000\nAWS_USE_PATH_STYLE_ENDPOINT=true",
+			'PHP' => "\$client = new \\Aws\\S3\\S3Client([\n  'endpoint' => 'http://127.0.0.1:9000',\n  'credentials' => ['key' => 'minioadmin', 'secret' => 'minioadmin']\n]);"
+		)
+	)
+);
+
+// Check which services are running
+foreach ($modern_services as $key => &$service) {
+	$service['running'] = checkServicePort('127.0.0.1', $service['port']);
+}
+
+
 /*********************************************************************************
  *
  * H T M L
@@ -317,6 +386,134 @@ $HEALTH_PERCENT = 100 - ceil(100 * $HEALTH_FAILS / $HEALTH_TOTAL);
 					</div>
 				</div>
 
+			</div><!-- /row -->
+
+
+			<!-- ############################################################ -->
+			<!-- MODERN SERVICES -->
+			<!-- ############################################################ -->
+			<div class="row">
+				<div class="col-md-12 col-sm-12 col-xs-12 col-margin">
+					<div class="dash-box">
+						<div class="dash-box-head"><i class="fa fa-rocket" aria-hidden="true"></i> Modern Services (Optional)</div>
+						<div class="dash-box-body">
+
+							<div class="row">
+								<?php foreach ($modern_services as $key => $service): ?>
+								<div class="col-xl-3 col-lg-6 col-md-6 col-sm-12" style="margin-bottom:20px;">
+									<div class="card text-white <?php echo $service['running'] ? 'bg-success' : 'bg-secondary'; ?>" style="border-radius:8px; height:100%;">
+										<div class="card-body" style="padding:15px;">
+											<h5 class="card-title">
+												<?php if ($key == 'meilisearch'): ?>
+													<i class="fa fa-search"></i> <?php echo $service['name']; ?>
+												<?php elseif ($key == 'mailpit'): ?>
+													<i class="fa fa-envelope"></i> <?php echo $service['name']; ?>
+												<?php elseif ($key == 'rabbit'): ?>
+													<i class="fa fa-exchange"></i> <?php echo $service['name']; ?>
+												<?php elseif ($key == 'minio'): ?>
+													<i class="fa fa-database"></i> <?php echo $service['name']; ?>
+												<?php endif; ?>
+												<?php if ($service['running']): ?>
+													<span class="badge badge-light" style="font-size:10px; float:right;">RUNNING</span>
+												<?php else: ?>
+													<span class="badge badge-dark" style="font-size:10px; float:right;">STOPPED</span>
+												<?php endif; ?>
+											</h5>
+
+											<p class="card-text"><small>
+												<?php if ($key == 'meilisearch'): ?>
+													Fast search engine
+												<?php elseif ($key == 'mailpit'): ?>
+													Email testing
+												<?php elseif ($key == 'rabbit'): ?>
+													Message queue
+												<?php elseif ($key == 'minio'): ?>
+													S3 storage
+												<?php endif; ?>
+											</small></p>
+
+											<?php if ($service['running']): ?>
+												<a href="<?php echo $service['url']; ?>" target="_blank" class="btn btn-light btn-sm btn-block" style="margin-bottom:10px;">
+													<i class="fa fa-external-link"></i> Open Dashboard
+												</a>
+											<?php else: ?>
+												<button class="btn btn-dark btn-sm btn-block" disabled style="margin-bottom:10px;">
+													<i class="fa fa-power-off"></i> Not Running
+												</button>
+											<?php endif; ?>
+
+											<div style="background:#f8f9fa; color:#333; padding:8px; border-radius:4px; font-size:11px;">
+												<?php if ($key == 'meilisearch'): ?>
+													<strong>Master Key:</strong><br/>
+													<code style="background:#fff; padding:2px 4px; color:#d63384;"><?php echo $service['master_key']; ?></code>
+												<?php elseif ($key == 'mailpit'): ?>
+													<strong>SMTP:</strong> <?php echo $service['smtp']['host']; ?>:<?php echo $service['smtp']['port']; ?><br/>
+													<small>No authentication required</small>
+												<?php elseif ($key == 'rabbit'): ?>
+													<strong>User:</strong> <code style="background:#fff; padding:2px 4px;"><?php echo $service['username']; ?></code><br/>
+													<strong>Pass:</strong> <code style="background:#fff; padding:2px 4px;"><?php echo $service['password']; ?></code><br/>
+													<small>AMQP Port: <?php echo $service['amqp_port']; ?></small>
+												<?php elseif ($key == 'minio'): ?>
+													<strong>User:</strong> <code style="background:#fff; padding:2px 4px;"><?php echo $service['username']; ?></code><br/>
+													<strong>Pass:</strong> <code style="background:#fff; padding:2px 4px;"><?php echo $service['password']; ?></code><br/>
+													<small>API Port: <?php echo $service['api_port']; ?></small>
+												<?php endif; ?>
+											</div>
+										</div>
+									</div>
+								</div>
+								<?php endforeach; ?>
+							</div>
+
+							<div class="row" style="margin-top:15px;">
+								<div class="col-12">
+									<h6 style="color:#9ccc65;"><i class="fa fa-code"></i> Quick Start</h6>
+									<ul class="nav nav-tabs" id="servicesTabs" role="tablist">
+										<li class="nav-item">
+											<a class="nav-link active" id="meilisearch-tab" data-toggle="tab" href="#meilisearch-config" role="tab">Meilisearch</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link" id="mailpit-tab" data-toggle="tab" href="#mailpit-config" role="tab">Mailpit</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link" id="rabbitmq-tab" data-toggle="tab" href="#rabbitmq-config" role="tab">RabbitMQ</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link" id="minio-tab" data-toggle="tab" href="#minio-config" role="tab">MinIO</a>
+										</li>
+									</ul>
+									<div class="tab-content" id="servicesTabContent" style="background:#2a2a2a; padding:15px; border-radius:0 0 4px 4px;">
+										<div class="tab-pane fade show active" id="meilisearch-config" role="tabpanel">
+											<h6>Laravel Scout Configuration</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px;"><?php echo htmlspecialchars($modern_services['meilisearch']['config']['Laravel Scout']); ?></pre>
+										</div>
+										<div class="tab-pane fade" id="mailpit-config" role="tabpanel">
+											<h6>Laravel Mail Configuration</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px;"><?php echo htmlspecialchars($modern_services['mailpit']['config']['Laravel']); ?></pre>
+											<h6 style="margin-top:15px;">WordPress SMTP</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px;"><?php echo htmlspecialchars($modern_services['mailpit']['config']['WordPress']); ?></pre>
+										</div>
+										<div class="tab-pane fade" id="rabbitmq-config" role="tabpanel">
+											<h6>Laravel Queue Configuration</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px;"><?php echo htmlspecialchars($modern_services['rabbit']['config']['Laravel']); ?></pre>
+										</div>
+										<div class="tab-pane fade" id="minio-config" role="tabpanel">
+											<h6>Laravel S3 Configuration</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px;"><?php echo htmlspecialchars($modern_services['minio']['config']['Laravel']); ?></pre>
+										</div>
+									</div>
+									<div style="margin-top:10px;">
+										<small class="text-muted">
+											<i class="fa fa-info-circle"></i>
+											Need more examples? See <a href="https://github.com/Drmzindec/Devilbox-Boost/blob/main/docs/MODERN-SERVICES.md" target="_blank">full documentation</a> with PHP, WordPress, and framework-specific guides.
+										</small>
+									</div>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
 			</div><!-- /row -->
 
 
