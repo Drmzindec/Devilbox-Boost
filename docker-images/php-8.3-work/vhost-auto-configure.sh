@@ -48,6 +48,18 @@ detect_framework() {
         return 0
     fi
 
+    # Drupal - has core/lib/Drupal.php or sites/default
+    if [ -f "$project_dir/core/lib/Drupal.php" ] || [ -d "$project_dir/sites/default" ]; then
+        echo "drupal"
+        return 0
+    fi
+
+    # Magento - has app/Mage.php (Magento 1) or bin/magento (Magento 2)
+    if [ -f "$project_dir/app/Mage.php" ] || [ -f "$project_dir/bin/magento" ]; then
+        echo "magento"
+        return 0
+    fi
+
     # Generic PHP project
     echo "generic"
     return 0
@@ -55,10 +67,27 @@ detect_framework() {
 
 get_docroot() {
     local framework="$1"
+    local project_dir="$2"
 
     case "$framework" in
         laravel|symfony|cakephp|yii)
             echo "public"
+            ;;
+        drupal)
+            # Drupal 8+ composer-based uses /web, older versions use root
+            if [ -d "$project_dir/web" ]; then
+                echo "web"
+            else
+                echo ""
+            fi
+            ;;
+        magento)
+            # Magento 2 uses /pub, Magento 1 uses root
+            if [ -d "$project_dir/pub" ]; then
+                echo "pub"
+            else
+                echo ""
+            fi
             ;;
         wordpress|codeigniter|generic)
             echo ""
@@ -219,7 +248,7 @@ scan_projects() {
 
         # Detect framework
         local framework=$(detect_framework "$project_path")
-        local docroot=$(get_docroot "$framework")
+        local docroot=$(get_docroot "$framework" "$project_path")
 
         # Create vhost config
         create_vhost_config "$project" "$framework" "$docroot"

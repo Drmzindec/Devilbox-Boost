@@ -19,6 +19,8 @@ A background service runs inside the PHP container that:
 | **Symfony** | `symfony.lock` or `bin/console` exists | `/public` |
 | **CakePHP** | `bin/cake` exists | `/public` |
 | **Yii** | `yii` file exists | `/public` |
+| **Drupal 8+** | `core/lib/Drupal.php` or `sites/default` exists | `/web` (if exists, else `/`) |
+| **Magento 2** | `bin/magento` or `app/Mage.php` exists | `/pub` (if exists, else `/`) |
 | **WordPress** | `wp-config.php` exists | `/` (project root) |
 | **CodeIgniter** | `system/core/CodeIgniter.php` exists | `/` (project root) |
 | **Generic PHP** | No framework detected | `/` (project root) |
