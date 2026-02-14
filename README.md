@@ -1,149 +1,205 @@
-# Devilbox Boost
+<div align="center">
 
-**Modern tools and workflow improvements for Devilbox.**
+# 🚀 Devilbox Boost
 
-Devilbox Boost is an enhancement layer that modernizes the official [Devilbox](https://github.com/cytopia/devilbox) with PHP 8.3/8.4 support, modern development tools, and quality-of-life improvements.
+**Modern PHP 8.3/8.4 development stack powered by Docker**
 
----
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4-777BB4?logo=php&logoColor=white)](https://www.php.net/)
+[![Docker](https://img.shields.io/badge/Docker-required-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Laravel](https://img.shields.io/badge/Laravel-ready-FF2D20?logo=laravel&logoColor=white)](https://laravel.com/)
+[![WordPress](https://img.shields.io/badge/WordPress-ready-21759B?logo=wordpress&logoColor=white)](https://wordpress.org/)
 
-## What's Included
-
-### Modern PHP Support
-- PHP 8.3 & 8.4 with latest features
-- No deprecation warnings
-- Production-ready configurations
-
-### Development Tools
-- **Composer 2.9.5** - Dependency management
-- **Laravel Installer 5.24.5** - Quick project creation
-- **WP-CLI 2.12.0** - WordPress management
-- **Pest 4.3.2** - Modern testing framework
-- **Node.js 24.13.1** - JavaScript runtime
-- **Bun 1.3.9** - Fast all-in-one toolkit
-- **Vite 7.3.1** - Lightning-fast build tool
-- **Vue CLI 5.0.9** - Vue.js framework
-- **React CLI 5.0.1** - React framework (create-react-app)
-- **Angular CLI 21.1.4** - Angular framework
-- **Prettier 3.8.1** & **ESLint 10.0.0** - Code quality
-
-### Database Services
-- MySQL 8.0 / MariaDB
-- PostgreSQL 16
-- MongoDB 7
-- Redis 7
-- Memcached
-
-### Updated Admin Tools (PHP 8.4 Compatible)
-- **phpMyAdmin 5.2.3** - MySQL administration
-- **Adminer 5.4.2** - Lightweight database manager (prefilled login)
-- **phpPgAdmin 7.13.0** - PostgreSQL admin
-- **phpCacheAdmin 2.4.1** - Redis/Memcached manager (unified)
-- **OpCache GUI 3.6.0** - OpCache viewer
-
-### Smart Features
-- **Vhost Auto-Detection** - Automatically detects Laravel, WordPress, Symfony, CakePHP, Yii, CodeIgniter
-- **Port Forwarding** - Direct `127.0.0.1` database connections from PHP
-- **Interactive Setup Wizard** - 10-minute guided installation
-- **Command Wrappers** - Run `composer`, `npm`, `artisan` directly on host
-- **MCP Server** (Optional) - Claude Code integration for AI-assisted development
-
-### Comprehensive Documentation
-- Quick start guide
-- Interactive setup wizard documentation
-- Service-specific guides (Redis, Memcached, MySQL, PostgreSQL, MongoDB)
-- Development guidelines for Claude Code
-- Migration guide from vanilla Devilbox
+[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
 ---
 
-## Quick Install
+**Devilbox Boost** modernizes the official [Devilbox](https://github.com/cytopia/devilbox) with PHP 8.3/8.4 support, modern development tools (Bun, Vite, Pest), and quality-of-life improvements.
 
-**For existing Devilbox installations:**
+</div>
 
+---
+
+## ⚡ Quick Start
+
+**New installation:**
+```bash
+git clone https://github.com/cytopia/devilbox.git && cd devilbox
+curl -sSL https://raw.githubusercontent.com/Drmzindec/Devilbox-Boost/main/install.sh | bash
+./setup-devilbox.sh  # Interactive wizard
+```
+
+**Upgrade existing Devilbox:**
 ```bash
 cd /path/to/devilbox
 curl -sSL https://raw.githubusercontent.com/Drmzindec/Devilbox-Boost/main/install.sh | bash
 ```
 
-**For new installations:**
+**First project:**
+```bash
+docker compose exec php laravel new my-blog
+# Visit http://my-blog.local (auto-configured!)
+```
 
-See [Installation Guide](#installation) below.
+📖 **Detailed guide:** [QUICKSTART.md](QUICKSTART.md)
 
 ---
 
-## Installation
+## ✨ Features
 
-### Prerequisites
+### 🐘 Modern PHP Stack
+- **PHP 8.3 & 8.4** - Zero deprecation warnings
+- **Laravel Installer** - Instant Laravel projects
+- **WP-CLI** - WordPress management
+- **Pest** - Modern testing framework
+- **Composer 2.9.5** - Latest dependency manager
 
-- macOS, Linux, or Windows (WSL2)
-- Docker Desktop installed and running
-- 8GB RAM minimum (16GB recommended)
-- 20GB free disk space
+### 🛠️ Modern JavaScript Tools
+- **Bun 1.3.9** - Fast all-in-one toolkit
+- **Vite 7.3.1** - Lightning-fast builds
+- **Node.js 24** - Latest LTS
+- **Vue/React/Angular CLIs** - Framework scaffolding
+- **Prettier & ESLint** - Code quality
 
-### Option 1: New Devilbox Installation
+### 🗄️ Database & Caching
+- **MySQL 8.0** / MariaDB
+- **PostgreSQL 16**
+- **MongoDB 7**
+- **Redis 7**
+- **Memcached**
+
+### 🎯 Smart Automation
+- **Auto Vhost Detection** - Laravel, WordPress, Symfony auto-configured
+- **Port Forwarding** - Use `127.0.0.1` for database connections
+- **Setup Wizard** - 10-minute interactive configuration
+- **Command Wrappers** - Run `composer`, `artisan`, `npm` directly on host
+
+### 🎨 Updated Admin Tools
+- **phpMyAdmin 5.2.3** - Pre-filled login (127.0.0.1, root:root)
+- **Adminer 5.4.2** - Lightweight database manager
+- **phpCacheAdmin 2.4.1** - Redis/Memcached unified UI
+- **OpCache GUI 3.6.0** - Performance monitoring
+- **phpPgAdmin 7.13.0** - PostgreSQL admin
+
+### 🤖 AI Integration (Optional)
+- **MCP Server** - Claude Code integration
+- **10+ tools** - Service management, database ops, health checks
+- **Automated workflows** - AI-assisted development
+
+---
+
+## 📊 Devilbox vs Devilbox Boost
+
+| Feature | Devilbox | Devilbox Boost |
+|---------|----------|----------------|
+| **PHP 8.4 Support** | ❌ | ✅ |
+| **Modern Tools** | ⚠️ Outdated (2023) | ✅ Bun, Vite, Pest |
+| **Setup Time** | ⏱️ 1-2 hours manual | ⏱️ 10 minutes wizard |
+| **Laravel Auto-Config** | ❌ Manual vhost | ✅ Auto-detected |
+| **WordPress Support** | ⚠️ Manual setup | ✅ WP-CLI + auto-config |
+| **Admin Tools** | ⚠️ PHP warnings | ✅ PHP 8.4 compatible |
+| **AI Integration** | ❌ | ✅ Claude Code MCP |
+| **Documentation** | ⚠️ Outdated | ✅ Comprehensive guides |
+
+---
+
+## 💻 Usage Examples
+
+### Create Laravel Project
+```bash
+docker compose exec php laravel new my-app
+# Auto-detected, configured, ready at http://my-app.local
+```
+
+### Create WordPress Site
+```bash
+docker compose exec php wp core download --path=my-site
+# Visit http://my-site.local to complete setup
+```
+
+### Use Modern Tools
+```bash
+docker compose exec php bun install    # Fast package install
+docker compose exec php vite build     # Lightning builds
+docker compose exec php pest           # Modern testing
+```
+
+### Database Operations
+```bash
+# MySQL
+docker compose exec php mysql -h 127.0.0.1 -u root -proot --skip-ssl
+
+# Redis
+docker compose exec php redis-cli -h 127.0.0.1
+
+# PostgreSQL
+docker compose exec php psql -h 127.0.0.1 -U postgres
+```
+
+---
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [QUICKSTART.md](QUICKSTART.md) | 10-minute setup guide |
+| [SETUP-WIZARD.md](SETUP-WIZARD.md) | Interactive wizard walkthrough |
+| [MIGRATION.md](MIGRATION.md) | Upgrade from vanilla Devilbox |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [Roadmap](docs/ROADMAP-MODERNIZATION.md) | Project roadmap and features |
+| [Phase 4 Plan](docs/PHASE-4-PLAN.md) | Distribution strategy |
+
+### Service Guides
+- [Using Redis](.claude/skills/using-redis.md) - Cache, sessions, queues
+- [Using Memcached](.claude/skills/using-memcached.md) - High-performance caching
+- [Using MySQL](.claude/skills/using-mysql.md) - Advanced SQL features
+- [Using PostgreSQL](.claude/skills/using-postgresql.md) - JSONB, full-text search
+- [Using MongoDB](.claude/skills/using-mongodb.md) - Document store operations
+
+---
+
+## 🔧 Requirements
+
+- **OS:** macOS, Linux, or Windows (WSL2)
+- **Docker:** Desktop 20.10+
+- **RAM:** 8GB minimum (16GB recommended)
+- **Disk:** 20GB free space
+
+---
+
+## 📥 Installation Options
+
+### Option 1: New Installation (Recommended)
 
 ```bash
-# Clone official Devilbox
+# 1. Clone Devilbox
 git clone https://github.com/cytopia/devilbox.git
 cd devilbox
 
-# Install Boost enhancements
+# 2. Install Boost
 curl -sSL https://raw.githubusercontent.com/Drmzindec/Devilbox-Boost/main/install.sh | bash
 
-# Follow the interactive setup wizard
+# 3. Run wizard
 ./setup-devilbox.sh
 ```
 
 ### Option 2: Upgrade Existing Devilbox
 
 ```bash
-# Navigate to your Devilbox directory
 cd /path/to/devilbox
-
-# Install Boost (non-destructive)
 curl -sSL https://raw.githubusercontent.com/Drmzindec/Devilbox-Boost/main/install.sh | bash
-
-# Rebuild with modern tools
 ./docker-images/build-php.sh 8.4
 docker compose up -d
 ```
 
-See [MIGRATION.md](MIGRATION.md) for detailed upgrade instructions.
+### Option 3: Manual Installation
+
+See [MIGRATION.md](MIGRATION.md) for detailed manual setup.
 
 ---
 
-## Quick Start
-
-After installation, create your first project:
-
-### Laravel
-
-```bash
-docker compose exec php laravel new my-blog
-# Wait 30 seconds for vhost auto-detection
-# Visit: http://my-blog.local
-```
-
-### WordPress
-
-```bash
-docker compose exec php wp core download --path=my-site
-# Visit: http://my-site.local
-```
-
-### Custom PHP
-
-```bash
-mkdir -p data/www/my-project
-echo '<?php phpinfo();' > data/www/my-project/index.php
-# Visit: http://my-project.local
-```
-
-See [QUICKSTART.md](QUICKSTART.md) for detailed tutorials.
-
----
-
-## Access Points
+## 🎮 Access Points
 
 | Service | URL |
 |---------|-----|
@@ -154,318 +210,98 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed tutorials.
 | **OpCache GUI** | http://localhost/vendor/opcache-gui-3.6.0.php |
 
 **Database Credentials:**
-- Host: `127.0.0.1`
-- Username: `root`
-- Password: `root`
+```
+Host: 127.0.0.1
+Username: root
+Password: root
+```
 
 ---
 
-## Documentation
+## 🚀 What's New in v1.0.0
 
-- [Quick Start Guide](QUICKSTART.md) - Get up and running in 10 minutes
-- [Setup Wizard Guide](SETUP-WIZARD.md) - Complete walkthrough of interactive setup
-- [Migration Guide](MIGRATION.md) - Upgrade from vanilla Devilbox
-- [Phase 4 Plan](PHASE-4-PLAN.md) - Distribution strategy and roadmap
-- [Modernization Roadmap](ROADMAP-MODERNIZATION.md) - Project history and features
+- ✅ **PHP 8.3 & 8.4** with custom Docker images
+- ✅ **Modern tools** - Bun, Vite, Pest, latest Node.js
+- ✅ **Auto vhost detection** - Laravel, WordPress, Symfony
+- ✅ **Updated admin tools** - All PHP 8.4 compatible
+- ✅ **Interactive wizard** - 10-minute setup
+- ✅ **MCP server** - Claude Code AI integration
+- ✅ **Comprehensive docs** - Guides for all services
+- ✅ **Port forwarding** - Direct 127.0.0.1 connections
+- ✅ **Command wrappers** - Run tools from host
 
-### Development Guides
-
-Located in `.claude/skills/`:
-- [Using Redis](skills/using-redis.md) - Cache, sessions, queues
-- [Using Memcached](skills/using-memcached.md) - High-performance caching
-- [Using MySQL/MariaDB](skills/using-mysql.md) - Advanced SQL features
-- [Using PostgreSQL](skills/using-postgresql.md) - JSONB, full-text search, CTEs
-- [Using MongoDB](skills/using-mongodb.md) - Document store, aggregations
+See [CHANGELOG.md](CHANGELOG.md) for complete details.
 
 ---
 
-## Features Comparison
+## 🤝 Contributing
 
-| Feature | Official Devilbox | Devilbox Boost |
-|---------|-------------------|----------------|
-| PHP 8.4 Support | ❌ (last update 2023) | ✅ Full support |
-| Modern Tools | ❌ Outdated (Grunt/Gulp era) | ✅ Bun, Vite, Pest |
-| AI Integration | ❌ None | ✅ MCP server for Claude Code |
-| Easy Setup | ⚠️ Manual .env editing | ✅ Interactive wizard |
-| Command Wrappers | ❌ Must use shell.sh | ✅ Direct host commands |
-| Laravel Support | ⚠️ Manual vhost setup | ✅ Auto-detect & configure |
-| Admin Tools | ⚠️ Showing PHP warnings | ✅ Latest PHP 8.4 compatible |
-| Port Forwarding | ⚠️ Official images only | ✅ Built-in |
-| Documentation | ⚠️ Outdated | ✅ Modern, comprehensive |
-| Service Guides | ❌ None | ✅ Redis, Memcached, MySQL, PostgreSQL, MongoDB |
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Bug reports
+- Feature requests
+- Pull request process
+- Development setup
 
 ---
 
-## Common Commands
+## 🐛 Troubleshooting
 
-### Container Management
-
+### Port 80 in use?
 ```bash
-# Start Devilbox
-docker compose up -d
-
-# Stop Devilbox
-docker compose stop
-
-# Restart services
+# Use different port
+echo "HOST_PORT_HTTPD=8000" >> .env
 docker compose restart
-
-# View running containers
-docker compose ps
-
-# View logs
-docker compose logs -f php
-```
-
-### Development
-
-```bash
-# Using command wrappers (if added to PATH)
-composer install
-npm install
-artisan migrate
-wp plugin list
-
-# Or via docker compose exec
-docker compose exec php composer install
-docker compose exec php npm install
-docker compose exec php php artisan migrate
-docker compose exec php wp plugin list --allow-root
-```
-
-### Database
-
-```bash
-# Connect to MySQL
-docker compose exec php mysql -h 127.0.0.1 -u root -proot --skip-ssl
-
-# Create database
-docker compose exec php mysql -h 127.0.0.1 -u root -proot --skip-ssl \
-    -e "CREATE DATABASE my_database;"
-
-# Redis CLI
-docker compose exec php redis-cli -h 127.0.0.1
-```
-
----
-
-## Switching PHP Versions
-
-Edit `.env`:
-
-```bash
-PHP_SERVER=8.4  # or 8.3
-```
-
-Restart:
-
-```bash
-docker compose restart
-```
-
-Check version:
-
-```bash
-docker compose exec php php -v
-```
-
----
-
-## Troubleshooting
-
-### Docker Not Running
-
-```bash
-# Check Docker
-docker info
-
-# If error, start Docker Desktop
-```
-
-### Port 80 Already in Use
-
-```bash
-# Find process using port 80
-sudo lsof -i :80
-
-# Change port in .env
-HOST_PORT_HTTPD=8000
-
-# Restart
-docker compose restart
-
 # Access via http://localhost:8000
 ```
 
-### .local Domains Don't Resolve
-
-Add to `/etc/hosts`:
-
-```bash
-sudo nano /etc/hosts
-```
-
-Add:
-
-```
-127.0.0.1 my-project.local
-```
-
-Or use Devilbox DNS (port 1053).
-
-### Database Connection Failed
-
+### Database connection failed?
 Always use `127.0.0.1` not `localhost`:
-
 ```env
-# ❌ Wrong
-DB_HOST=localhost
-
-# ✅ Correct
-DB_HOST=127.0.0.1
+DB_HOST=127.0.0.1  # ✅ Correct
+DB_HOST=localhost  # ❌ Won't work
 ```
 
----
-
-## Optional: Claude Code Integration
-
-Install the MCP server for AI-assisted Devilbox management:
-
+### Project shows 404?
+Wait 30 seconds for vhost auto-detection:
 ```bash
-cd mcp-server
-./install.sh
+sleep 30
+docker compose restart httpd
 ```
 
-This enables Claude Code to:
-- Start/stop services
-- List projects and databases
-- Create databases
-- View container health
-- Manage vhosts
-
-See [.claude/README.md](.claude/README.md) for details.
+More help: [QUICKSTART.md#troubleshooting](QUICKSTART.md#troubleshooting)
 
 ---
 
-## What Gets Modified
+## 📜 License
 
-Devilbox Boost is **non-destructive** and only adds/enhances:
+MIT License - see [LICENSE](LICENSE) for details.
 
-### Added Files
-- `docker-images/php-8.3-work/` - Custom PHP 8.3 image
-- `docker-images/php-8.4-work/` - Custom PHP 8.4 image
-- `docker-images/build-php.sh` - Image builder script
-- `setup-devilbox.sh` - Interactive setup wizard
-- `bin/` - Command wrappers (optional)
-- `mcp-server/` - Claude Code integration (optional)
-- `.claude/` - Development guidelines and skills
-
-### Updated Files
-- `.env` - Your configuration choices (via wizard)
-- `.devilbox/www/` - Dashboard improvements and updated admin tools
-- `docker-compose.override.yml` - Port forwarding configuration
-
-### Never Modified
-- Core Devilbox files remain untouched
-- Your existing projects continue to work
-- Can be uninstalled cleanly
+Based on [Devilbox](https://github.com/cytopia/devilbox) by [cytopia](https://github.com/cytopia).
 
 ---
 
-## Uninstall
+## 🌟 Show Your Support
 
-To remove Boost enhancements:
-
-```bash
-# Remove custom images
-docker rmi devilbox-php-8.3:work
-docker rmi devilbox-php-8.4:work
-
-# Remove Boost files
-rm -rf docker-images/php-8.3-work
-rm -rf docker-images/php-8.4-work
-rm -f docker-images/build-php.sh
-rm -f setup-devilbox.sh
-rm -rf bin
-rm -rf mcp-server
-rm -rf .claude
-
-# Restore to official Devilbox
-git checkout .env docker-compose.override.yml
-docker compose up -d
-```
-
-Your projects and data remain untouched.
+If Devilbox Boost helps your development workflow:
+- ⭐ Star this repository
+- 🐛 Report bugs and suggest features
+- 🤝 Contribute improvements
+- 📣 Share with other developers
 
 ---
 
-## Contributing
+## 🔗 Links
 
-Contributions welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+- **Issues:** [Report bugs](https://github.com/Drmzindec/Devilbox-Boost/issues)
+- **Discussions:** [Q&A and ideas](https://github.com/Drmzindec/Devilbox-Boost/discussions)
+- **Original Devilbox:** [cytopia/devilbox](https://github.com/cytopia/devilbox)
 
 ---
 
-## Support
+<div align="center">
 
-- **Issues**: [GitHub Issues](https://github.com/Drmzindec/Devilbox-Boost/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Drmzindec/Devilbox-Boost/discussions)
-- **Documentation**: Check docs in this repository
-- **Original Devilbox**: [cytopia/devilbox](https://github.com/cytopia/devilbox)
+**Built with ❤️ for the PHP community**
 
----
+[Get Started](#-quick-start) • [View Docs](#-documentation) • [Contribute](#-contributing)
 
-## License
-
-Devilbox Boost is released under the MIT License.
-
-Based on [Devilbox](https://github.com/cytopia/devilbox) by cytopia.
-
----
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for version history.
-
----
-
-## Acknowledgments
-
-- **cytopia** and contributors for the original Devilbox
-- The PHP community for modern tools
-- Claude Code team for MCP protocol
-- All beta testers and early adopters
-
----
-
-## Roadmap
-
-### Completed ✅
-- PHP 8.3 & 8.4 support with modern tools
-- Smart vhost auto-detection for multiple frameworks
-- Updated admin tools (PHP 8.4 compatible)
-- Interactive setup wizard
-- MCP server for Claude Code
-- Comprehensive documentation and guides
-
-### Planned 🚀
-- Additional framework support (Symfony, CakePHP improvements)
-- Performance optimizations
-- More admin tools
-- Video tutorials
-- Docker Hub images (optional)
-
----
-
-**Devilbox Boost** - Making Devilbox modern, easy, and powerful.
-
-Get started: `./setup-devilbox.sh`
-
----
+</div>
