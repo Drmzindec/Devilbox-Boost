@@ -78,37 +78,35 @@ create_vhost_config() {
     # Create .devilbox directory if it doesn't exist
     mkdir -p "$vhost_dir"
 
-    # Determine docroot path
-    if [ -n "$docroot" ]; then
-        local docroot_path="__DOCUMENT_ROOT__/$docroot"
-    else
-        local docroot_path="__DOCUMENT_ROOT__"
-    fi
-
     # Create Apache config if it doesn't exist
     if [ ! -f "$vhost_dir/apache24.yml" ]; then
         log "Creating Apache vhost config for $project ($framework)"
-        cat > "$vhost_dir/apache24.yml" << EOF
-vhost: |
-  <VirtualHost __DEFAULT_VHOST__:__PORT__>
-      ServerName   __VHOST_NAME__
-      DocumentRoot "$docroot_path"
+        if [ -n "$docroot" ]; then
+            # For frameworks with /public subdirectory
+            cat > "$vhost_dir/apache24.yml" << EOF
+vhost_type:
+  docroot: |
+    # Define the vhost to serve files
+    DocumentRoot "__DOCUMENT_ROOT__/$docroot"
+    <Directory "__DOCUMENT_ROOT__/$docroot">
+        DirectoryIndex index.php index.html index.htm
 
-      <Directory "$docroot_path">
-          DirectoryIndex index.php index.html index.htm
-          AllowOverride All
-          Require all granted
-      </Directory>
+        AllowOverride All
+        Options All
 
-      # PHP-FPM
-      <FilesMatch \.php$>
-          SetHandler "proxy:fcgi://__PHP_ADDR__:__PHP_PORT__"
-      </FilesMatch>
+        RewriteEngine on
+        RewriteBase /
 
-      CustomLog  "__ACCESS_LOG__" combined
-      ErrorLog   "__ERROR_LOG__"
-  </VirtualHost>
+        Order allow,deny
+        Allow from all
+        Require all granted
+    </Directory>
 EOF
+        else
+            # For frameworks without subdirectory (WordPress, CodeIgniter, generic)
+            # No custom config needed, use defaults
+            touch "$vhost_dir/apache24.yml"
+        fi
     fi
 
     # Create Nginx config if it doesn't exist
