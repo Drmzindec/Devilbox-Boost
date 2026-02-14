@@ -1,0 +1,7 @@
+#!/bin/bash
+# Wrapper to run Prettier code formatter in Devilbox container
+if [ -t 0 ]; then
+    docker exec -it devilbox-php-1 prettier "$@"
+else
+    docker exec devilbox-php-1 prettier "$@"
+fi

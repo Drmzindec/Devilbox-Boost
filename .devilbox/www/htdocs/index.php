@@ -45,13 +45,6 @@ $connection['Httpd'][$host] = array(
 	'host' => $host,
 	'succ' => $succ
 );
-$host	= 'random.'.loadClass('Httpd')->getTldSuffix();
-$succ	= loadClass('Httpd')->canConnect($error, $host);
-$connection['Httpd'][$host] = array(
-	'error' => $error,
-	'host' => $host,
-	'succ' => $succ
-);
 // ---- MYSQL ----
 if ($avail_mysql) {
 	$host	= $GLOBALS['MYSQL_HOST_NAME'];
@@ -344,97 +337,80 @@ $HEALTH_PERCENT = 100 - ceil(100 * $HEALTH_FAILS / $HEALTH_TOTAL);
 									</tr>
 								</thead>
 								<tbody>
+									<!-- Core Tools -->
 									<tr>
-										<th style="width: 50%;">Angular Cli</th>
-										<td id="app_angular_cli"></td>
-									</tr>
-									<tr>
-										<th>AsgardCMS Installer</th>
-										<td id="app_asgardcms_installer"></td>
-									</tr>
-									<tr>
-										<th>Codeception</th>
-										<td id="app_codeception"></td>
+										<th style="width: 50%;">Git</th>
+										<td id="app_git"></td>
 									</tr>
 									<tr>
 										<th>Composer</th>
 										<td id="app_composer"></td>
 									</tr>
+									<!-- PHP Frameworks & Tools -->
 									<tr>
-										<th>Deployer</th>
-										<td id="app_deployer"></td>
+										<th>Laravel Installer</th>
+										<td id="app_laravel_installer"></td>
 									</tr>
 									<tr>
-										<th>Git</th>
-										<td id="app_git"></td>
+										<th>WordPress CLI</th>
+										<td id="app_wpcli"></td>
 									</tr>
 									<tr>
-										<th>Grunt Cli</th>
-										<td id="app_grunt_cli"></td>
+										<th>Pest (Testing)</th>
+										<td id="app_pest"></td>
+									</tr>
+									<!-- JavaScript Runtimes -->
+									<tr>
+										<th>Node.js</th>
+										<td id="app_node"></td>
+									</tr>
+									<tr>
+										<th>Bun</th>
+										<td id="app_bun"></td>
+									</tr>
+									<!-- Package Managers -->
+									<tr>
+										<th>NPM</th>
+										<td id="app_npm"></td>
+									</tr>
+									<tr>
+										<th>Yarn</th>
+										<td id="app_yarn"></td>
+									</tr>
+									<!-- Build Tools -->
+									<tr>
+										<th>Vite</th>
+										<td id="app_vite"></td>
+									</tr>
+									<tr>
+										<th>Webpack</th>
+										<td id="app_webpack_cli"></td>
 									</tr>
 									<tr>
 										<th>Gulp</th>
 										<td id="app_gulp"></td>
 									</tr>
 									<tr>
-										<th>Laravel Installer</th>
-										<td id="app_laravel_installer"></td>
+										<th>Grunt</th>
+										<td id="app_grunt_cli"></td>
+									</tr>
+									<!-- Code Quality -->
+									<tr>
+										<th>Prettier</th>
+										<td id="app_prettier"></td>
 									</tr>
 									<tr>
-										<th>Laravel Lumen</th>
-										<td id="app_laravel_lumen"></td>
+										<th>ESLint</th>
+										<td id="app_eslint"></td>
 									</tr>
+									<!-- Framework CLIs -->
 									<tr>
-										<th>Mupdf Tools</th>
-										<td id="app_mupdf_tools"></td>
-									</tr>
-									<tr>
-										<th>mysqldump-secure</th>
-										<td id="app_mds"></td>
-									</tr>
-									<tr>
-										<th>Node</th>
-										<td id="app_node"></td>
-									</tr>
-									<tr>
-										<th>Npm</th>
-										<td id="app_npm"></td>
-									</tr>
-									<tr>
-										<th>Phalcon Devtools</th>
-										<td id="app_phalcon_devtools"></td>
-									</tr>
-									<tr>
-										<th>Phpunit</th>
-										<td id="app_phpunit"></td>
-									</tr>
-									<tr>
-										<th>Stylelint</th>
-										<td id="app_stylelint"></td>
-									</tr>
-									<tr>
-										<th>Symfony Cli</th>
-										<td id="app_symfony_cli"></td>
-									</tr>
-									<tr>
-										<th>Vue Cli</th>
+										<th>Vue CLI</th>
 										<td id="app_vue_cli"></td>
 									</tr>
 									<tr>
-										<th>Webpack Cli</th>
-										<td id="app_webpack_cli"></td>
-									</tr>
-									<tr>
-										<th>Wordpress Cli</th>
-										<td id="app_wpcli"></td>
-									</tr>
-									<tr>
-										<th>Wscat</th>
-										<td id="app_wscat"></td>
-									</tr>
-									<tr>
-										<th>Yarn</th>
-										<td id="app_yarn"></td>
+										<th>Angular CLI</th>
+										<td id="app_angular_cli"></td>
 									</tr>
 								</tbody>
 							</table>
@@ -953,29 +929,30 @@ $HEALTH_PERCENT = 100 - ceil(100 * $HEALTH_FAILS / $HEALTH_TOTAL);
 				xhttp.open('GET', '_ajax_callback.php?software='+app, true);
 				xhttp.send();
 			}
-			updateVersions('angular_cli');
-			updateVersions('asgardcms_installer');
-			updateVersions('codeception');
-			updateVersions('composer');
-			updateVersions('deployer');
+			// Core Tools
 			updateVersions('git');
-			updateVersions('grunt_cli');
-			updateVersions('gulp');
+			updateVersions('composer');
+			// PHP Tools
 			updateVersions('laravel_installer');
-			updateVersions('laravel_lumen');
-			updateVersions('mds');
-			updateVersions('mupdf_tools');
-			updateVersions('node');
-			updateVersions('npm');
-			updateVersions('phalcon_devtools');
-			updateVersions('phpunit');
-			updateVersions('stylelint');
-			updateVersions('symfony_cli');
-			updateVersions('vue_cli');
-			updateVersions('webpack_cli');
 			updateVersions('wpcli');
-			updateVersions('wscat');
+			updateVersions('pest');
+			// JS Runtimes
+			updateVersions('node');
+			updateVersions('bun');
+			// Package Managers
+			updateVersions('npm');
 			updateVersions('yarn');
+			// Build Tools
+			updateVersions('vite');
+			updateVersions('webpack_cli');
+			updateVersions('gulp');
+			updateVersions('grunt_cli');
+			// Code Quality
+			updateVersions('prettier');
+			updateVersions('eslint');
+			// Framework CLIs
+			updateVersions('vue_cli');
+			updateVersions('angular_cli');
 		})();
 		</script>
 	</body>

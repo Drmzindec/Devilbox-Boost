@@ -150,6 +150,31 @@ class Php extends BaseClass implements BaseInterface
 		$output = loadClass('Helper')->exec('yarn --version 2>/dev/null', $output);
 		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
 	}
+	public function getBunVersion()
+	{
+		$output = loadClass('Helper')->exec('bun --version 2>/dev/null', $output);
+		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
+	}
+	public function getPestVersion()
+	{
+		$output = loadClass('Helper')->exec('pest --version 2>/dev/null', $output);
+		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
+	}
+	public function getViteVersion()
+	{
+		$output = loadClass('Helper')->exec('vite --version 2>/dev/null', $output);
+		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
+	}
+	public function getPrettierVersion()
+	{
+		$output = loadClass('Helper')->exec('prettier --version 2>/dev/null', $output);
+		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
+	}
+	public function getEslintVersion()
+	{
+		$output = loadClass('Helper')->exec('eslint --version 2>/dev/null', $output);
+		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
+	}
 	//public function getDrushVersion($version)
 	//{
 	//	$output = loadClass('Helper')->exec('drush'.$version.' --version 2>/dev/null', $output);

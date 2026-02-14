@@ -42,6 +42,7 @@ RUN apt-get update && apt-get install -y \
     netcat-traditional \
     iputils-ping \
     dnsutils \
+    socat \
     # Process management
     supervisor \
     # Bash tools
@@ -79,6 +80,15 @@ RUN pecl install redis \
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Install Composer global packages
+RUN composer global config allow-plugins.pestphp/pest-plugin true \
+    && composer global require laravel/installer \
+    && composer global require wp-cli/wp-cli-bundle \
+    && composer global require pestphp/pest \
+    && ln -s /root/.composer/vendor/bin/laravel /usr/local/bin/laravel \
+    && ln -s /root/.composer/vendor/bin/wp /usr/local/bin/wp \
+    && ln -s /root/.composer/vendor/bin/pest /usr/local/bin/pest
+
 # Install Node.js from NodeSource repository
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && apt-get install -y nodejs \
@@ -89,7 +99,20 @@ RUN npm install -g \
     yarn \
     npm-check-updates \
     webpack \
-    webpack-cli
+    webpack-cli \
+    grunt-cli \
+    gulp-cli \
+    vite \
+    prettier \
+    eslint \
+    @vue/cli \
+    @angular/cli \
+    create-next-app
+
+# Install Bun (faster alternative to Node.js)
+RUN curl -fsSL https://bun.sh/install | bash \
+    && ln -s /root/.bun/bin/bun /usr/local/bin/bun \
+    && ln -s /root/.bun/bin/bunx /usr/local/bin/bunx
 
 # Install sudo first (before modifying sudoers)
 RUN apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*
@@ -113,11 +136,18 @@ RUN set -x \
     && sed -i "s/user = www-data/user = devilbox/g" /usr/local/etc/php-fpm.d/www.conf \
     && sed -i "s/group = www-data/group = ${ACTUAL_GROUP}/g" /usr/local/etc/php-fpm.d/www.conf
 
+# Copy entrypoint script for port forwarding
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Set working directory
 WORKDIR /shared/httpd
 
 # Expose port 9000 for PHP-FPM
 EXPOSE 9000
+
+# Use entrypoint to setup port forwarding
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Start PHP-FPM
 CMD ["php-fpm"]

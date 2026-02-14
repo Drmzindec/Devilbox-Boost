@@ -53,7 +53,7 @@
 															</button>
 														</div>
 														<div class="modal-body">
-															<?php $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]"; ?>
+															<?php $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://".$GLOBALS['HTTPD_HOST_NAME']; ?>
 															<?php $src = file_get_contents($url.'/vhost.d/' . $vHost['name'] . '.conf'); ?>
 															<?php //$src = htmlentities($src); ?>
 															<?php $src = str_replace('<', '&lt;', $src); ?>

@@ -43,7 +43,7 @@ class Httpd extends BaseClass implements BaseInterface
 			}
 		}
 
-		// 2. Check internal DNS server
+		// 2. Check internal DNS server connectivity
 		$err = false;
 		if (!$this->canConnect($err, $domain)) {
 			$error[] = 'warning';

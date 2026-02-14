@@ -1,0 +1,12 @@
+#!/bin/bash
+# Wrapper to run MySQL client in Devilbox container
+# Uses root password from .env file
+
+# Read MySQL password from .env
+MYSQL_PASS=$(grep "^MYSQL_ROOT_PASSWORD=" /Users/johanpretorius/devilbox/.env | cut -d'=' -f2)
+
+if [ -t 0 ]; then
+    docker exec -it devilbox-php-1 mysql -h 127.0.0.1 -u root -p"$MYSQL_PASS" "$@"
+else
+    docker exec devilbox-php-1 mysql -h 127.0.0.1 -u root -p"$MYSQL_PASS" "$@"
+fi

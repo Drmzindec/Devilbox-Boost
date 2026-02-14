@@ -159,6 +159,31 @@ if (loadClass('Helper')->isLoggedIn()) {
 			echo json_encode(array(
 				$_GET['software'] => (($version = loadClass('Php')->getYarnVersion()) !== false) ? $version : $no
 			));
+		}
+		else if ($_GET['software'] == 'bun') {
+			echo json_encode(array(
+				$_GET['software'] => (($version = loadClass('Php')->getBunVersion()) !== false) ? $version : $no
+			));
+		}
+		else if ($_GET['software'] == 'pest') {
+			echo json_encode(array(
+				$_GET['software'] => (($version = loadClass('Php')->getPestVersion()) !== false) ? $version : $no
+			));
+		}
+		else if ($_GET['software'] == 'vite') {
+			echo json_encode(array(
+				$_GET['software'] => (($version = loadClass('Php')->getViteVersion()) !== false) ? $version : $no
+			));
+		}
+		else if ($_GET['software'] == 'prettier') {
+			echo json_encode(array(
+				$_GET['software'] => (($version = loadClass('Php')->getPrettierVersion()) !== false) ? $version : $no
+			));
+		}
+		else if ($_GET['software'] == 'eslint') {
+			echo json_encode(array(
+				$_GET['software'] => (($version = loadClass('Php')->getEslintVersion()) !== false) ? $version : $no
+			));
 		} else {
 			echo json_encode(array($_GET['software'] => 'unknown software'));
 		}

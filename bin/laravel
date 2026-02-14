@@ -1,0 +1,7 @@
+#!/bin/bash
+# Wrapper to run Laravel installer in Devilbox container
+if [ -t 0 ]; then
+    docker exec -it devilbox-php-1 laravel "$@"
+else
+    docker exec devilbox-php-1 laravel "$@"
+fi

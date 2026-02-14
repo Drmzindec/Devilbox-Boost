@@ -1,0 +1,19 @@
+#!/bin/bash
+# Wrapper to run Laravel Artisan commands in Devilbox container
+# Automatically detects current project directory
+
+# Get the current directory name (project name)
+PROJECT_DIR=$(basename "$PWD")
+
+# Check if we're in a Laravel project
+if [ ! -f "artisan" ]; then
+    echo "Error: Not in a Laravel project directory (artisan file not found)"
+    exit 1
+fi
+
+# Run artisan in the container
+if [ -t 0 ]; then
+    docker exec -it -w "/shared/httpd/$PROJECT_DIR" devilbox-php-1 php artisan "$@"
+else
+    docker exec -w "/shared/httpd/$PROJECT_DIR" devilbox-php-1 php artisan "$@"
+fi

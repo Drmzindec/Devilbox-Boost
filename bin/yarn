@@ -1,0 +1,7 @@
+#!/bin/bash
+# Wrapper to run Yarn commands in Devilbox container
+if [ -t 0 ]; then
+    docker exec -it devilbox-php-1 yarn "$@"
+else
+    docker exec devilbox-php-1 yarn "$@"
+fi
