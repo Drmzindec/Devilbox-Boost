@@ -128,9 +128,51 @@ if /i "!BUILD_IMAGE!"=="y" (
     echo.
 )
 
+REM Optional Modern Services
+echo.
+echo [5/6] Optional Modern Services
+echo.
+echo Enable additional services? (You can add these later)
+echo.
+echo Available services:
+echo   Meilisearch - Lightning-fast search engine
+echo   Mailpit     - Modern email testing
+echo   RabbitMQ    - Message queue for async tasks
+echo   MinIO       - S3-compatible object storage
+echo.
+set /p ADD_SERVICES="Configure modern services now? (y/n) [n]: "
+if "!ADD_SERVICES!"=="" set ADD_SERVICES=n
+
+if /i "!ADD_SERVICES!"=="y" (
+    echo.
+    echo Copying modern services configuration...
+    if exist docker-compose.override.yml (
+        echo WARNING: docker-compose.override.yml already exists!
+        set /p OVERWRITE="Overwrite it? (y/n) [n]: "
+        if /i "!OVERWRITE!"=="y" (
+            copy compose\docker-compose.override.yml-modern-services docker-compose.override.yml >nul
+            echo  - Created docker-compose.override.yml with all modern services
+        ) else (
+            echo  - Skipped
+        )
+    ) else (
+        copy compose\docker-compose.override.yml-modern-services docker-compose.override.yml >nul
+        echo  - Created docker-compose.override.yml with all modern services
+    )
+    echo.
+    echo Note: All 4 services will be enabled.
+    echo To enable individually, copy specific files from compose\ directory
+) else (
+    echo.
+    echo Skipped. Enable later by copying from compose\ directory:
+    echo   copy compose\docker-compose.override.yml-meilisearch docker-compose.override.yml
+    echo   copy compose\docker-compose.override.yml-modern-services docker-compose.override.yml
+    echo.
+)
+
 REM Start containers
 echo.
-echo [5/5] Starting Devilbox
+echo [6/6] Starting Devilbox
 echo.
 set /p START_NOW="Start Devilbox containers now? (y/n) [y]: "
 if "!START_NOW!"=="" set START_NOW=y

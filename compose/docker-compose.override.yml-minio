@@ -1,0 +1,41 @@
+# vim: set ft=yaml:
+---
+version: '2.3'
+
+services:
+
+  # -----------------------------------------------------------------------------------------------
+  # MinIO - S3-compatible object storage
+  # -----------------------------------------------------------------------------------------------
+  minio:
+    image: minio/minio:${MINIO_SERVER:-latest}
+    hostname: minio
+    command: server /data --console-address ":9001"
+    environment:
+      # Root credentials (change these!)
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+      # Optional: Set default region
+      - MINIO_REGION=${MINIO_REGION:-us-east-1}
+    ports:
+      # S3 API
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MINIO:-9000}:9000"
+      # Web Console
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MINIO_CONSOLE:-9001}:9001"
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.204
+    volumes:
+      - devilbox-minio:/data
+    depends_on:
+      - bind
+      - php
+      - httpd
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+volumes:
+  devilbox-minio:

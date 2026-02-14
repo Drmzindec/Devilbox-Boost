@@ -41,6 +41,13 @@ Create a modern, developer-friendly Docker-based PHP development stack that:
 - [x] **Service Guides** - Redis, Memcached, MySQL, PostgreSQL, MongoDB best practices
 - [x] **Contributing Guidelines** - Development setup and standards
 
+### Modern Services (Optional)
+- [x] **Meilisearch** - Fast search engine with typo-tolerance
+- [x] **Mailpit** - Modern email testing (replaces Mailhog)
+- [x] **RabbitMQ** - Message queue for async tasks
+- [x] **MinIO** - S3-compatible object storage
+- [x] **Combined Setup** - Enable all services via wizard
+
 ---
 
 ## 🚀 Planned - v1.1.0 (Q2 2026)
@@ -90,10 +97,7 @@ Create a modern, developer-friendly Docker-based PHP development stack that:
   - Custom Podman build scripts and configurations
 
 ### New Services
-- [ ] **Elasticsearch/OpenSearch** - Search engine support
-- [ ] **RabbitMQ** - Message queue integration
-- [ ] **Mailpit** - Modern email testing (replace Mailhog)
-- [ ] **MinIO** - S3-compatible object storage
+- [ ] **Elasticsearch/OpenSearch** - Advanced search and analytics (if needed beyond Meilisearch)
 
 ### Enhanced AI Features
 - [ ] **Natural Language Commands** - "Create a Laravel project with authentication"

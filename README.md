@@ -86,6 +86,12 @@ docker compose exec php laravel new my-blog
 - **10+ tools** - Service management, database ops, health checks
 - **Automated workflows** - AI-assisted development
 
+### ⚡ Modern Services (Optional)
+- **Meilisearch** - Lightning-fast search engine
+- **Mailpit** - Modern email testing (replaces Mailhog)
+- **RabbitMQ** - Message queue for async tasks
+- **MinIO** - S3-compatible object storage
+
 ---
 
 ## 📊 Devilbox vs Devilbox Boost
@@ -147,10 +153,10 @@ docker compose exec php psql -h 127.0.0.1 -U postgres
 | [MIGRATION.md](MIGRATION.md) | Upgrade from vanilla Devilbox |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |
-| [Roadmap](docs/ROADMAP-MODERNIZATION.md) | Project roadmap and features |
-| [Phase 4 Plan](docs/PHASE-4-PLAN.md) | Distribution strategy |
+| [Roadmap](docs/ROADMAP.md) | Future features and milestones |
 
 ### Service Guides
+- [Modern Services](docs/MODERN-SERVICES.md) - Meilisearch, Mailpit, RabbitMQ, MinIO
 - [Using Redis](.claude/skills/using-redis.md) - Cache, sessions, queues
 - [Using Memcached](.claude/skills/using-memcached.md) - High-performance caching
 - [Using MySQL](.claude/skills/using-mysql.md) - Advanced SQL features

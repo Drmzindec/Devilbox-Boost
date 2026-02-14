@@ -1,0 +1,107 @@
+# vim: set ft=yaml:
+---
+# Modern Services Bundle - Meilisearch, Mailpit, RabbitMQ, MinIO
+# Use this file to enable all modern services at once
+version: '2.3'
+
+services:
+
+  # -----------------------------------------------------------------------------------------------
+  # Meilisearch - Fast search engine
+  # -----------------------------------------------------------------------------------------------
+  meilisearch:
+    image: getmeili/meilisearch:${MEILI_SERVER:-latest}
+    hostname: meilisearch
+    command: meilisearch
+    environment:
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
+    ports:
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MEILI:-7700}:7700"
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.203
+    volumes:
+      - devilbox-meilisearch:/meili_data
+    depends_on:
+      - bind
+      - php
+      - httpd
+
+  # -----------------------------------------------------------------------------------------------
+  # Mailpit - Modern email testing
+  # -----------------------------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:${MAILPIT_SERVER:-latest}
+    hostname: mailpit
+    environment:
+      - MP_MAX_MESSAGES=${MP_MAX_MESSAGES:-500}
+    ports:
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MAILPIT:-8025}:8025"
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MAILPIT_SMTP:-1025}:1025"
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.202
+    volumes:
+      - devilbox-mailpit:/data
+    depends_on:
+      - bind
+      - php
+      - httpd
+
+  # -----------------------------------------------------------------------------------------------
+  # RabbitMQ - Message queue
+  # -----------------------------------------------------------------------------------------------
+  rabbit:
+    image: rabbitmq:${RABBIT_SERVER:-management}
+    hostname: rabbit
+    environment:
+      - RABBITMQ_DEFAULT_VHOST=${RABBIT_DEFAULT_VHOST:-my_vhost}
+      - RABBITMQ_DEFAULT_USER=${RABBIT_DEFAULT_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBIT_DEFAULT_PASS:-guest}
+    ports:
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_RABBIT:-5672}:5672"
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_RABBIT_MGMT:-15672}:15672"
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.210
+    volumes:
+      - devilbox-rabbit:/var/lib/rabbitmq
+    depends_on:
+      - bind
+      - php
+      - httpd
+
+  # -----------------------------------------------------------------------------------------------
+  # MinIO - S3-compatible object storage
+  # -----------------------------------------------------------------------------------------------
+  minio:
+    image: minio/minio:${MINIO_SERVER:-latest}
+    hostname: minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - MINIO_REGION=${MINIO_REGION:-us-east-1}
+    ports:
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MINIO:-9000}:9000"
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MINIO_CONSOLE:-9001}:9001"
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.204
+    volumes:
+      - devilbox-minio:/data
+    depends_on:
+      - bind
+      - php
+      - httpd
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+volumes:
+  devilbox-meilisearch:
+  devilbox-mailpit:
+  devilbox-rabbit:
+  devilbox-minio:

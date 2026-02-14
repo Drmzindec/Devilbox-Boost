@@ -308,6 +308,75 @@ else
 fi
 
 ###############################################################################
+# Optional Modern Services
+###############################################################################
+
+print_section "${PACKAGE} Optional Modern Services"
+
+echo "Enable additional services? (You can add these later)"
+echo ""
+echo "Available services:"
+echo "  ${BOLD}Meilisearch${NC} - Lightning-fast search engine"
+echo "  ${BOLD}Mailpit${NC} - Modern email testing (replaces Mailhog)"
+echo "  ${BOLD}RabbitMQ${NC} - Message queue for async tasks"
+echo "  ${BOLD}MinIO${NC} - S3-compatible object storage"
+echo ""
+
+if ask_yes_no "Configure modern services now?" "n"; then
+    SELECTED_SERVICES=""
+
+    # Meilisearch
+    echo ""
+    if ask_yes_no "Enable Meilisearch (search engine)?" "n"; then
+        SELECTED_SERVICES="${SELECTED_SERVICES} meilisearch"
+        print_success "Meilisearch will be enabled"
+    fi
+
+    # Mailpit
+    if ask_yes_no "Enable Mailpit (email testing)?" "n"; then
+        SELECTED_SERVICES="${SELECTED_SERVICES} mailpit"
+        print_success "Mailpit will be enabled"
+    fi
+
+    # RabbitMQ
+    if ask_yes_no "Enable RabbitMQ (message queue)?" "n"; then
+        SELECTED_SERVICES="${SELECTED_SERVICES} rabbit"
+        print_success "RabbitMQ will be enabled"
+    fi
+
+    # MinIO
+    if ask_yes_no "Enable MinIO (S3 storage)?" "n"; then
+        SELECTED_SERVICES="${SELECTED_SERVICES} minio"
+        print_success "MinIO will be enabled"
+    fi
+
+    # Create docker-compose.override.yml if any services selected
+    if [ -n "$SELECTED_SERVICES" ]; then
+        if [ -f "docker-compose.override.yml" ]; then
+            print_warning "docker-compose.override.yml already exists"
+            if ask_yes_no "Overwrite it?" "n"; then
+                cp compose/docker-compose.override.yml-modern-services docker-compose.override.yml
+                print_success "Created docker-compose.override.yml with modern services"
+            fi
+        else
+            cp compose/docker-compose.override.yml-modern-services docker-compose.override.yml
+            print_success "Created docker-compose.override.yml with modern services"
+        fi
+
+        print_info "Services will start with Devilbox"
+        print_info "Selected:${SELECTED_SERVICES}"
+    else
+        print_info "No services selected"
+    fi
+else
+    print_info "Skipped. Enable later by copying from compose/ directory"
+    echo ""
+    echo "Examples:"
+    echo "  ${BOLD}cp compose/docker-compose.override.yml-meilisearch docker-compose.override.yml${NC}"
+    echo "  ${BOLD}cp compose/docker-compose.override.yml-modern-services docker-compose.override.yml${NC} (all 4)"
+fi
+
+###############################################################################
 # Start Devilbox
 ###############################################################################
 
@@ -327,6 +396,25 @@ if ask_yes_no "Start Devilbox now?" "y"; then
         fi
         echo "  phpMyAdmin: ${BOLD}http://localhost/vendor/phpmyadmin-5.2.3/${NC}"
         echo "  Adminer: ${BOLD}http://localhost/vendor/adminer-5.4.2-devilbox.php${NC}"
+
+        # Show modern service links if enabled
+        if [ -n "$SELECTED_SERVICES" ]; then
+            echo ""
+            echo "Modern services:"
+            if [[ "$SELECTED_SERVICES" == *"meilisearch"* ]]; then
+                echo "  Meilisearch: ${BOLD}http://localhost:7700${NC}"
+            fi
+            if [[ "$SELECTED_SERVICES" == *"mailpit"* ]]; then
+                echo "  Mailpit: ${BOLD}http://localhost:8025${NC}"
+            fi
+            if [[ "$SELECTED_SERVICES" == *"rabbit"* ]]; then
+                echo "  RabbitMQ: ${BOLD}http://localhost:15672${NC} (guest/guest)"
+            fi
+            if [[ "$SELECTED_SERVICES" == *"minio"* ]]; then
+                echo "  MinIO Console: ${BOLD}http://localhost:9001${NC} (minioadmin/minioadmin)"
+                echo "  MinIO API: ${BOLD}http://localhost:9000${NC}"
+            fi
+        fi
     else
         print_error "Failed to start Devilbox"
         exit 1
