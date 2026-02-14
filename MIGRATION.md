@@ -99,7 +99,7 @@ docker compose stop
 
 ```bash
 # Download the installer
-curl -sSL https://raw.githubusercontent.com/[YOUR-USERNAME]/devilbox-boost/main/install.sh -o install-boost.sh
+curl -sSL https://raw.githubusercontent.com/Drmzindec/Devilbox-Boost/main/install.sh -o install-boost.sh
 
 # Make executable
 chmod +x install-boost.sh
@@ -271,7 +271,7 @@ cd devilbox
 
 ```bash
 # Download and run installer
-curl -sSL https://raw.githubusercontent.com/[YOUR-USERNAME]/devilbox-boost/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Drmzindec/Devilbox-Boost/main/install.sh | bash
 
 # Run setup wizard
 ./setup-devilbox.sh
@@ -320,7 +320,7 @@ open http://localhost
    cd devilbox-boost-test
 
    # Install Boost
-   curl -sSL https://raw.githubusercontent.com/[YOUR-USERNAME]/devilbox-boost/main/install.sh | bash
+   curl -sSL https://raw.githubusercontent.com/Drmzindec/Devilbox-Boost/main/install.sh | bash
 
    # Use different ports in .env
    HOST_PORT_HTTPD=8080
@@ -631,4 +631,4 @@ After successful migration:
 
 **Welcome to Devilbox Boost!** 🚀
 
-Questions? Check [GitHub Discussions](https://github.com/[YOUR-USERNAME]/devilbox-boost/discussions).
+Questions? Check [GitHub Discussions](https://github.com/Drmzindec/Devilbox-Boost/discussions).

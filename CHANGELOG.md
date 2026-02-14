@@ -103,5 +103,5 @@ Based on Devilbox by cytopia, enhanced for modern PHP development.
 
 ---
 
-[Unreleased]: https://github.com/OWNER/devilbox-boost/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/OWNER/devilbox-boost/releases/tag/v1.0.0
+[Unreleased]: https://github.com/OWNER/Devilbox-Boost/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/OWNER/Devilbox-Boost/releases/tag/v1.0.0
