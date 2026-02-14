@@ -78,7 +78,7 @@ class Redis extends BaseClass implements BaseInterface
 	public function flushDB($db)
 	{
 		if ($this->_redis) {
-			if ( !$this->_redis->select($db) ) {
+			if ( !$this->_redis->select((int)$db) ) {
 				return FALSE;
 			}
 			return $this->_redis->flushDb();
@@ -102,7 +102,7 @@ class Redis extends BaseClass implements BaseInterface
 
 		foreach ($this->getInfo() as $key => $val) {
 			if (preg_match('/db[0-9]+/', $key)) {
-				$databases[] = str_replace('db', '', $key);
+				$databases[] = (int)str_replace('db', '', $key);
 			}
 		}
 		return ($databases);
