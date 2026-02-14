@@ -465,7 +465,7 @@ $HEALTH_PERCENT = 100 - ceil(100 * $HEALTH_FAILS / $HEALTH_TOTAL);
 									</tr>
 									<tr>
 										<th>vHost docroot dir</th>
-										<td><?php echo loadClass('Helper')->getEnv('HTTPD_DOCROOT_DIR'); ?></td>
+										<td><?php echo loadClass('Helper')->getEnv('HTTPD_DOCROOT_DIR') ?: '/ (vhost root)'; ?></td>
 									</tr>
 									<tr>
 										<th>vHost config dir</th>
