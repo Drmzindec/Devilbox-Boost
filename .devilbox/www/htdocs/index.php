@@ -263,8 +263,8 @@ $modern_services = array(
 		'password' => loadClass('Helper')->getEnv('MINIO_ROOT_PASSWORD') ?: 'minioadmin',
 		'api_port' => 9000,
 		'config' => array(
-			'Laravel' => "AWS_ACCESS_KEY_ID=minioadmin\nAWS_SECRET_ACCESS_KEY=minioadmin\nAWS_DEFAULT_REGION=us-east-1\nAWS_BUCKET=my-bucket\nAWS_ENDPOINT=http://127.0.0.1:9000\nAWS_USE_PATH_STYLE_ENDPOINT=true",
-			'PHP' => "\$client = new \\Aws\\S3\\S3Client([\n  'endpoint' => 'http://127.0.0.1:9000',\n  'credentials' => ['key' => 'minioadmin', 'secret' => 'minioadmin']\n]);"
+			'Laravel' => "AWS_ACCESS_KEY_ID=minioadmin\nAWS_SECRET_ACCESS_KEY=minioadmin\nAWS_DEFAULT_REGION=us-east-1\nAWS_BUCKET=my-bucket\nAWS_ENDPOINT=http://minio:9000\nAWS_USE_PATH_STYLE_ENDPOINT=true",
+			'PHP' => "\$client = new \\Aws\\S3\\S3Client([\n  'endpoint' => 'http://minio:9000',\n  'credentials' => ['key' => 'minioadmin', 'secret' => 'minioadmin']\n]);"
 		)
 	)
 );
@@ -401,111 +401,113 @@ foreach ($modern_services as $key => &$service) {
 							<div class="row">
 								<?php foreach ($modern_services as $key => $service): ?>
 								<div class="col-xl-3 col-lg-6 col-md-6 col-sm-12" style="margin-bottom:20px;">
-									<div class="card text-white <?php echo $service['running'] ? 'bg-success' : 'bg-secondary'; ?>" style="border-radius:8px; height:100%;">
-										<div class="card-body" style="padding:15px;">
-											<h5 class="card-title">
-												<?php if ($key == 'meilisearch'): ?>
-													<i class="fa fa-search"></i> <?php echo $service['name']; ?>
-												<?php elseif ($key == 'mailpit'): ?>
-													<i class="fa fa-envelope"></i> <?php echo $service['name']; ?>
-												<?php elseif ($key == 'rabbit'): ?>
-													<i class="fa fa-exchange"></i> <?php echo $service['name']; ?>
-												<?php elseif ($key == 'minio'): ?>
-													<i class="fa fa-database"></i> <?php echo $service['name']; ?>
-												<?php endif; ?>
-												<?php if ($service['running']): ?>
-													<span class="badge badge-light" style="font-size:10px; float:right;">RUNNING</span>
-												<?php else: ?>
-													<span class="badge badge-dark" style="font-size:10px; float:right;">STOPPED</span>
-												<?php endif; ?>
-											</h5>
-
-											<p class="card-text"><small>
-												<?php if ($key == 'meilisearch'): ?>
-													Fast search engine
-												<?php elseif ($key == 'mailpit'): ?>
-													Email testing
-												<?php elseif ($key == 'rabbit'): ?>
-													Message queue
-												<?php elseif ($key == 'minio'): ?>
-													S3 storage
-												<?php endif; ?>
-											</small></p>
-
-											<?php if ($service['running']): ?>
-												<a href="<?php echo $service['url']; ?>" target="_blank" class="btn btn-light btn-sm btn-block" style="margin-bottom:10px;">
-													<i class="fa fa-external-link"></i> Open Dashboard
-												</a>
-											<?php else: ?>
-												<button class="btn btn-dark btn-sm btn-block" disabled style="margin-bottom:10px;">
-													<i class="fa fa-power-off"></i> Not Running
-												</button>
+									<div style="border: 1px solid <?php echo $service['running'] ? '#9ccc65' : '#555'; ?>; background-color: #2a2a2a; border-radius:4px; height:100%; padding:15px;">
+										<h5 style="color: #999; font-weight:bold; margin-bottom:15px;">
+											<?php if ($key == 'meilisearch'): ?>
+												<i class="fa fa-search" style="color:#ffc107;"></i> <?php echo $service['name']; ?>
+											<?php elseif ($key == 'mailpit'): ?>
+												<i class="fa fa-envelope" style="color:#64b5f6;"></i> <?php echo $service['name']; ?>
+											<?php elseif ($key == 'rabbit'): ?>
+												<i class="fa fa-exchange" style="color:#ff9800;"></i> <?php echo $service['name']; ?>
+											<?php elseif ($key == 'minio'): ?>
+												<i class="fa fa-database" style="color:#ab47bc;"></i> <?php echo $service['name']; ?>
 											<?php endif; ?>
+											<?php if ($service['running']): ?>
+												<span style="font-size:10px; float:right; background:#9ccc65; color:#1f1f1f; padding:3px 8px; border-radius:3px; font-weight:bold;">RUNNING</span>
+											<?php else: ?>
+												<span style="font-size:10px; float:right; background:#555; color:#999; padding:3px 8px; border-radius:3px; font-weight:normal;">STOPPED</span>
+											<?php endif; ?>
+										</h5>
 
-											<div style="background:#f8f9fa; color:#333; padding:8px; border-radius:4px; font-size:11px;">
-												<?php if ($key == 'meilisearch'): ?>
-													<strong>Master Key:</strong><br/>
-													<code style="background:#fff; padding:2px 4px; color:#d63384;"><?php echo $service['master_key']; ?></code>
-												<?php elseif ($key == 'mailpit'): ?>
-													<strong>SMTP:</strong> <?php echo $service['smtp']['host']; ?>:<?php echo $service['smtp']['port']; ?><br/>
-													<small>No authentication required</small>
-												<?php elseif ($key == 'rabbit'): ?>
-													<strong>User:</strong> <code style="background:#fff; padding:2px 4px;"><?php echo $service['username']; ?></code><br/>
-													<strong>Pass:</strong> <code style="background:#fff; padding:2px 4px;"><?php echo $service['password']; ?></code><br/>
-													<small>AMQP Port: <?php echo $service['amqp_port']; ?></small>
-												<?php elseif ($key == 'minio'): ?>
-													<strong>User:</strong> <code style="background:#fff; padding:2px 4px;"><?php echo $service['username']; ?></code><br/>
-													<strong>Pass:</strong> <code style="background:#fff; padding:2px 4px;"><?php echo $service['password']; ?></code><br/>
-													<small>API Port: <?php echo $service['api_port']; ?></small>
+										<p style="color:#777; font-size:12px; margin-bottom:12px;">
+											<?php if ($key == 'meilisearch'): ?>
+												Fast search engine
+											<?php elseif ($key == 'mailpit'): ?>
+												Email testing
+											<?php elseif ($key == 'rabbit'): ?>
+												Message queue
+											<?php elseif ($key == 'minio'): ?>
+												S3 storage
+											<?php endif; ?>
+										</p>
+
+										<?php if ($service['running']): ?>
+											<a href="<?php echo $service['url']; ?>" target="_blank" style="display:block; width:100%; background:#9ccc65; color:#1f1f1f; text-align:center; padding:8px; border-radius:4px; text-decoration:none; font-size:12px; font-weight:bold; margin-bottom:10px;">
+												<i class="fa fa-external-link"></i> Open Dashboard
+											</a>
+										<?php else: ?>
+											<button style="display:block; width:100%; background:#555; color:#999; border:none; text-align:center; padding:8px; border-radius:4px; font-size:12px; margin-bottom:10px; cursor:not-allowed;" disabled>
+												<i class="fa fa-power-off"></i> Not Running
+											</button>
+										<?php endif; ?>
+
+										<div style="background:#383737; color:#999; padding:10px; border-radius:4px; font-size:11px;">
+											<?php if ($key == 'meilisearch' && isset($service['master_key'])): ?>
+												<strong style="color:#ffc107;">Master Key:</strong><br/>
+												<code style="background:#2a2a2a; padding:3px 6px; color:#9ccc65; border-radius:3px; display:inline-block; margin-top:5px;"><?php echo $service['master_key']; ?></code>
+											<?php elseif ($key == 'mailpit' && isset($service['smtp'])): ?>
+												<strong style="color:#64b5f6;">SMTP:</strong> <?php echo $service['smtp']['host']; ?>:<?php echo $service['smtp']['port']; ?><br/>
+												<small style="color:#777;">No authentication required</small>
+											<?php elseif ($key == 'rabbit' && isset($service['username']) && isset($service['password'])): ?>
+												<strong style="color:#ff9800;">User:</strong> <code style="background:#2a2a2a; padding:2px 4px; color:#9ccc65; border-radius:3px;"><?php echo $service['username']; ?></code><br/>
+												<strong style="color:#ff9800;">Pass:</strong> <code style="background:#2a2a2a; padding:2px 4px; color:#9ccc65; border-radius:3px;"><?php echo $service['password']; ?></code><br/>
+												<?php if (isset($service['amqp_port'])): ?>
+													<small style="color:#777;">AMQP Port: <?php echo $service['amqp_port']; ?></small>
 												<?php endif; ?>
-											</div>
+											<?php elseif ($key == 'minio' && isset($service['username']) && isset($service['password'])): ?>
+												<strong style="color:#ab47bc;">User:</strong> <code style="background:#2a2a2a; padding:2px 4px; color:#9ccc65; border-radius:3px;"><?php echo $service['username']; ?></code><br/>
+												<strong style="color:#ab47bc;">Pass:</strong> <code style="background:#2a2a2a; padding:2px 4px; color:#9ccc65; border-radius:3px;"><?php echo $service['password']; ?></code><br/>
+												<?php if (isset($service['api_port'])): ?>
+													<small style="color:#777;">API Port: <?php echo $service['api_port']; ?></small>
+												<?php endif; ?>
+											<?php endif; ?>
 										</div>
 									</div>
 								</div>
 								<?php endforeach; ?>
 							</div>
 
-							<div class="row" style="margin-top:15px;">
+							<div class="row" style="margin-top:20px; padding-top:20px; border-top:1px solid #383737;">
 								<div class="col-12">
-									<h6 style="color:#9ccc65;"><i class="fa fa-code"></i> Quick Start</h6>
-									<ul class="nav nav-tabs" id="servicesTabs" role="tablist">
+									<h6 style="color:#9ccc65; margin-bottom:15px;"><i class="fa fa-code"></i> Quick Start</h6>
+									<ul class="nav nav-tabs" id="servicesTabs" role="tablist" style="border-bottom:2px solid #383737;">
 										<li class="nav-item">
-											<a class="nav-link active" id="meilisearch-tab" data-toggle="tab" href="#meilisearch-config" role="tab">Meilisearch</a>
+											<a class="nav-link active" id="meilisearch-tab" data-toggle="tab" href="#meilisearch-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">Meilisearch</a>
 										</li>
 										<li class="nav-item">
-											<a class="nav-link" id="mailpit-tab" data-toggle="tab" href="#mailpit-config" role="tab">Mailpit</a>
+											<a class="nav-link" id="mailpit-tab" data-toggle="tab" href="#mailpit-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">Mailpit</a>
 										</li>
 										<li class="nav-item">
-											<a class="nav-link" id="rabbitmq-tab" data-toggle="tab" href="#rabbitmq-config" role="tab">RabbitMQ</a>
+											<a class="nav-link" id="rabbitmq-tab" data-toggle="tab" href="#rabbitmq-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">RabbitMQ</a>
 										</li>
 										<li class="nav-item">
-											<a class="nav-link" id="minio-tab" data-toggle="tab" href="#minio-config" role="tab">MinIO</a>
+											<a class="nav-link" id="minio-tab" data-toggle="tab" href="#minio-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">MinIO</a>
 										</li>
 									</ul>
-									<div class="tab-content" id="servicesTabContent" style="background:#2a2a2a; padding:15px; border-radius:0 0 4px 4px;">
+									<div class="tab-content" id="servicesTabContent" style="background:#2a2a2a; padding:15px; border:1px solid #383737; border-top:none; border-radius:0 0 4px 4px;">
 										<div class="tab-pane fade show active" id="meilisearch-config" role="tabpanel">
-											<h6>Laravel Scout Configuration</h6>
-											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px;"><?php echo htmlspecialchars($modern_services['meilisearch']['config']['Laravel Scout']); ?></pre>
+											<h6 style="color:#ffc107; margin-bottom:10px;">Laravel Scout Configuration</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;"><?php echo htmlspecialchars($modern_services['meilisearch']['config']['Laravel Scout']); ?></pre>
 										</div>
 										<div class="tab-pane fade" id="mailpit-config" role="tabpanel">
-											<h6>Laravel Mail Configuration</h6>
-											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px;"><?php echo htmlspecialchars($modern_services['mailpit']['config']['Laravel']); ?></pre>
-											<h6 style="margin-top:15px;">WordPress SMTP</h6>
-											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px;"><?php echo htmlspecialchars($modern_services['mailpit']['config']['WordPress']); ?></pre>
+											<h6 style="color:#64b5f6; margin-bottom:10px;">Laravel Mail Configuration</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;"><?php echo htmlspecialchars($modern_services['mailpit']['config']['Laravel']); ?></pre>
+											<h6 style="margin-top:15px; color:#64b5f6; margin-bottom:10px;">WordPress SMTP</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;"><?php echo htmlspecialchars($modern_services['mailpit']['config']['WordPress']); ?></pre>
 										</div>
 										<div class="tab-pane fade" id="rabbitmq-config" role="tabpanel">
-											<h6>Laravel Queue Configuration</h6>
-											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px;"><?php echo htmlspecialchars($modern_services['rabbit']['config']['Laravel']); ?></pre>
+											<h6 style="color:#ff9800; margin-bottom:10px;">Laravel Queue Configuration</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;"><?php echo htmlspecialchars($modern_services['rabbit']['config']['Laravel']); ?></pre>
 										</div>
 										<div class="tab-pane fade" id="minio-config" role="tabpanel">
-											<h6>Laravel S3 Configuration</h6>
-											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px;"><?php echo htmlspecialchars($modern_services['minio']['config']['Laravel']); ?></pre>
+											<h6 style="color:#ab47bc; margin-bottom:10px;">Laravel S3 Configuration</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;"><?php echo htmlspecialchars($modern_services['minio']['config']['Laravel']); ?></pre>
 										</div>
 									</div>
 									<div style="margin-top:10px;">
-										<small class="text-muted">
+										<small style="color:#777;">
 											<i class="fa fa-info-circle"></i>
-											Need more examples? See <a href="https://github.com/Drmzindec/Devilbox-Boost/blob/main/docs/MODERN-SERVICES.md" target="_blank">full documentation</a> with PHP, WordPress, and framework-specific guides.
+											Need more examples? See <a href="https://github.com/Drmzindec/Devilbox-Boost/blob/main/docs/MODERN-SERVICES.md" target="_blank" style="color:#9ccc65;">full documentation</a> with PHP, WordPress, and framework-specific guides.
 										</small>
 									</div>
 								</div>

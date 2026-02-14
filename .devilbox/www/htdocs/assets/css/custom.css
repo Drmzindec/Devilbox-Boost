@@ -232,3 +232,24 @@ td.break-word {
 		width: 32rem;
 	}
 }
+
+
+/* Modern Services Section
+-------------------------------------------------- */
+#servicesTabs .nav-link {
+	color: #999 !important;
+	background: #2a2a2a !important;
+	border: 1px solid #383737 !important;
+	border-bottom: none !important;
+}
+
+#servicesTabs .nav-link:hover {
+	color: #9ccc65 !important;
+	background: #383737 !important;
+}
+
+#servicesTabs .nav-link.active {
+	color: #9ccc65 !important;
+	background: #2a2a2a !important;
+	border-bottom-color: #2a2a2a !important;
+}
