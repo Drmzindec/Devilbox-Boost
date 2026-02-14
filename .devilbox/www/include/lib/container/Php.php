@@ -137,7 +137,7 @@ class Php extends BaseClass implements BaseInterface
 	}
 	public function getWpcliVersion()
 	{
-		$output = loadClass('Helper')->exec('wp --version 2>/dev/null | grep -i ^WP', $output);
+		$output = loadClass('Helper')->exec('wp --version --allow-root 2>/dev/null | grep -i ^WP', $output);
 		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
 	}
 	public function getWscatVersion()
@@ -157,7 +157,8 @@ class Php extends BaseClass implements BaseInterface
 	}
 	public function getPestVersion()
 	{
-		$output = loadClass('Helper')->exec('pest --version 2>/dev/null', $output);
+		// Pest requires a test directory, so check composer global instead
+		$output = loadClass('Helper')->exec('composer global show pestphp/pest 2>/dev/null | grep "versions"', $output);
 		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
 	}
 	public function getViteVersion()
