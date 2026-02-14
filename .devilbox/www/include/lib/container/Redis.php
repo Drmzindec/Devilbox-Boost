@@ -39,16 +39,21 @@ class Redis extends BaseClass implements BaseInterface
 
 		if ($this->isAvailable()) {
 			$redis = new \Redis();
-			if (!@$redis->connect($hostname, 6379, 0.5, NULL)) {
-				$this->setConnectError('Failed to connect to Redis host on '.$hostname);
-				$this->setConnectErrno(1);
-				//loadClass('Logger')->error($this->_connect_error);
-			} else {
-				if (array_key_exists('pass', $data)) {
-					$redis->auth($data['pass']);
+			try {
+				if (!$redis->connect($hostname, 6379, 0.5, NULL)) {
+					$this->setConnectError('Failed to connect to Redis host on '.$hostname);
+					$this->setConnectErrno(1);
+					//loadClass('Logger')->error($this->_connect_error);
+				} else {
+					if (array_key_exists('pass', $data)) {
+						$redis->auth($data['pass']);
+					}
+					$redis->set('devilbox-version', $GLOBALS['DEVILBOX_VERSION'].' ('.$GLOBALS['DEVILBOX_DATE'].')');
+					$this->_redis = $redis;
 				}
-				$redis->set('devilbox-version', $GLOBALS['DEVILBOX_VERSION'].' ('.$GLOBALS['DEVILBOX_DATE'].')');
-				$this->_redis = $redis;
+			} catch (\RedisException $e) {
+				$this->setConnectError('Failed to connect to Redis host on '.$hostname.': '.$e->getMessage());
+				$this->setConnectErrno(1);
 			}
 		}
 	}
@@ -172,19 +177,21 @@ class Redis extends BaseClass implements BaseInterface
 			return $this->_can_connect[$hostname];
 		}
 
-		// Silence errors and try to connect
-		//error_reporting(0);
+		// Try to connect (PHP 8.4+ throws exceptions on connection failure)
 		$redis = new \Redis();
 
-		if (!$redis->connect($hostname, 6379)) {
-			$err = 'Failed to connect to Redis host on '.$hostname;
+		try {
+			if (!$redis->connect($hostname, 6379)) {
+				$err = 'Failed to connect to Redis host on '.$hostname;
+				$this->_can_connect[$hostname] = false;
+			} else {
+				$this->_can_connect[$hostname] = true;
+			}
+			$redis->close();
+		} catch (\RedisException $e) {
+			$err = 'Failed to connect to Redis host on '.$hostname.': '.$e->getMessage();
 			$this->_can_connect[$hostname] = false;
-		} else {
-			$this->_can_connect[$hostname] = true;
 		}
-		//error_reporting(-1);
-
-		$redis->close();
 
 		$this->_can_connect_err[$hostname] = $err;
 		return $this->_can_connect[$hostname];

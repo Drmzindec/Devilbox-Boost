@@ -245,16 +245,23 @@ class Mysql extends BaseClass implements BaseInterface
 			return $this->_can_connect[$hostname];
 		}
 
-		// Silence errors and try to connect
-		error_reporting(0);
-		$link = mysqli_connect($hostname, $data['user'], $data['pass']);
-		error_reporting(-1);
+		// Try to connect (PHP 8.4+ throws exceptions on connection failure)
+		$link = false;
+		try {
+			error_reporting(0);
+			$link = mysqli_connect($hostname, $data['user'], $data['pass']);
+			error_reporting(-1);
 
-		if (mysqli_connect_errno()) {
-			$err = 'Failed to connect: ' .mysqli_connect_error();
+			if (mysqli_connect_errno()) {
+				$err = 'Failed to connect: ' .mysqli_connect_error();
+				$this->_can_connect[$hostname] = false;
+			} else {
+				$this->_can_connect[$hostname] = true;
+			}
+		} catch (\mysqli_sql_exception $e) {
+			error_reporting(-1);
+			$err = 'Failed to connect: ' . $e->getMessage();
 			$this->_can_connect[$hostname] = false;
-		} else {
-			$this->_can_connect[$hostname] = true;
 		}
 
 		if ($link) {

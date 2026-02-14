@@ -102,11 +102,10 @@ RUN set -x \
         GROUP_NAME=devilbox; \
     fi \
     && useradd -u ${NEW_UID} -g ${GROUP_NAME} -m -s /bin/bash devilbox \
-    && echo "devilbox ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-
-# Configure PHP-FPM to run as devilbox user
-RUN sed -i 's/user = www-data/user = devilbox/g' /usr/local/etc/php-fpm.d/www.conf \
-    && sed -i 's/group = www-data/group = devilbox/g' /usr/local/etc/php-fpm.d/www.conf
+    && echo "devilbox ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && ACTUAL_GROUP=$(id -gn devilbox) \
+    && sed -i "s/user = www-data/user = devilbox/g" /usr/local/etc/php-fpm.d/www.conf \
+    && sed -i "s/group = www-data/group = ${ACTUAL_GROUP}/g" /usr/local/etc/php-fpm.d/www.conf
 
 # Set working directory
 WORKDIR /shared/httpd
