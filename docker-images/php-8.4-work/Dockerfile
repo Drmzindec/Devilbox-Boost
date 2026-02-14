@@ -140,6 +140,10 @@ RUN set -x \
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# Copy vhost auto-configuration script
+COPY vhost-auto-configure.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/vhost-auto-configure.sh
+
 # Set working directory
 WORKDIR /shared/httpd
 

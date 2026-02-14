@@ -24,5 +24,11 @@ if [ -n "$FORWARD_PORTS_TO_LOCALHOST" ]; then
     echo "[INFO] Port forwarding setup complete"
 fi
 
+# Start vhost auto-configuration service in background
+if [ -f /usr/local/bin/vhost-auto-configure.sh ]; then
+    echo "[INFO] Starting vhost auto-configuration service..."
+    /usr/local/bin/vhost-auto-configure.sh &
+fi
+
 # Execute the main command (PHP-FPM)
 exec "$@"
