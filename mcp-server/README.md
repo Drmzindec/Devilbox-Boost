@@ -39,20 +39,21 @@ The Devilbox MCP (Model Context Protocol) server provides AI assistants like Cla
 
 ### Automated Installation (Recommended)
 
-Run the installer to automatically configure Claude Code:
+Run the installer to automatically configure both Claude Code CLI and Claude Desktop:
 
 ```bash
-cd /path/to/devilbox/mcp-server
+cd /path/to/Devilbox-Boost/mcp-server
 ./install.sh
 ```
 
 The installer will:
 1. ✅ Install npm dependencies
 2. ✅ Make index.js executable
-3. ✅ Automatically add to Claude Code configuration
-4. ✅ Verify Docker and Devilbox are running
+3. ✅ Create `.mcp.json` in the project root (for Claude Code CLI)
+4. ✅ Update `claude_desktop_config.json` (for Claude Desktop app)
+5. ✅ Verify Docker and Devilbox are running
 
-**Then just restart Claude Code** and start using natural language!
+**Then restart Claude Code** and start using natural language!
 
 ### Manual Installation
 
@@ -60,7 +61,7 @@ If you prefer manual setup:
 
 1. **Install Dependencies:**
 ```bash
-cd /path/to/devilbox/mcp-server
+cd /path/to/Devilbox-Boost/mcp-server
 npm install
 ```
 
@@ -69,14 +70,11 @@ npm install
 chmod +x index.js
 ```
 
-3. **Add to Claude Code config:**
+3. **Configure your Claude client:**
 
-Edit your Claude Code MCP configuration file:
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+#### Claude Code CLI (recommended)
 
-Add this configuration:
+Create a `.mcp.json` file in the Devilbox-Boost project root:
 
 ```json
 {
@@ -84,14 +82,23 @@ Add this configuration:
     "devilbox": {
       "command": "node",
       "args": [
-        "/path/to/devilbox/mcp-server/index.js"
+        "/path/to/Devilbox-Boost/mcp-server/index.js"
       ]
     }
   }
 }
 ```
 
-**Note:** The installer automatically uses the correct absolute path.
+The MCP server activates automatically when Claude Code is opened in the Devilbox-Boost directory.
+
+#### Claude Desktop App
+
+Edit your Claude Desktop configuration file:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+
+Add the same `mcpServers` block shown above.
 
 4. **Restart Claude Code**
 
@@ -256,9 +263,9 @@ All 10 tools have been tested and verified working:
 
 ## Troubleshooting
 
-### "Command not found: docker-compose"
+### "Command not found: docker compose"
 
-Make sure Docker Desktop is running and docker-compose is in your PATH.
+Make sure Docker Desktop is running and `docker compose` is available (Docker Desktop includes it by default).
 
 ### "Permission denied"
 
@@ -301,7 +308,7 @@ MCP Protocol (stdio)
     ↓
 Devilbox MCP Server (Node.js)
     ↓
-Docker CLI / docker-compose
+Docker CLI / docker compose
     ↓
 Devilbox Containers
 ```

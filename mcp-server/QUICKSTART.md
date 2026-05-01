@@ -83,14 +83,17 @@ Just talk to Claude naturally:
 
 ### "MCP server not showing up in Claude Code"
 
-1. Verify installation:
+**Claude Code CLI:** Check that `.mcp.json` exists in the Devilbox-Boost root:
+```bash
+cat /path/to/Devilbox-Boost/.mcp.json
+```
+
+**Claude Desktop:** Check the desktop config:
 ```bash
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
 ```
 
-2. Look for the `devilbox` entry under `mcpServers`
-
-3. Completely restart Claude Code (quit and reopen)
+Look for the `devilbox` entry under `mcpServers`, then completely restart Claude Code.
 
 ### "Docker not running"
 
@@ -102,8 +105,8 @@ docker info
 ### "Devilbox not running"
 
 ```bash
-cd /path/to/devilbox
-docker-compose up -d
+cd /path/to/Devilbox-Boost
+docker compose up -d
 ```
 
 ---

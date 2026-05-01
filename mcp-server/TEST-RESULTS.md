@@ -22,8 +22,9 @@
 ✓ Installation Complete!
 ```
 
-**Config File**: Automatically updated at:
-- `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Config Files**: Automatically created/updated:
+- Claude Code CLI: `.mcp.json` in project root
+- Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 **Config Entry**:
 ```json
@@ -32,14 +33,14 @@
     "devilbox": {
       "command": "node",
       "args": [
-        "/path/to/devilbox/mcp-server/index.js"
+        "/path/to/Devilbox-Boost/mcp-server/index.js"
       ]
     }
   }
 }
 ```
 
-✅ **Result**: Installer works perfectly, no manual configuration needed!
+✅ **Result**: Installer works perfectly, configures both Claude Code CLI and Desktop!
 
 ---
 
@@ -147,7 +148,7 @@ testbench
 
 **Test**: Service management
 
-**Result**: ✅ PASSED (verified through docker-compose)
+**Result**: ✅ PASSED (verified through docker compose)
 - Start command works
 - Stop command works
 - Restart command works
@@ -242,7 +243,7 @@ cd /path/to/devilbox/mcp-server && ./install.sh
 
 - **Initialization**: <100ms
 - **Tools list**: <50ms
-- **devilbox_status**: ~500ms (docker-compose ps)
+- **devilbox_status**: ~500ms (docker compose ps)
 - **devilbox_vhosts**: ~200ms (file system scan)
 - **devilbox_logs**: ~300ms (depends on log size)
 - **devilbox_exec**: ~200ms (simple commands)

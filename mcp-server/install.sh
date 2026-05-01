@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ###
 ### Devilbox MCP Server - Automated Installer
 ###
-### Automatically configures Claude Code to use the Devilbox MCP server
+### Configures Claude Code (CLI or Desktop) to use the Devilbox MCP server
 ###
 
 set -e
@@ -27,33 +27,20 @@ echo "║                                                            ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
-# Detect OS and find Claude Code config
-detect_config_path() {
+# Detect Claude Desktop config path
+detect_desktop_config_path() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
         echo "$HOME/Library/Application Support/Claude/claude_desktop_config.json"
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux
         echo "$HOME/.config/Claude/claude_desktop_config.json"
     elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "win32" ]]; then
-        # Windows
         echo "$APPDATA/Claude/claude_desktop_config.json"
     else
         echo ""
     fi
 }
 
-CONFIG_PATH=$(detect_config_path)
-
-if [ -z "$CONFIG_PATH" ]; then
-    echo -e "${RED}✗ Could not detect Claude Code configuration path for OS: $OSTYPE${NC}"
-    exit 1
-fi
-
-echo -e "${BLUE}→ Detected Claude Code config: $CONFIG_PATH${NC}"
-
 # Step 1: Install dependencies
-echo ""
 echo -e "${YELLOW}[1/4] Installing npm dependencies...${NC}"
 cd "$SCRIPT_DIR"
 
@@ -63,8 +50,7 @@ if ! command -v npm &> /dev/null; then
 fi
 
 npm install --silent
-
-echo -e "${GREEN}✓ Dependencies installed (91 packages)${NC}"
+echo -e "${GREEN}✓ Dependencies installed${NC}"
 
 # Step 2: Make executable
 echo ""
@@ -72,50 +58,58 @@ echo -e "${YELLOW}[2/4] Making index.js executable...${NC}"
 chmod +x "$SCRIPT_DIR/index.js"
 echo -e "${GREEN}✓ Made executable${NC}"
 
-# Step 3: Create/update Claude Code config
+# Step 3: Configure MCP server
 echo ""
-echo -e "${YELLOW}[3/4] Configuring Claude Code...${NC}"
+echo -e "${YELLOW}[3/4] Configuring MCP server...${NC}"
 
-# Create config directory if it doesn't exist
-CONFIG_DIR=$(dirname "$CONFIG_PATH")
-mkdir -p "$CONFIG_DIR"
+# --- Claude Code CLI: create .mcp.json in project root ---
+MCP_JSON="$DEVILBOX_PATH/.mcp.json"
+echo -e "${BLUE}→ Claude Code CLI: Creating $MCP_JSON${NC}"
 
-# Check if config file exists
-if [ ! -f "$CONFIG_PATH" ]; then
-    echo -e "${BLUE}→ Creating new Claude Code configuration${NC}"
-    cat > "$CONFIG_PATH" <<EOF
-{
-  "mcpServers": {
-    "devilbox": {
-      "command": "node",
-      "args": [
-        "$SCRIPT_DIR/index.js"
-      ]
-    }
-  }
+node <<EOF
+const fs = require('fs');
+const path = '$MCP_JSON';
+
+let config = {};
+try {
+    const content = fs.readFileSync(path, 'utf8');
+    config = JSON.parse(content);
+} catch (e) {
+    config = {};
 }
+
+if (!config.mcpServers) {
+    config.mcpServers = {};
+}
+
+config.mcpServers.devilbox = {
+    command: "node",
+    args: ["$SCRIPT_DIR/index.js"]
+};
+
+fs.writeFileSync(path, JSON.stringify(config, null, 2) + '\n');
 EOF
-    echo -e "${GREEN}✓ Created new configuration${NC}"
-else
-    echo -e "${BLUE}→ Updating existing Claude Code configuration${NC}"
 
-    # Check if devilbox entry already exists
-    if grep -q '"devilbox"' "$CONFIG_PATH" 2>/dev/null; then
-        echo -e "${YELLOW}! Devilbox MCP server already configured${NC}"
-        echo -e "${BLUE}→ Updating path to: $SCRIPT_DIR/index.js${NC}"
-    fi
+echo -e "${GREEN}✓ Claude Code CLI configured (.mcp.json)${NC}"
 
-    # Use Node.js to safely update JSON
+# --- Claude Desktop app: update claude_desktop_config.json ---
+DESKTOP_CONFIG=$(detect_desktop_config_path)
+
+if [ -n "$DESKTOP_CONFIG" ]; then
+    CONFIG_DIR=$(dirname "$DESKTOP_CONFIG")
+    mkdir -p "$CONFIG_DIR"
+
+    echo -e "${BLUE}→ Claude Desktop: Updating $DESKTOP_CONFIG${NC}"
+
     node <<EOF
 const fs = require('fs');
-const configPath = '$CONFIG_PATH';
+const configPath = '$DESKTOP_CONFIG';
 
 let config = {};
 try {
     const content = fs.readFileSync(configPath, 'utf8');
     config = JSON.parse(content);
 } catch (e) {
-    // File exists but might be empty or invalid JSON
     config = {};
 }
 
@@ -129,29 +123,29 @@ config.mcpServers.devilbox = {
 };
 
 fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
-console.log('Configuration updated successfully');
 EOF
 
-    echo -e "${GREEN}✓ Configuration updated${NC}"
+    echo -e "${GREEN}✓ Claude Desktop configured${NC}"
+else
+    echo -e "${YELLOW}⚠ Could not detect Claude Desktop config path (OS: $OSTYPE)${NC}"
+    echo -e "${BLUE}→ Claude Code CLI config was still created successfully${NC}"
 fi
 
 # Step 4: Verify installation
 echo ""
 echo -e "${YELLOW}[4/4] Verifying installation...${NC}"
 
-# Check if Docker is running
 if ! docker info &> /dev/null; then
     echo -e "${YELLOW}⚠ Docker is not running. Please start Docker Desktop.${NC}"
 else
     echo -e "${GREEN}✓ Docker is running${NC}"
 fi
 
-# Check if Devilbox is running
 cd "$DEVILBOX_PATH"
-if docker-compose ps | grep -q "Up"; then
+if docker compose ps 2>/dev/null | grep -q "Up\|running"; then
     echo -e "${GREEN}✓ Devilbox is running${NC}"
 else
-    echo -e "${YELLOW}⚠ Devilbox is not running. Start with: docker-compose up -d${NC}"
+    echo -e "${YELLOW}⚠ Devilbox is not running. Start with: docker compose up -d${NC}"
 fi
 
 # Summary
@@ -165,6 +159,15 @@ echo "╚═══════════════════════�
 echo -e "${NC}"
 
 echo ""
+echo -e "${BLUE}What was configured:${NC}"
+echo ""
+echo -e "  Claude Code CLI:  ${GREEN}$MCP_JSON${NC}"
+if [ -n "$DESKTOP_CONFIG" ]; then
+echo -e "  Claude Desktop:   ${GREEN}$DESKTOP_CONFIG${NC}"
+fi
+echo -e "  Server path:      ${GREEN}$SCRIPT_DIR/index.js${NC}"
+
+echo ""
 echo -e "${BLUE}Next Steps:${NC}"
 echo ""
 echo -e "  1. ${YELLOW}Restart Claude Code${NC} to load the MCP server"
@@ -176,16 +179,6 @@ echo -e "     ${GREEN}\"List all databases\"${NC}"
 echo -e "     ${GREEN}\"Switch to PHP 8.3\"${NC}"
 echo ""
 echo -e "  3. See ${BLUE}USAGE-EXAMPLES.md${NC} for more examples"
-echo ""
-echo -e "${BLUE}Configuration:${NC}"
-echo -e "  MCP Config: ${GREEN}$CONFIG_PATH${NC}"
-echo -e "  Server Path: ${GREEN}$SCRIPT_DIR/index.js${NC}"
-echo ""
-echo -e "${BLUE}Troubleshooting:${NC}"
-echo -e "  If Claude Code doesn't detect the server:"
-echo -e "  - Ensure Claude Code is completely restarted"
-echo -e "  - Check config file: ${YELLOW}cat \"$CONFIG_PATH\"${NC}"
-echo -e "  - View logs in Claude Code's MCP settings"
 echo ""
 
 exit 0

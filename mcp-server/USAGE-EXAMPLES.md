@@ -9,20 +9,21 @@ Comprehensive guide showing real-world usage examples with Claude Code.
 **One-line automated installation:**
 
 ```bash
-cd /path/to/devilbox/mcp-server && ./install.sh
+cd /path/to/Devilbox-Boost/mcp-server && ./install.sh
 ```
 
 The installer automatically:
-1. ✅ Installs npm dependencies (91 packages)
+1. ✅ Installs npm dependencies
 2. ✅ Makes index.js executable
-3. ✅ Adds Devilbox to Claude Code configuration
-4. ✅ Verifies Docker and Devilbox are running
+3. ✅ Creates `.mcp.json` in project root (Claude Code CLI)
+4. ✅ Updates Claude Desktop config (if applicable)
+5. ✅ Verifies Docker and Devilbox are running
 
 **Then restart Claude Code** and start using natural language!
 
 ### What Gets Configured
 
-The installer adds this to your Claude Code config:
+The installer creates a `.mcp.json` in the Devilbox-Boost project root (for Claude Code CLI) and updates the Claude Desktop config:
 
 ```json
 {
@@ -30,7 +31,7 @@ The installer adds this to your Claude Code config:
     "devilbox": {
       "command": "node",
       "args": [
-        "/absolute/path/to/devilbox/mcp-server/index.js"
+        "/path/to/Devilbox-Boost/mcp-server/index.js"
       ]
     }
   }
@@ -39,10 +40,11 @@ The installer adds this to your Claude Code config:
 
 **Note:** The installer automatically detects and uses your actual path.
 
-**Config location:**
-- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Linux: `~/.config/Claude/claude_desktop_config.json`
-- Windows: `%APPDATA%/Claude/claude_desktop_config.json`
+**Config locations:**
+- **Claude Code CLI**: `.mcp.json` in the Devilbox-Boost project root
+- **Claude Desktop (macOS)**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Claude Desktop (Linux)**: `~/.config/Claude/claude_desktop_config.json`
+- **Claude Desktop (Windows)**: `%APPDATA%/Claude/claude_desktop_config.json`
 
 ---
 
@@ -262,9 +264,9 @@ testbench
 
 **Important:** After config changes:
 ```bash
-docker-compose stop
-docker-compose rm -f
-docker-compose up -d
+docker compose stop
+docker compose rm -f
+docker compose up -d
 ```
 
 ---
