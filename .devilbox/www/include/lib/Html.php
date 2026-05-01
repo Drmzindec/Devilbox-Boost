@@ -121,6 +121,10 @@ class Html
 					'name' => 'Memcached Info',
 					'path' => '/info_memcd.php'
 				),
+				array(
+					'name' => 'PHP Error Log',
+					'path' => '/log_php.php'
+				),
 			)
 		),
 		array(
@@ -281,7 +285,7 @@ HTML;
 				<div class="container justify-content-end">
 					<ul class="nav navbar-nav">
 						<li class="nav-item nav-link">Render time: {$render_time} sec</li>
-						<li class="nav-item"><a class="nav-link" target="_blank" href="https://github.com/cytopia/devilbox"><code>Github</code></a></li>
+						<li class="nav-item"><a class="nav-link" target="_blank" href="https://github.com/Drmzindec/Devilbox-Boost"><code>Github</code></a></li>
 						<li class="nav-item"><a class="nav-link" href="/credits.php"><code>Credits</code></a></li>
 						<li class="nav-item"><a class="nav-link" href="/support.php"><code>Support</code></a></li>
 						<li class="nav-item"><a class="nav-link" href="/debug.php"><code>Debug ({$errors})</code></a></li>

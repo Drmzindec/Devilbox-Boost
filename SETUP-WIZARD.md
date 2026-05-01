@@ -18,7 +18,7 @@ The setup wizard is a comprehensive interactive TUI (Terminal User Interface) th
 
 ✅ **Checks Prerequisites** - Verifies Docker and Docker Compose are installed and running
 ✅ **Configures Environment** - Sets up `.env` file with your preferences
-✅ **Builds Custom Images** - Creates PHP 8.3/8.4 images with modern tools
+✅ **Builds Custom Images** - Creates PHP 8.3/8.4/8.5 images with modern tools
 ✅ **Starts Services** - Launches all Devilbox containers
 ✅ **Creates First Project** - Optionally scaffolds Laravel, WordPress, or custom PHP
 ✅ **Installs Tools** - Optionally sets up MCP server for Claude Code integration
@@ -46,7 +46,8 @@ Choose which PHP version(s) to install:
 Which PHP version(s) do you want to use?
   1) PHP 8.4 only (recommended for new projects)
   2) PHP 8.3 only
-  3) Both 8.3 and 8.4 (can switch between them)
+  3) PHP 8.5 (experimental)
+  4) Both 8.3 and 8.4 (can switch between them)
 ```
 
 **Recommendation**: Choose option 3 to have both versions available.
@@ -139,7 +140,7 @@ Build images now? [Y/n]:
 **Recommended**: `Y` (yes) if you have time
 
 **What it does**:
-- Builds custom PHP 8.3 and/or 8.4 Docker images
+- Builds custom PHP 8.3, 8.4, and/or 8.5 Docker images
 - Installs development tools:
   - **PHP**: Laravel Installer, WP-CLI, Composer, Pest
   - **Node**: Node.js 24, npm, Yarn, Bun
@@ -168,7 +169,7 @@ Start Devilbox now? [Y/n]:
 **What it does**:
 - Runs `docker compose up -d`
 - Starts all services:
-  - PHP-FPM (8.3 or 8.4)
+  - PHP-FPM (8.3, 8.4, or 8.5)
   - Apache/Nginx web server
   - MySQL/MariaDB
   - PostgreSQL
@@ -281,7 +282,7 @@ Create New Projects:
 Documentation:
   .claude/README.md              - Development guidelines
   .claude/skills/                - How-to guides
-  ROADMAP-MODERNIZATION.md       - Project roadmap
+  docs/ROADMAP.md                - Project roadmap
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
@@ -391,7 +392,7 @@ docker compose up -d
 
 Edit `.env`:
 ```bash
-PHP_SERVER=8.3  # or 8.4
+PHP_SERVER=8.3  # or 8.4 or 8.5
 ```
 
 Restart containers:
@@ -476,7 +477,7 @@ Safe to run multiple times:
 - **Documentation**: `.claude/README.md`
 - **Skills/Guides**: `.claude/skills/`
 - **Issues**: Check `docker compose logs <service>`
-- **Roadmap**: `ROADMAP-MODERNIZATION.md`
+- **Roadmap**: `docs/ROADMAP.md`
 
 ---
 

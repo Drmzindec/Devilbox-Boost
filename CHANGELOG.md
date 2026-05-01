@@ -17,6 +17,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.4] - 2026-05-01
+
+### Added
+- **PHP Error Log Viewer** — live-tailing log page at Info > PHP Error Log with color-coded output, pause/resume, adjustable refresh, and clear functionality
+- **PHPStan, Rector, Deno** — pre-installed in all custom PHP images and detected on dashboard
+- **VS Code Dev Container** — `.devcontainer/devcontainer.json` for remote development
+
+### Improved
+- Complete documentation audit: fixed outdated PHP versions, service versions, broken links, old `docker-compose` syntax, and incorrect paths across 15+ files
+- Credits page updated for Devilbox Boost with correct attributions and library versions
+- Footer GitHub link now points to Devilbox Boost repository
+- Modern services environment variables passed to PHP container (eliminates 60 debug errors)
+- Default TLD changed from `dvl.to` to `local` in `env-example`
+- Replaced deprecated SwiftMailer code example with Symfony Mailer in docs
+- Removed hardcoded personal paths from all documentation
+- Replaced outdated `docs/CLAUDE.md` with redirect to root `CLAUDE.md`
+- Roadmap updated to reflect v1.0.3 completed items and new plans
+
+### Fixed
+- Rector version detection failing when run as non-root user (cache permission issue, falls back to composer package version)
+- `docker compose restart` in docs replaced with full recreate command where `.env` changes require it
+
+---
+
 ## [1.0.3] - 2026-05-01
 
 ### Added
@@ -114,7 +138,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Background
 
 Devilbox Boost modernizes the official [Devilbox](https://github.com/cytopia/devilbox) with:
-- PHP 8.3/8.4 support
+- PHP 8.3/8.4/8.5 support
 - Modern development tools
 - Quality-of-life improvements
 - AI integration capabilities
@@ -126,11 +150,14 @@ Based on Devilbox by cytopia, enhanced for modern PHP development.
 
 ## Contributors
 
-- Johan Pretorius - Initial modernization and development
+- Devilbox Boost Contributors - Initial modernization and development
 - Claude Code - AI-assisted development and documentation
 - Devilbox community - Original project and inspiration
 
 ---
 
-[Unreleased]: https://github.com/OWNER/Devilbox-Boost/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/OWNER/Devilbox-Boost/releases/tag/v1.0.0
+[Unreleased]: https://github.com/Drmzindec/Devilbox-Boost/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/Drmzindec/Devilbox-Boost/compare/v1.0.3...v1.0.4
+[1.0.3]: https://github.com/Drmzindec/Devilbox-Boost/compare/v1.0.2...v1.0.3
+[1.0.2]: https://github.com/Drmzindec/Devilbox-Boost/compare/v1.0.0...v1.0.2
+[1.0.0]: https://github.com/Drmzindec/Devilbox-Boost/releases/tag/v1.0.0

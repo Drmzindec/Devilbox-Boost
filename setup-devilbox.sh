@@ -79,9 +79,9 @@ ask_question() {
     read -r response
 
     if [ -z "$response" ] && [ -n "$default" ]; then
-        eval "$var_name='$default'"
+        printf -v "$var_name" '%s' "$default"
     else
-        eval "$var_name='$response'"
+        printf -v "$var_name" '%s' "$response"
     fi
 }
 

@@ -7,7 +7,7 @@ Since official Devilbox doesn't yet support PHP 8.3+, this directory contains cu
 ### 1. Build the PHP 8.3 Image
 
 ```bash
-cd /Users/johanpretorius/devilbox
+cd /path/to/Devilbox-Boost
 ./docker-images/build-php.sh 8.3
 ```
 
@@ -24,7 +24,7 @@ This will build a custom image tagged as `devilbox-php-8.3:work` with:
 
 **Option A: Modify docker-compose.yml directly**
 
-Edit `/Users/johanpretorius/devilbox/docker-compose.yml`:
+Edit `/path/to/Devilbox-Boost/docker-compose.yml`:
 
 ```yaml
 php:
@@ -37,7 +37,7 @@ php:
 
 **Option B: Use docker-compose.override.yml**
 
-Edit `/Users/johanpretorius/devilbox/docker-compose.override.yml`:
+Edit `/path/to/Devilbox-Boost/docker-compose.override.yml`:
 
 ```yaml
 version: '2.3'

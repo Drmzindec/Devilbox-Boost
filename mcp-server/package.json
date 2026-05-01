@@ -17,7 +17,7 @@
     "lamp",
     "lemp"
   ],
-  "author": "Johan Pretorius",
+  "author": "Devilbox Boost Contributors",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4"

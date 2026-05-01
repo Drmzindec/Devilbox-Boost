@@ -30,5 +30,11 @@ if [ -f /usr/local/bin/vhost-auto-configure.sh ]; then
     /usr/local/bin/vhost-auto-configure.sh &
 fi
 
+# Ensure PHP error log is writable by PHP-FPM
+if [ -d /var/log/php ]; then
+    touch /var/log/php/php-errors.log
+    chmod 666 /var/log/php/php-errors.log
+fi
+
 # Execute the main command (PHP-FPM)
 exec "$@"

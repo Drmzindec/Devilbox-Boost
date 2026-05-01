@@ -282,4 +282,4 @@ When working on Devilbox:
 ---
 
 **Last Updated**: February 14, 2026
-**Maintained By**: Johan Pretorius with Claude Code assistance
+**Maintained By**: Devilbox Boost Contributors

@@ -262,7 +262,7 @@ Make sure Docker Desktop is running and docker-compose is in your PATH.
 
 ### "Permission denied"
 
-Run: `chmod +x /Users/johanpretorius/devilbox/mcp-server/index.js`
+Run: `chmod +x /path/to/Devilbox-Boost/mcp-server/index.js`
 
 ### "Cannot connect to Docker daemon"
 
@@ -336,5 +336,5 @@ MIT License - Same as Devilbox
 ---
 
 **Version**: 1.0.0
-**Author**: Johan Pretorius
+**Author**: Devilbox Boost Contributors
 **Date**: February 14, 2026

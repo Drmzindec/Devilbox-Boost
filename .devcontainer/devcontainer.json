@@ -1,0 +1,27 @@
+{
+  "name": "Devilbox Boost",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "php",
+  "workspaceFolder": "/shared/httpd",
+  "remoteUser": "devilbox",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "php.validate.executablePath": "/usr/local/bin/php",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug",
+        "ms-azuretools.vscode-docker",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "Vue.volar",
+        "bradlc.vscode-tailwindcss",
+        "EditorConfig.EditorConfig"
+      ]
+    }
+  },
+  "forwardPorts": [80, 443, 3306, 5432, 6379, 8025, 9001],
+  "postAttachCommand": "php -v && composer --version && node --version"
+}

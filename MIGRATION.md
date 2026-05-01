@@ -118,7 +118,7 @@ cat install-boost.sh
 The installer will:
 - ✅ Detect your existing Devilbox installation
 - ✅ Preserve your current `.env` configuration
-- ✅ Add custom PHP images (8.3, 8.4)
+- ✅ Add custom PHP images (8.3, 8.4, 8.5)
 - ✅ Update admin tools to PHP 8.4 compatible versions
 - ✅ Add setup wizard and documentation
 - ✅ Optionally add command wrappers
@@ -383,10 +383,10 @@ docker compose restart
 head data/www/project/composer.json
 
 # Set matching PHP version in .env
-PHP_SERVER=8.3  # or 8.4
+PHP_SERVER=8.3  # or 8.4 or 8.5
 
-# Restart
-docker compose restart
+# Restart (full recreate required after .env changes)
+docker compose stop && docker compose rm -f && docker compose up -d
 ```
 
 ### Issue 3: Database Connection Lost
@@ -518,6 +518,7 @@ After successful migration:
 docker-images/
 ├── php-8.3-work/           # Custom PHP 8.3 image
 ├── php-8.4-work/           # Custom PHP 8.4 image
+├── php-8.5-work/           # Custom PHP 8.5 image
 └── build-php.sh            # Image builder
 
 bin/                         # Command wrappers (optional)
@@ -536,8 +537,7 @@ setup-devilbox.sh            # Interactive setup wizard
 Documentation:
 ├── QUICKSTART.md
 ├── SETUP-WIZARD.md
-├── MIGRATION.md (this file)
-└── PHASE-4-PLAN.md
+└── MIGRATION.md (this file)
 ```
 
 ### Files Updated
@@ -569,7 +569,7 @@ All databases                # Completely preserved
 
 - [QUICKSTART.md](QUICKSTART.md) - Quick reference
 - [SETUP-WIZARD.md](SETUP-WIZARD.md) - Setup guide
-- [.claude/skills/](. claude/skills/) - Service-specific guides
+- [.claude/skills/](.claude/skills/) - Service-specific guides
 
 ### Support Channels
 

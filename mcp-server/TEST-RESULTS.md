@@ -183,7 +183,7 @@ testbench
 **Test**: All paths should be generic
 
 **Result**: ✅ PASSED
-- No hardcoded `/Users/johanpretorius` in documentation
+- No hardcoded user paths in documentation
 - Installer uses `$SCRIPT_DIR` and `$DEVILBOX_PATH`
 - Server uses `__dirname` for relative paths
 - All examples use `/path/to/devilbox` placeholder

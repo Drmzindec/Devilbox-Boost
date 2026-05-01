@@ -24,8 +24,8 @@
 
 **New installation:**
 ```bash
-git clone https://github.com/cytopia/devilbox.git && cd devilbox
 curl -sSL https://raw.githubusercontent.com/Drmzindec/Devilbox-Boost/main/install.sh | bash
+cd Devilbox-Boost
 ./setup-devilbox.sh  # Interactive wizard
 ```
 
@@ -62,10 +62,10 @@ docker compose exec php laravel new my-blog
 - **Prettier & ESLint** - Code quality
 
 ### 🗄️ Database & Caching
-- **MySQL 8.0** / MariaDB
-- **PostgreSQL 16**
-- **MongoDB 7**
-- **Redis 7**
+- **MariaDB 10.6** (MySQL 8.0 also available)
+- **PostgreSQL 18**
+- **MongoDB 8.0**
+- **Redis 8.6**
 - **Memcached**
 
 ### 🎯 Smart Automation

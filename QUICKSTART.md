@@ -1,4 +1,4 @@
-# Devilbox Modern - Quick Start Guide
+# Devilbox Boost - Quick Start Guide
 
 Get up and running with Devilbox in 10 minutes.
 
@@ -93,9 +93,9 @@ open http://my-site.local
 ### Custom PHP
 
 ```bash
-# Create directory
-mkdir data/www/my-project
-cd data/www/my-project
+# Create directory with docroot
+mkdir -p data/www/my-project/htdocs
+cd data/www/my-project/htdocs
 
 # Create index.php
 echo '<?php phpinfo();' > index.php
@@ -218,13 +218,13 @@ Edit `.env`:
 
 ```bash
 # Change this line
-PHP_SERVER=8.4  # or 8.3
+PHP_SERVER=8.4  # or 8.3 or 8.5
 ```
 
-Restart:
+Restart (full recreate required after `.env` changes):
 
 ```bash
-docker compose restart
+docker compose stop && docker compose rm -f && docker compose up -d
 ```
 
 Check version:
@@ -365,7 +365,7 @@ Or use Devilbox DNS (port 1053).
 - **Setup Wizard**: [SETUP-WIZARD.md](SETUP-WIZARD.md)
 - **Development Guidelines**: [.claude/README.md](.claude/README.md)
 - **Service Guides**: [.claude/skills/](.claude/skills/)
-- **Roadmap**: [ROADMAP-MODERNIZATION.md](ROADMAP-MODERNIZATION.md)
+- **Roadmap**: [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ### Skills & Guides
 
@@ -387,7 +387,7 @@ Located in `.claude/skills/`:
 - **Vhost Auto-Detection**: Automatic Apache/Nginx configuration
 - **Port Forwarding**: Direct `127.0.0.1` database connections
 - **Modern Tools**: Bun, Vite, Pest, React, Vue, Angular
-- **Multiple PHP Versions**: Switch between 8.3 and 8.4
+- **Multiple PHP Versions**: Switch between 8.3, 8.4, and 8.5
 
 ---
 
@@ -412,7 +412,7 @@ Located in `.claude/skills/`:
 
 ### Modern Tools
 
-- **PHP 8.3 & 8.4** with latest features
+- **PHP 8.3, 8.4 & 8.5** with latest features
 - **Composer 2.9.5** - Dependency management
 - **Laravel Installer 5.24.5** - Quick project creation
 - **WP-CLI 2.12.0** - WordPress management
@@ -426,10 +426,10 @@ Located in `.claude/skills/`:
 
 ### Database Services
 
-- **MySQL 8.0** / MariaDB
-- **PostgreSQL 16**
-- **MongoDB 7**
-- **Redis 7**
+- **MariaDB 10.6** (MySQL 8.0 also available)
+- **PostgreSQL 18**
+- **MongoDB 8.0**
+- **Redis 8.6**
 - **Memcached**
 
 ### Admin Tools

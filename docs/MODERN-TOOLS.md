@@ -123,9 +123,7 @@ artisan make:model Post
 ### Create a New Laravel Project
 ```bash
 laravel new myblog
-cd myblog
-./setup-laravel-vhost.sh myblog  # Auto-configure vhost
-docker-compose restart httpd
+# Vhost is auto-detected — no manual setup needed
 # Visit: http://myblog.local
 ```
 
@@ -165,14 +163,13 @@ pest tests/Feature             # Run specific directory
 
 1. **Rebuild the PHP image** to include all new tools:
    ```bash
-   cd /Users/johanpretorius/devilbox
    ./docker-images/build-php.sh 8.4
-   docker-compose up -d --force-recreate php
+   docker compose up -d --force-recreate php
    ```
 
-2. **Add bin to PATH** (already done if you followed QOL-SETUP.md):
+2. **Add bin to PATH** (already done if you ran the setup wizard):
    ```bash
-   export PATH="/Users/johanpretorius/devilbox/bin:$PATH"
+   export PATH="/path/to/Devilbox-Boost/bin:$PATH"
    ```
 
 3. **Test the new tools**:

@@ -84,9 +84,13 @@ RUN composer global config allow-plugins.pestphp/pest-plugin true \
     && composer global require laravel/installer \
     && composer global require wp-cli/wp-cli-bundle \
     && composer global require pestphp/pest \
+    && composer global require phpstan/phpstan \
+    && composer global require rector/rector \
     && ln -s /root/.composer/vendor/bin/laravel /usr/local/bin/laravel \
     && ln -s /root/.composer/vendor/bin/wp /usr/local/bin/wp \
-    && ln -s /root/.composer/vendor/bin/pest /usr/local/bin/pest
+    && ln -s /root/.composer/vendor/bin/pest /usr/local/bin/pest \
+    && ln -s /root/.composer/vendor/bin/phpstan /usr/local/bin/phpstan \
+    && ln -s /root/.composer/vendor/bin/rector /usr/local/bin/rector
 
 # Install Node.js from NodeSource repository
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
@@ -114,10 +118,15 @@ RUN curl -fsSL https://bun.sh/install | bash \
     && ln -s /root/.bun/bin/bun /usr/local/bin/bun \
     && ln -s /root/.bun/bin/bunx /usr/local/bin/bunx
 
-# Make root's .composer and .bun accessible to PHP-FPM (runs as devilbox user)
+# Install Deno
+RUN curl -fsSL https://deno.land/install.sh | sh \
+    && ln -s /root/.deno/bin/deno /usr/local/bin/deno
+
+# Make root's .composer, .bun and .deno accessible to PHP-FPM (runs as devilbox user)
 # This allows the dashboard to detect installed tools
 RUN chmod o+rx /root \
-    && chmod -R o+rx /root/.composer /root/.bun
+    && chmod -R o+rx /root/.composer /root/.bun /root/.deno \
+    && mkdir -p /tmp/cache && chmod 1777 /tmp/cache
 
 # Install sudo first (before modifying sudoers)
 RUN apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*

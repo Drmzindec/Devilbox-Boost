@@ -451,18 +451,18 @@ All tools tested successfully:
 
 **Solution:** Ensure Docker Desktop is installed and running
 
-### "Permission denied: /Users/johanpretorius/devilbox/mcp-server/index.js"
+### "Permission denied: /path/to/Devilbox-Boost/mcp-server/index.js"
 
 **Solution:**
 ```bash
-chmod +x /Users/johanpretorius/devilbox/mcp-server/index.js
+chmod +x /path/to/Devilbox-Boost/mcp-server/index.js
 ```
 
 ### "Module not found: @modelcontextprotocol/sdk"
 
 **Solution:**
 ```bash
-cd /Users/johanpretorius/devilbox/mcp-server
+cd /path/to/Devilbox-Boost/mcp-server
 npm install
 ```
 

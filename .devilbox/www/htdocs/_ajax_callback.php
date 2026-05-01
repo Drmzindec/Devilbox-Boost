@@ -189,6 +189,21 @@ if (loadClass('Helper')->isLoggedIn()) {
 			echo json_encode(array(
 				$_GET['software'] => (($version = loadClass('Php')->getEslintVersion()) !== false) ? $version : $no
 			));
+		}
+		else if ($_GET['software'] == 'phpstan') {
+			echo json_encode(array(
+				$_GET['software'] => (($version = loadClass('Php')->getPhpstanVersion()) !== false) ? $version : $no
+			));
+		}
+		else if ($_GET['software'] == 'rector') {
+			echo json_encode(array(
+				$_GET['software'] => (($version = loadClass('Php')->getRectorVersion()) !== false) ? $version : $no
+			));
+		}
+		else if ($_GET['software'] == 'deno') {
+			echo json_encode(array(
+				$_GET['software'] => (($version = loadClass('Php')->getDenoVersion()) !== false) ? $version : $no
+			));
 		} else {
 			echo json_encode(array($_GET['software'] => 'unknown software'));
 		}

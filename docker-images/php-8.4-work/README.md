@@ -18,7 +18,7 @@ This is a custom PHP 8.4 FPM image with essential development tools, created bec
 ## Building
 
 ```bash
-cd /Users/johanpretorius/devilbox
+cd /path/to/Devilbox-Boost
 docker build \
   --build-arg NEW_UID=$(id -u) \
   --build-arg NEW_GID=$(id -g) \

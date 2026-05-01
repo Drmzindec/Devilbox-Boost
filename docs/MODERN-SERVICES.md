@@ -18,8 +18,9 @@ Devilbox Boost includes optional modern services for search, email testing, mess
 
 **Enable:**
 ```bash
-cp compose/docker-compose.override.yml-meilisearch docker-compose.override.yml
-docker compose up -d meilisearch
+# Meilisearch is included in the main docker-compose.yml
+# Just start the stack:
+docker compose up -d
 ```
 
 **Access:**
@@ -71,8 +72,9 @@ $results = $index->search('lap'); // Finds "Laptop" (typo-tolerant)
 
 **Enable:**
 ```bash
-cp compose/docker-compose.override.yml-mailpit docker-compose.override.yml
-docker compose up -d mailpit
+# Mailpit is included in the main docker-compose.yml
+# Just start the stack:
+docker compose up -d
 ```
 
 **Access:**
@@ -97,17 +99,22 @@ define('SMTP_PORT', 1025);
 define('SMTP_AUTH', false);
 ```
 
-**PHP Example:**
+**PHP Example (Symfony Mailer):**
 ```php
-$transport = (new Swift_SmtpTransport('127.0.0.1', 1025));
-$mailer = new Swift_Mailer($transport);
+use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mime\Email;
 
-$message = (new Swift_Message('Test Email'))
-    ->setFrom(['dev@example.com' => 'Dev Team'])
-    ->setTo(['user@example.com'])
-    ->setBody('This is a test email!');
+$transport = Transport::fromDsn('smtp://127.0.0.1:1025');
+$mailer = new Mailer($transport);
 
-$mailer->send($message);
+$email = (new Email())
+    ->from('dev@example.com')
+    ->to('user@example.com')
+    ->subject('Test Email')
+    ->text('This is a test email!');
+
+$mailer->send($email);
 // Check http://localhost:8025 to see the email!
 ```
 
@@ -126,8 +133,9 @@ $mailer->send($message);
 
 **Enable:**
 ```bash
-cp compose/docker-compose.override.yml-rabbitmq docker-compose.override.yml
-docker compose up -d rabbit
+# RabbitMQ is included in the main docker-compose.yml
+# Just start the stack:
+docker compose up -d
 ```
 
 **Access:**
@@ -198,8 +206,9 @@ while ($channel->is_consuming()) {
 
 **Enable:**
 ```bash
-cp compose/docker-compose.override.yml-minio docker-compose.override.yml
-docker compose up -d minio
+# MinIO is included in the main docker-compose.yml
+# Just start the stack:
+docker compose up -d
 ```
 
 **Access:**
@@ -273,11 +282,10 @@ echo $url; // http://127.0.0.1:9000/my-bucket/photos/vacation.jpg
 
 ## 📦 Enable All Services
 
-To enable all 4 modern services at once:
+All 4 modern services are included in the main `docker-compose.yml` and start automatically:
 
 ```bash
-cp compose/docker-compose.override.yml-modern-services docker-compose.override.yml
-docker compose up -d meilisearch mailpit rabbit minio
+docker compose up -d
 ```
 
 Or use the setup wizard:

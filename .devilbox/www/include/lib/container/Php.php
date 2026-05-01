@@ -186,6 +186,21 @@ class Php extends BaseClass implements BaseInterface
 		$output = loadClass('Helper')->exec('eslint --version 2>/dev/null', $output);
 		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
 	}
+	public function getPhpstanVersion()
+	{
+		$output = loadClass('Helper')->exec('phpstan --version 2>/dev/null', $output);
+		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
+	}
+	public function getRectorVersion()
+	{
+		$output = loadClass('Helper')->exec('rector --version 2>/dev/null || COMPOSER_HOME=/root/.composer composer global show rector/rector 2>/dev/null | grep "versions"', $output);
+		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
+	}
+	public function getDenoVersion()
+	{
+		$output = loadClass('Helper')->exec('deno --version 2>/dev/null | head -1', $output);
+		return loadClass('Helper')->egrep('/[0-9.]+/', $output);
+	}
 	//public function getDrushVersion($version)
 	//{
 	//	$output = loadClass('Helper')->exec('drush'.$version.' --version 2>/dev/null', $output);

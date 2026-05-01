@@ -5,7 +5,7 @@
 ## Usage: docker compose -f docker-compose.lean.yml up -d
 ##
 ## Runs only: PHP 8.4, Nginx, MariaDB, Redis
-## No DNS server (uses dvl.to public DNS), no pgsql/memcd/mongo/modern services.
+## No DNS server, no pgsql/memcd/mongo/modern services.
 ##
 
 services:
@@ -16,6 +16,7 @@ services:
   php:
     image: devilbox-php-${PHP_SERVER}:work
     hostname: php
+    restart: always
 
     env_file:
       - ./.env
@@ -64,6 +65,13 @@ services:
       - ${DEVILBOX_PATH}/ca:/ca:rw${MOUNT_OPTIONS}
       - ${HOST_PATH_SSH_DIR}:/home/devilbox/.ssh:ro${MOUNT_OPTIONS}
 
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm-healthcheck || kill -0 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
 
   # ------------------------------------------------------------
   # Web Server
@@ -71,6 +79,7 @@ services:
   httpd:
     image: devilbox/${HTTPD_SERVER}:${HTTPD_FLAVOUR:-alpine}-1.2
     hostname: httpd
+    restart: always
 
     environment:
       - SVCTL_ENABLE=1
@@ -124,6 +133,13 @@ services:
       - ${DEVILBOX_PATH}/log/${HTTPD_SERVER}:/var/log/httpd:rw${MOUNT_OPTIONS}
       - ${DEVILBOX_PATH}/ca:/ca:rw${MOUNT_OPTIONS}
 
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:80/ -o /dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
     depends_on:
       - php
 
@@ -134,6 +150,7 @@ services:
   mysql:
     image: devilbox/mysql:${MYSQL_SERVER}-0.21
     hostname: mysql
+    restart: always
 
     environment:
       - MYSQL_ROOT_PASSWORD
@@ -151,6 +168,13 @@ services:
       - ${DEVILBOX_PATH}/cfg/${MYSQL_SERVER}:/etc/mysql/docker-default.d:ro${MOUNT_OPTIONS}
       - devilbox-${MYSQL_SERVER}:/var/lib/mysql:rw${MOUNT_OPTIONS}
 
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost --silent"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
     depends_on:
       - php
       - httpd
@@ -162,6 +186,7 @@ services:
   redis:
     image: redis:${REDIS_SERVER}
     hostname: redis
+    restart: always
 
     command: redis-server ${REDIS_ARGS:- }
     environment:
@@ -173,6 +198,13 @@ services:
     networks:
       app_net:
         ipv4_address: 172.16.238.14
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
     depends_on:
       - php

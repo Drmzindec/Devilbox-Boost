@@ -634,6 +634,14 @@ $db = $client->my_database;</pre>
 										<th style="padding-left: 20px;">Pest (Testing)</th>
 										<td id="app_pest"></td>
 									</tr>
+									<tr>
+										<th style="padding-left: 20px;">PHPStan</th>
+										<td id="app_phpstan"></td>
+									</tr>
+									<tr>
+										<th style="padding-left: 20px;">Rector</th>
+										<td id="app_rector"></td>
+									</tr>
 									<!-- JavaScript & Runtimes -->
 									<tr style="background-color: #2a2a2a;">
 										<th colspan="2" style="color: #ffc107; font-weight: bold; padding: 8px;"><i class="fa fa-code" aria-hidden="true"></i> JavaScript & Build</th>
@@ -645,6 +653,10 @@ $db = $client->my_database;</pre>
 									<tr>
 										<th style="padding-left: 20px;">Bun</th>
 										<td id="app_bun"></td>
+									</tr>
+									<tr>
+										<th style="padding-left: 20px;">Deno</th>
+										<td id="app_deno"></td>
 									</tr>
 									<tr>
 										<th style="padding-left: 20px;">NPM</th>
@@ -1218,9 +1230,12 @@ $db = $client->my_database;</pre>
 			updateVersions('laravel_installer');
 			updateVersions('wpcli');
 			updateVersions('pest');
+			updateVersions('phpstan');
+			updateVersions('rector');
 			// JS Runtimes
 			updateVersions('node');
 			updateVersions('bun');
+			updateVersions('deno');
 			// Package Managers
 			updateVersions('npm');
 			updateVersions('yarn');

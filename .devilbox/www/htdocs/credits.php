@@ -18,8 +18,8 @@
 			<div class="row">
 
 				<div class="col-md-6">
-					<h2>Contributors</h2>
-					<p>The following people have contributed to the <a href="https://github.com/cytopia/devilbox/graphs/contributors">Devilbox</a>.</p>
+					<h2>Devilbox Boost</h2>
+					<p>An enhanced fork of <a href="https://github.com/cytopia/devilbox">Devilbox</a> with modern PHP support, updated tools, and quality-of-life improvements.</p>
 					<table class="table table-striped ">
 						<thead class="thead-inverse ">
 							<tr>
@@ -30,8 +30,13 @@
 						</thead>
 						<tbody>
 							<tr>
+								<td>Drmzindec</td>
+								<td>Boost creator &amp; maintainer</td>
+								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a href="https://github.com/Drmzindec/Devilbox-Boost">Devilbox-Boost</a></td>
+							</tr>
+							<tr>
 								<td>cytopia</td>
-								<td>Project creator</td>
+								<td>Original Devilbox creator</td>
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a href="https://github.com/cytopia">cytopia</a></td>
 							</tr>
 							<tr>
@@ -41,13 +46,13 @@
 							</tr>
 						</tbody>
 					</table>
-					<p>If you like to contribute, have a lookt at the <a href="https://github.com/cytopia/devilbox/blob/master/CONTRIBUTING.md">Contributing Guidelines</a>.</p>
+					<p>Want to contribute? See the <a href="https://github.com/Drmzindec/Devilbox-Boost/blob/main/CONTRIBUTING.md">Contributing Guidelines</a>.</p>
 				</div>
 
 
 				<div class="col-md-6">
 					<h2>Libraries</h2>
-					<p>The <a href="https://github.com/cytopia/devilbox">Devilbox</a> includes several libraries which are listed below.</p>
+					<p><a href="https://github.com/Drmzindec/Devilbox-Boost">Devilbox Boost</a> includes the following libraries.</p>
 					<table class="table table-striped ">
 						<thead class="thead-inverse ">
 							<tr>
@@ -58,7 +63,7 @@
 						</thead>
 						<tbody>
 							<tr>
-								<td>Adminer</td>
+								<td>Adminer 5.4.2</td>
 								<td>Apache License 2.0 or GPL 2</td>
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/vrana/adminer">vrana/adminer</a></td>
 							</tr>
@@ -78,29 +83,24 @@
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/FortAwesome/Font-Awesome">FortAwesome/Font-Awesome</a></td>
 							</tr>
 							<tr>
-								<td>Opcache GUI</td>
+								<td>OpCache GUI 3.6.0</td>
 								<td>MIT</td>
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/amnuts/opcache-gui">amnuts/opcache-gui</a></td>
 							</tr>
 							<tr>
-								<td>PHPMemcachedAdmin</td>
+								<td>phpCacheAdmin 2.4.1</td>
 								<td>Apache 2.0</td>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/elijaa/phpmemcachedadmin">elijaa/phpmemcachedadmin</a></td>
+								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/RobiNN1/phpCacheAdmin">RobiNN1/phpCacheAdmin</a></td>
 							</tr>
 							<tr>
-								<td>phpMyAdmin</td>
+								<td>phpMyAdmin 5.2.3</td>
 								<td>GPL 2.0</td>
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/phpmyadmin/phpmyadmin">phpmyadmin/phpmyadmin</a></td>
 							</tr>
 							<tr>
-								<td>phpPgAdmin</td>
+								<td>phpPgAdmin 7.13.0</td>
 								<td>GPL 2.0</td>
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/phppgadmin/phppgadmin">phppgadmin/phppgadmin</a></td>
-							</tr>
-							<tr>
-								<td>PHPRedMin</td>
-								<td>BSD 3-Clause License</td>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/sasanrose/phpredmin">sasanrose/phpredmin</a></td>
 							</tr>
 						</tbody>
 					</table>
