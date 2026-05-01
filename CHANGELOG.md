@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.3] - 2026-05-01
+
+### Added
+- `install.sh` — one-line installer for new and existing Devilbox setups
+- PHP 8.5 support with custom Docker image (`docker-images/php-8.5-work/`)
+- PHP 8.5 configuration directories (`cfg/php-ini-8.5/`, `cfg/php-fpm-8.5/`, `cfg/php-startup-8.5/`)
+- PHP 8.5 option in `env-example`
+
+---
+
 ## [1.0.2] - 2026-05-01
 
 ### Added

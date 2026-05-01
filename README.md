@@ -2,10 +2,10 @@
 
 # 🚀 Devilbox Boost
 
-**Modern PHP 8.3/8.4 development stack powered by Docker**
+**Modern PHP 8.3/8.4/8.5 development stack powered by Docker**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4-777BB4?logo=php&logoColor=white)](https://www.php.net/)
+[![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4%20%7C%208.5-777BB4?logo=php&logoColor=white)](https://www.php.net/)
 [![Docker](https://img.shields.io/badge/Docker-required-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Laravel](https://img.shields.io/badge/Laravel-ready-FF2D20?logo=laravel&logoColor=white)](https://laravel.com/)
 [![WordPress](https://img.shields.io/badge/WordPress-ready-21759B?logo=wordpress&logoColor=white)](https://wordpress.org/)
@@ -14,7 +14,7 @@
 
 ---
 
-**Devilbox Boost** modernizes the official [Devilbox](https://github.com/cytopia/devilbox) with PHP 8.3/8.4 support, modern development tools (Bun, Vite, Pest), and quality-of-life improvements.
+**Devilbox Boost** modernizes the official [Devilbox](https://github.com/cytopia/devilbox) with PHP 8.3/8.4/8.5 support, modern development tools (Bun, Vite, Pest), and quality-of-life improvements.
 
 </div>
 
@@ -48,7 +48,7 @@ docker compose exec php laravel new my-blog
 ## ✨ Features
 
 ### 🐘 Modern PHP Stack
-- **PHP 8.3 & 8.4** - Zero deprecation warnings
+- **PHP 8.3, 8.4 & 8.5** - Zero deprecation warnings
 - **Laravel Installer** - Instant Laravel projects
 - **WP-CLI** - WordPress management
 - **Pest** - Modern testing framework
@@ -98,12 +98,12 @@ docker compose exec php laravel new my-blog
 
 | Feature | Devilbox | Devilbox Boost |
 |---------|----------|----------------|
-| **PHP 8.4 Support** | ❌ | ✅ |
+| **PHP 8.4/8.5 Support** | ❌ | ✅ |
 | **Modern Tools** | ⚠️ Outdated (2023) | ✅ Bun, Vite, Pest |
 | **Setup Time** | ⏱️ 1-2 hours manual | ⏱️ 10 minutes wizard |
 | **Laravel Auto-Config** | ❌ Manual vhost | ✅ Auto-detected |
 | **WordPress Support** | ⚠️ Manual setup | ✅ WP-CLI + auto-config |
-| **Admin Tools** | ⚠️ PHP warnings | ✅ PHP 8.4 compatible |
+| **Admin Tools** | ⚠️ PHP warnings | ✅ PHP 8.5 compatible |
 | **AI Integration** | ❌ | ✅ Claude Code MCP |
 | **Documentation** | ⚠️ Outdated | ✅ Comprehensive guides |
 
@@ -224,12 +224,12 @@ Password: root
 
 ---
 
-## 🚀 What's New in v1.0.2
+## 🚀 What's New in v1.0.3
 
-- ✅ **PHP 8.3 & 8.4** with custom Docker images
+- ✅ **PHP 8.3, 8.4 & 8.5** with custom Docker images
 - ✅ **Modern tools** - Bun, Vite, Pest, latest Node.js
 - ✅ **Auto vhost detection** - Laravel, WordPress, Symfony
-- ✅ **Updated admin tools** - All PHP 8.4 compatible
+- ✅ **Updated admin tools** - All PHP 8.5 compatible
 - ✅ **Interactive wizard** - 10-minute setup
 - ✅ **MCP server** - Claude Code AI integration
 - ✅ **Comprehensive docs** - Guides for all services
