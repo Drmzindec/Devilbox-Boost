@@ -224,7 +224,7 @@ Password: root
 
 ---
 
-## 🚀 What's New in v1.0.0
+## 🚀 What's New in v1.0.2
 
 - ✅ **PHP 8.3 & 8.4** with custom Docker images
 - ✅ **Modern tools** - Bun, Vite, Pest, latest Node.js
@@ -235,6 +235,9 @@ Password: root
 - ✅ **Comprehensive docs** - Guides for all services
 - ✅ **Port forwarding** - Direct 127.0.0.1 connections
 - ✅ **Command wrappers** - Run tools from host
+- ✅ **Quick Start snippets** - Connection examples for all services
+- ✅ **Lean mode** - Minimal 4-container alternative via `docker-compose.lean.yml`
+- ✅ **Modern services built-in** - Meilisearch, Mailpit, RabbitMQ, MinIO in default stack
 
 See [CHANGELOG.md](CHANGELOG.md) for complete details.
 

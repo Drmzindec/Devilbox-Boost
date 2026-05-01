@@ -17,6 +17,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] - 2026-05-01
+
+### Added
+- Quick Start connection snippets for MariaDB, PostgreSQL, Redis, Memcached, and MongoDB (Laravel, WordPress, PHP examples)
+- `docker-compose.lean.yml` for minimal 4-container mode (PHP, Nginx, MariaDB, Redis)
+- PHP-FPM pool tuning (`cfg/php-fpm-8.4/devilbox-fpm.conf`)
+- Modern services baked into main `docker-compose.yml` (Meilisearch, Mailpit, RabbitMQ, MinIO)
+
+### Improved
+- PHP 8.4 OPcache JIT configuration for development performance
+- Dashboard layout: CLI Tools and PHP Container Status panels now fill full width
+- Webpack version detection updated for webpack-cli 7.x compatibility
+
+### Fixed
+- Modern Services dashboard: MinIO card incorrectly displayed as RabbitMQ (PHP foreach-by-reference bug)
+- Modern Services health checks: services now detected via Docker network hostnames instead of localhost
+
+---
+
 ## [1.0.0] - 2026-02-14
 
 ### Added
