@@ -271,8 +271,9 @@ $modern_services = array(
 
 // Check which services are running
 foreach ($modern_services as $key => &$service) {
-	$service['running'] = checkServicePort('127.0.0.1', $service['port']);
+	$service['running'] = checkServicePort($key, $service['port']);
 }
+unset($service);
 
 
 /*********************************************************************************
@@ -472,7 +473,22 @@ foreach ($modern_services as $key => &$service) {
 									<h6 style="color:#9ccc65; margin-bottom:15px;"><i class="fa fa-code"></i> Quick Start</h6>
 									<ul class="nav nav-tabs" id="servicesTabs" role="tablist" style="border-bottom:2px solid #383737;">
 										<li class="nav-item">
-											<a class="nav-link active" id="meilisearch-tab" data-toggle="tab" href="#meilisearch-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">Meilisearch</a>
+											<a class="nav-link active" id="mariadb-tab" data-toggle="tab" href="#mariadb-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">MariaDB</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link" id="pgsql-tab" data-toggle="tab" href="#pgsql-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">PostgreSQL</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link" id="redis-tab" data-toggle="tab" href="#redis-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">Redis</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link" id="memcached-tab" data-toggle="tab" href="#memcached-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">Memcached</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link" id="mongodb-tab" data-toggle="tab" href="#mongodb-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">MongoDB</a>
+										</li>
+										<li class="nav-item" style="border-left:2px solid #555; margin-left:5px; padding-left:5px;">
+											<a class="nav-link" id="meilisearch-tab" data-toggle="tab" href="#meilisearch-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">Meilisearch</a>
 										</li>
 										<li class="nav-item">
 											<a class="nav-link" id="mailpit-tab" data-toggle="tab" href="#mailpit-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">Mailpit</a>
@@ -485,7 +501,65 @@ foreach ($modern_services as $key => &$service) {
 										</li>
 									</ul>
 									<div class="tab-content" id="servicesTabContent" style="background:#2a2a2a; padding:15px; border:1px solid #383737; border-top:none; border-radius:0 0 4px 4px;">
-										<div class="tab-pane fade show active" id="meilisearch-config" role="tabpanel">
+										<div class="tab-pane fade show active" id="mariadb-config" role="tabpanel">
+											<h6 style="color:#e57373; margin-bottom:10px;">Laravel .env</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=my_database
+DB_USERNAME=root
+DB_PASSWORD=<?php echo htmlspecialchars(loadClass('Helper')->getEnv('MYSQL_ROOT_PASSWORD') ?: 'root'); ?></pre>
+											<h6 style="margin-top:15px; color:#e57373; margin-bottom:10px;">WordPress wp-config.php</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">define('DB_NAME', 'my_database');
+define('DB_USER', 'root');
+define('DB_PASSWORD', '<?php echo htmlspecialchars(loadClass('Helper')->getEnv('MYSQL_ROOT_PASSWORD') ?: 'root'); ?>');
+define('DB_HOST', '127.0.0.1:3306');</pre>
+											<h6 style="margin-top:15px; color:#e57373; margin-bottom:10px;">PHP PDO</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">$pdo = new PDO('mysql:host=127.0.0.1;port=3306;dbname=my_database', 'root', '<?php echo htmlspecialchars(loadClass('Helper')->getEnv('MYSQL_ROOT_PASSWORD') ?: 'root'); ?>');</pre>
+										</div>
+										<div class="tab-pane fade" id="pgsql-config" role="tabpanel">
+											<h6 style="color:#64b5f6; margin-bottom:10px;">Laravel .env</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=my_database
+DB_USERNAME=postgres
+DB_PASSWORD=</pre>
+											<h6 style="margin-top:15px; color:#64b5f6; margin-bottom:10px;">PHP PDO</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">$pdo = new PDO('pgsql:host=127.0.0.1;port=5432;dbname=my_database', 'postgres', '');</pre>
+										</div>
+										<div class="tab-pane fade" id="redis-config" role="tabpanel">
+											<h6 style="color:#ef5350; margin-bottom:10px;">Laravel .env</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+CACHE_DRIVER=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis</pre>
+											<h6 style="margin-top:15px; color:#ef5350; margin-bottom:10px;">PHP</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">$redis = new Redis();
+$redis->connect('127.0.0.1', 6379);</pre>
+										</div>
+										<div class="tab-pane fade" id="memcached-config" role="tabpanel">
+											<h6 style="color:#26a69a; margin-bottom:10px;">Laravel .env</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">CACHE_DRIVER=memcached
+MEMCACHED_HOST=127.0.0.1
+MEMCACHED_PORT=11211</pre>
+											<h6 style="margin-top:15px; color:#26a69a; margin-bottom:10px;">PHP</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">$memcached = new Memcached();
+$memcached->addServer('127.0.0.1', 11211);</pre>
+										</div>
+										<div class="tab-pane fade" id="mongodb-config" role="tabpanel">
+											<h6 style="color:#4db6ac; margin-bottom:10px;">Laravel .env</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">DB_CONNECTION=mongodb
+DB_HOST=127.0.0.1
+DB_PORT=27017
+DB_DATABASE=my_database</pre>
+											<h6 style="margin-top:15px; color:#4db6ac; margin-bottom:10px;">PHP</h6>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;">$client = new MongoDB\Client('mongodb://127.0.0.1:27017');
+$db = $client->my_database;</pre>
+										</div>
+										<div class="tab-pane fade" id="meilisearch-config" role="tabpanel">
 											<h6 style="color:#ffc107; margin-bottom:10px;">Laravel Scout Configuration</h6>
 											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;"><?php echo htmlspecialchars($modern_services['meilisearch']['config']['Laravel Scout']); ?></pre>
 										</div>
@@ -524,7 +598,7 @@ foreach ($modern_services as $key => &$service) {
 			<!-- ############################################################ -->
 
 			<div class="row">
-				<div class="col-lg-4 col-md-6 col-sm-12 col-xs-12 col-margin">
+				<div class="col-lg-6 col-md-6 col-sm-12 col-xs-12 col-margin">
 					<div class="dash-box">
 						<div class="dash-box-head"><i class="fa fa-terminal" aria-hidden="true"></i> Available CLI Tools</div>
 						<div class="dash-box-body">
@@ -627,7 +701,7 @@ foreach ($modern_services as $key => &$service) {
 					</div>
 				</div>
 
-				<div class="col-lg-4 col-md-6 col-sm-12 col-xs-12 offset-lg-4 offset-md-0 offset-sm-0 col-margin">
+				<div class="col-lg-6 col-md-6 col-sm-12 col-xs-12 col-margin">
 					<div class="dash-box">
 						<div class="dash-box-head"><i class="fa fa-info-circle" aria-hidden="true"></i> PHP Container Status</div>
 						<div class="dash-box-body">
@@ -718,7 +792,7 @@ foreach ($modern_services as $key => &$service) {
 			<!-- ############################################################ -->
 			<div class="row">
 
-				<div class="col-lg-4 col-md-6 col-sm-12 col-xs-12 col-margin">
+				<div class="col-lg-6 col-md-6 col-sm-12 col-xs-12 col-margin">
 					<div class="dash-box">
 						<div class="dash-box-head"><i class="fa fa-share-alt" aria-hidden="true"></i> Networking</div>
 						<div class="dash-box-body">
@@ -794,7 +868,7 @@ foreach ($modern_services as $key => &$service) {
 				</div>
 
 
-				<div class="col-lg-4 col-md-6 col-sm-12 col-xs-12 offset-lg-4 offset-md-0 offset-sm-0 col-margin">
+				<div class="col-lg-6 col-md-6 col-sm-12 col-xs-12 col-margin">
 					<div class="dash-box">
 						<div class="dash-box-head"><i class="fa fa-wrench" aria-hidden="true"></i> Ports</div>
 						<div class="dash-box-body">
