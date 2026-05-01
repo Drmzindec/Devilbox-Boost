@@ -157,6 +157,9 @@
 /mcp-server/node_modules/
 /mcp-server/package-lock.json
 
+# Ignore MCP config (contains machine-specific paths)
+.mcp.json
+
 # Ignore downloaded admin tool archives
 /.devilbox/www/htdocs/vendor/*.tar.gz
 /.devilbox/www/htdocs/vendor/*.zip

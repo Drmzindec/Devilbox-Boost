@@ -24,11 +24,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEVILBOX_PATH = join(__dirname, '..');
 
 /**
- * Execute docker-compose command
+ * Execute docker compose command
  */
 async function dockerCompose(args, options = {}) {
   const cwd = options.cwd || DEVILBOX_PATH;
-  const { stdout, stderr } = await execAsync(`docker-compose ${args}`, { cwd });
+  const { stdout, stderr } = await execAsync(`docker compose ${args}`, { cwd });
   return { stdout, stderr };
 }
 
@@ -336,12 +336,12 @@ const toolHandlers = {
 
   async devilbox_databases({ type = 'mysql' }) {
     if (type === 'mysql') {
-      const { stdout } = await docker('exec devilbox-php-1 mysql -h 127.0.0.1 -u root -proot --skip-ssl -e "SHOW DATABASES;"');
+      const { stdout } = await dockerCompose('exec -T php mysql -h 127.0.0.1 -u root -proot --skip-ssl -e "SHOW DATABASES;"');
       return {
         content: [{ type: 'text', text: stdout }],
       };
     } else if (type === 'pgsql') {
-      const { stdout } = await docker('exec devilbox-php-1 psql -h 127.0.0.1 -U postgres -l');
+      const { stdout } = await dockerCompose('exec -T php psql -h 127.0.0.1 -U postgres -l');
       return {
         content: [{ type: 'text', text: stdout }],
       };
@@ -368,7 +368,7 @@ const toolHandlers = {
 
     // Check connectivity
     try {
-      await docker('exec devilbox-php-1 ping -c 1 mysql');
+      await dockerCompose('exec -T php ping -c 1 mysql');
       results.push('\n✅ PHP → MySQL connectivity: OK');
     } catch {
       results.push('\n❌ PHP → MySQL connectivity: FAILED');
