@@ -35,6 +35,36 @@ cd /path/to/devilbox
 curl -sSL https://raw.githubusercontent.com/Drmzindec/Devilbox-Boost/main/install.sh | bash
 ```
 
+**Auto-DNS setup (one-time):**
+
+Devilbox includes a DNS server so every project in `data/www/` auto-resolves — no `/etc/hosts` editing needed.
+
+<details>
+<summary><strong>macOS</strong></summary>
+
+```bash
+sudo bash -c 'mkdir -p /etc/resolver && echo -e "nameserver 127.0.0.1\nport 1053" > /etc/resolver/local'
+```
+</details>
+
+<details>
+<summary><strong>Linux (systemd-resolved)</strong></summary>
+
+```bash
+# Add to /etc/systemd/resolved.conf under [Resolve]:
+DNS=127.0.0.1:1053
+Domains=~local
+
+sudo systemctl restart systemd-resolved
+```
+</details>
+
+<details>
+<summary><strong>Windows</strong></summary>
+
+Set your network adapter's DNS to `127.0.0.1`. Devilbox's bind service listens on port 1053, so you may also need [Acrylic DNS Proxy](https://mayakron.altervista.org/support/acrylic/Home.htm) to forward `.local` queries.
+</details>
+
 **First project:**
 ```bash
 docker compose exec php laravel new my-blog

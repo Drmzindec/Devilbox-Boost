@@ -45,6 +45,31 @@ docker compose ps
 
 ---
 
+## Auto-DNS Setup (One-Time)
+
+Devilbox includes a bind DNS server so every project auto-resolves at `<name>.local` — no `/etc/hosts` editing needed.
+
+**macOS:**
+```bash
+sudo bash -c 'mkdir -p /etc/resolver && echo -e "nameserver 127.0.0.1\nport 1053" > /etc/resolver/local'
+```
+
+**Linux (systemd-resolved):**
+```bash
+# Add to /etc/systemd/resolved.conf under [Resolve]:
+DNS=127.0.0.1:1053
+Domains=~local
+
+sudo systemctl restart systemd-resolved
+```
+
+**Windows:**
+Set your network adapter's DNS to `127.0.0.1`. You may need [Acrylic DNS Proxy](https://mayakron.altervista.org/support/acrylic/Home.htm) to forward `.local` queries to port 1053.
+
+After this, any project in `data/www/<name>/` is instantly available at `http://<name>.local`.
+
+---
+
 ## First Project
 
 ### Laravel
