@@ -100,7 +100,7 @@ docker-compose restart php
 # Restart httpd to load new vhost
 docker-compose restart httpd
 
-# Access at: http://mynewapp.local
+# Access at: http://mynewapp.loc
 ```
 
 ## Technical Details

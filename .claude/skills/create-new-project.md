@@ -18,7 +18,7 @@ sleep 35
 ls -la my-project/.devilbox/
 
 # Visit project
-open http://my-project.local
+open http://my-project.loc
 ```
 
 ## WordPress Project
@@ -44,14 +44,14 @@ docker-compose exec php mysql -h 127.0.0.1 -u root -proot --skip-ssl \
 # Install WordPress
 docker-compose exec php wp core install \
     --path=my-wordpress \
-    --url=http://my-wordpress.local \
+    --url=http://my-wordpress.loc \
     --title="My WordPress Site" \
     --admin_user=admin \
     --admin_password=admin \
     --admin_email=admin@example.com
 
 # Visit
-open http://my-wordpress.local
+open http://my-wordpress.loc
 ```
 
 ## Custom PHP Project
@@ -73,7 +73,7 @@ EOF
 # No DocumentRoot subdirectory needed for custom PHP
 
 # Visit
-open http://my-custom-project.local
+open http://my-custom-project.loc
 ```
 
 ## Manual Vhost Configuration
@@ -90,8 +90,8 @@ mkdir -p .devilbox
 cat > .devilbox/apache24.yml <<'EOF'
 vhost: |
   <VirtualHost *:80>
-    ServerName my-project.local
-    ServerAlias www.my-project.local
+    ServerName my-project.loc
+    ServerAlias www.my-project.loc
 
     DocumentRoot "/shared/httpd/my-project/public"
 
@@ -116,7 +116,7 @@ cat > .devilbox/nginx.yml <<'EOF'
 vhost: |
   server {
     listen 80;
-    server_name my-project.local www.my-project.local;
+    server_name my-project.loc www.my-project.loc;
 
     root /shared/httpd/my-project/public;
     index index.php index.html;
@@ -157,7 +157,7 @@ docker-compose ps bind
 
 # Or use /etc/hosts
 sudo nano /etc/hosts
-# Add: 127.0.0.1 my-project.local
+# Add: 127.0.0.1 my-project.loc
 ```
 
 ### Option 2: Manual /etc/hosts
@@ -168,9 +168,9 @@ sudo nano /etc/hosts
 
 Add entries:
 ```
-127.0.0.1 my-project.local
-127.0.0.1 my-wordpress.local
-127.0.0.1 my-custom-project.local
+127.0.0.1 my-project.loc
+127.0.0.1 my-wordpress.loc
+127.0.0.1 my-custom-project.loc
 ```
 
 ## Troubleshooting

@@ -343,11 +343,11 @@ macOS | 27.5.1
 
 ### Workflow 1: Debug Production Error
 
-**Scenario:** User reports 500 error on `companychat.local`
+**Scenario:** User reports 500 error on `companychat.loc`
 
 **Conversation:**
 ```
-You: "I'm getting a 500 error on companychat.local, help me debug"
+You: "I'm getting a 500 error on companychat.loc, help me debug"
 
 Claude:
 1. *Uses devilbox_logs with service=httpd*
@@ -375,7 +375,7 @@ Claude:
 3. *Uses devilbox_databases* to check existing databases
 4. Suggests creating database: "Create database 'shopify_clone'?"
 5. *Uses devilbox_exec*: "mysql -h 127.0.0.1 -u root -proot --skip-ssl -e 'CREATE DATABASE shopify_clone;'"
-6. "Project ready at http://shopify-clone.local"
+6. "Project ready at http://shopify-clone.loc"
 ```
 
 ---
@@ -476,7 +476,7 @@ npm install
 
 1. **Be specific with requests:** Instead of "check logs", say "show me the last 50 lines of PHP errors"
 
-2. **Provide context:** "I'm getting a 404 on fansframe.local, help me debug"
+2. **Provide context:** "I'm getting a 404 on fansframe.loc, help me debug"
 
 3. **Ask for analysis:** "What's using the most memory in my containers?"
 

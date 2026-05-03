@@ -24,6 +24,15 @@ if [ -n "$FORWARD_PORTS_TO_LOCALHOST" ]; then
     echo "[INFO] Port forwarding setup complete"
 fi
 
+# Run custom startup scripts from /startup.2.d/
+if [ -d /startup.2.d ]; then
+    for script in /startup.2.d/*.sh; do
+        [ -x "$script" ] || continue
+        echo "[INFO] Running startup script: $(basename "$script")"
+        "$script" || true
+    done
+fi
+
 # Start vhost auto-configuration service in background
 if [ -f /usr/local/bin/vhost-auto-configure.sh ]; then
     echo "[INFO] Starting vhost auto-configuration service..."

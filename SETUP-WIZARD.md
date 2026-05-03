@@ -90,15 +90,15 @@ HTTPS port [443]:
 
 #### TLD Suffix
 ```
-TLD suffix for projects (e.g., .local, .test, .dev) [local]:
+TLD suffix for projects (e.g., .loc, .test, .dev) [loc]:
 ```
 
-**Default**: `local`
+**Default**: `loc`
 **What it does**: Sets `TLD_SUFFIX` in `.env`
-**Result**: Your projects will be accessible at `http://project-name.local`
+**Result**: Your projects will be accessible at `http://project-name.loc`
 
 **Popular Options**:
-- `.local` - macOS/Linux friendly
+- `.loc` - macOS/Linux friendly
 - `.test` - Recommended for modern development
 - `.dev` - Requires HTTPS (Chrome enforces)
 
@@ -206,7 +206,7 @@ Project name (e.g., my-blog):
 - Runs `docker compose exec php laravel new <project-name>`
 - Creates Laravel project in `data/www/<project-name>/`
 - Vhost auto-detection creates Apache/Nginx config (30 seconds)
-- Accessible at: `http://<project-name>.local`
+- Accessible at: `http://<project-name>.loc`
 
 #### Option 2: WordPress
 ```
@@ -215,7 +215,7 @@ Project name (e.g., my-site):
 
 **What it does**:
 - Downloads WordPress to `data/www/<project-name>/`
-- Accessible at: `http://<project-name>.local`
+- Accessible at: `http://<project-name>.loc`
 - Complete installation in browser
 
 #### Option 3: Custom PHP
@@ -225,7 +225,7 @@ Project name:
 
 **What it does**:
 - Creates directory with `index.php` (phpinfo)
-- Accessible at: `http://<project-name>.local`
+- Accessible at: `http://<project-name>.loc`
 
 ### 8. Optional: Claude Code Integration
 
@@ -299,7 +299,7 @@ PHP_SERVER=8.4                    # Your selected PHP version
 MYSQL_ROOT_PASSWORD=root          # Your MySQL password
 HOST_PORT_HTTPD=80               # Your HTTP port
 HOST_PORT_HTTPS=443              # Your HTTPS port
-TLD_SUFFIX=local                 # Your TLD suffix
+TLD_SUFFIX=loc                   # Your TLD suffix
 ```
 
 ### Shell Config (`~/.zshrc` or `~/.bashrc`)
@@ -345,7 +345,7 @@ sudo kill <PID>
 
 Check logs for specific error messages.
 
-### ".local domains don't resolve"
+### ".loc domains don't resolve"
 
 **Solution**: Configure DNS or use `/etc/hosts`:
 
@@ -355,8 +355,8 @@ sudo nano /etc/hosts
 
 Add:
 ```
-127.0.0.1 my-project.local
-127.0.0.1 my-wordpress.local
+127.0.0.1 my-project.loc
+127.0.0.1 my-wordpress.loc
 ```
 
 ### "Permission denied on PATH setup"
@@ -468,7 +468,7 @@ Safe to run multiple times:
    docker compose exec php laravel new my-app
    ```
 4. **Wait 30 seconds** for vhost auto-detection
-5. **Visit your project**: http://my-app.local
+5. **Visit your project**: http://my-app.loc
 
 ---
 

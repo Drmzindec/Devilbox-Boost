@@ -47,26 +47,26 @@ docker compose ps
 
 ## Auto-DNS Setup (One-Time)
 
-Devilbox includes a bind DNS server so every project auto-resolves at `<name>.local` — no `/etc/hosts` editing needed.
+Devilbox includes a bind DNS server so every project auto-resolves at `<name>.loc` — no `/etc/hosts` editing needed.
 
 **macOS:**
 ```bash
-sudo bash -c 'mkdir -p /etc/resolver && echo -e "nameserver 127.0.0.1\nport 1053" > /etc/resolver/local'
+sudo bash -c 'mkdir -p /etc/resolver && echo -e "nameserver 127.0.0.1\nport 1053" > /etc/resolver/loc'
 ```
 
 **Linux (systemd-resolved):**
 ```bash
 # Add to /etc/systemd/resolved.conf under [Resolve]:
 DNS=127.0.0.1:1053
-Domains=~local
+Domains=~loc
 
 sudo systemctl restart systemd-resolved
 ```
 
 **Windows:**
-Set your network adapter's DNS to `127.0.0.1`. You may need [Acrylic DNS Proxy](https://mayakron.altervista.org/support/acrylic/Home.htm) to forward `.local` queries to port 1053.
+Set your network adapter's DNS to `127.0.0.1`. You may need [Acrylic DNS Proxy](https://mayakron.altervista.org/support/acrylic/Home.htm) to forward `.loc` queries to port 1053.
 
-After this, any project in `data/www/<name>/` is instantly available at `http://<name>.local`.
+After this, any project in `data/www/<name>/` is instantly available at `http://<name>.loc`.
 
 ---
 
@@ -81,7 +81,7 @@ docker compose exec php laravel new my-blog
 # Wait 30 seconds for vhost auto-detection
 
 # Visit
-open http://my-blog.local
+open http://my-blog.loc
 ```
 
 ### WordPress
@@ -105,14 +105,14 @@ docker compose exec php mysql -h 127.0.0.1 -u root -proot --skip-ssl \
 # Install WordPress
 docker compose exec php wp core install \
     --path=my-site \
-    --url=http://my-site.local \
+    --url=http://my-site.loc \
     --title="My Site" \
     --admin_user=admin \
     --admin_password=admin \
     --admin_email=admin@example.com
 
 # Visit
-open http://my-site.local
+open http://my-site.loc
 ```
 
 ### Custom PHP
@@ -126,7 +126,7 @@ cd data/www/my-project/htdocs
 echo '<?php phpinfo();' > index.php
 
 # Visit
-open http://my-project.local
+open http://my-project.loc
 ```
 
 ---
@@ -307,7 +307,7 @@ docker compose exec php bash -c "cd my-app && php artisan migrate"
 ### 6. Visit Project
 
 ```
-http://my-app.local
+http://my-app.loc
 ```
 
 ---
@@ -366,7 +366,7 @@ DB_HOST=localhost
 DB_HOST=127.0.0.1
 ```
 
-### .local Domains Don't Work
+### .loc Domains Don't Work
 
 Add to `/etc/hosts`:
 
@@ -376,7 +376,7 @@ sudo nano /etc/hosts
 
 Add line:
 ```
-127.0.0.1 my-project.local
+127.0.0.1 my-project.loc
 ```
 
 Or use Devilbox DNS (port 1053).

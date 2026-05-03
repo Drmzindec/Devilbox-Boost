@@ -187,7 +187,7 @@ docker compose logs -f
 open http://localhost
 
 # Check your projects still work
-# Visit each project URL: http://project-name.local
+# Visit each project URL: http://project-name.loc
 
 # Check database connections
 docker compose exec php mysql -h 127.0.0.1 -u root -proot --skip-ssl -e "SHOW DATABASES;"
@@ -214,7 +214,7 @@ You should see:
 - `apache24.yml`
 - `nginx.yml`
 
-Visit: http://test-project.local
+Visit: http://test-project.loc
 
 ### Step 10: Optional Enhancements
 

@@ -17,6 +17,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.5] - 2026-05-03
+
+### Added
+- **Auto-docroot detection** — projects dropped in `data/www/` auto-detect their document root (`public/` for Laravel/Symfony, `web/` for Drupal, `pub/` for Magento, root for WordPress/generic). No manual `htdocs` symlinks or configuration needed
+- **MCP server for Claude Code CLI** — `.mcp.json` project-level config, installer now configures both Claude Code CLI and Desktop
+- **Auto-DNS documentation** — one-time resolver setup for macOS, Linux, and Windows
+
+### Changed
+- **Default TLD changed from `local` to `loc`** — `.local` is reserved by macOS for mDNS/Bonjour and does not resolve in browsers. All documentation updated to use `.loc`
+- **Simplified vhost auto-configure** — removed broken per-project nginx/apache config generation that conflicted with stock httpd watcherd. Now only handles htdocs symlink creation
+- **Custom PHP entrypoint** — now executes scripts from `/startup.2.d/` (autostart directory) before starting PHP-FPM
+- **bin/ wrappers fixed** — all 15 host-side command wrappers (`composer`, `artisan`, `php`, `npm`, etc.) now use `docker compose exec` with dynamic path detection instead of hardcoded container names
+- MCP server uses `docker compose exec -T php` instead of hardcoded `devilbox-php-1` container name
+- MCP server installer updated for both Claude Code CLI (`.mcp.json`) and Desktop (`claude_desktop_config.json`)
+
+### Fixed
+- `bin/` wrappers failing with "No such container: devilbox-php-1" when project directory is not named "devilbox"
+- `bin/mysql` wrapper had hardcoded path to wrong `.env` location
+- MCP server `docker-compose` (hyphenated) replaced with `docker compose` (space-separated)
+- Projects showing Devilbox dashboard instead of actual site content due to broken vhost config generation
+
+---
+
 ## [1.0.4] - 2026-05-01
 
 ### Added

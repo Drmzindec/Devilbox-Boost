@@ -43,7 +43,7 @@ Devilbox includes a DNS server so every project in `data/www/` auto-resolves —
 <summary><strong>macOS</strong></summary>
 
 ```bash
-sudo bash -c 'mkdir -p /etc/resolver && echo -e "nameserver 127.0.0.1\nport 1053" > /etc/resolver/local'
+sudo bash -c 'mkdir -p /etc/resolver && echo -e "nameserver 127.0.0.1\nport 1053" > /etc/resolver/loc'
 ```
 </details>
 
@@ -53,7 +53,7 @@ sudo bash -c 'mkdir -p /etc/resolver && echo -e "nameserver 127.0.0.1\nport 1053
 ```bash
 # Add to /etc/systemd/resolved.conf under [Resolve]:
 DNS=127.0.0.1:1053
-Domains=~local
+Domains=~loc
 
 sudo systemctl restart systemd-resolved
 ```
@@ -62,13 +62,13 @@ sudo systemctl restart systemd-resolved
 <details>
 <summary><strong>Windows</strong></summary>
 
-Set your network adapter's DNS to `127.0.0.1`. Devilbox's bind service listens on port 1053, so you may also need [Acrylic DNS Proxy](https://mayakron.altervista.org/support/acrylic/Home.htm) to forward `.local` queries.
+Set your network adapter's DNS to `127.0.0.1`. Devilbox's bind service listens on port 1053, so you may also need [Acrylic DNS Proxy](https://mayakron.altervista.org/support/acrylic/Home.htm) to forward `.loc` queries.
 </details>
 
 **First project:**
 ```bash
 docker compose exec php laravel new my-blog
-# Visit http://my-blog.local (auto-configured!)
+# Visit http://my-blog.loc (auto-configured!)
 ```
 
 📖 **Detailed guide:** [QUICKSTART.md](QUICKSTART.md)
@@ -144,13 +144,13 @@ docker compose exec php laravel new my-blog
 ### Create Laravel Project
 ```bash
 docker compose exec php laravel new my-app
-# Auto-detected, configured, ready at http://my-app.local
+# Auto-detected, configured, ready at http://my-app.loc
 ```
 
 ### Create WordPress Site
 ```bash
 docker compose exec php wp core download --path=my-site
-# Visit http://my-site.local to complete setup
+# Visit http://my-site.loc to complete setup
 ```
 
 ### Use Modern Tools

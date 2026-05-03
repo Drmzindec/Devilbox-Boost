@@ -124,7 +124,7 @@ artisan make:model Post
 ```bash
 laravel new myblog
 # Vhost is auto-detected — no manual setup needed
-# Visit: http://myblog.local
+# Visit: http://myblog.loc
 ```
 
 ### Frontend Development with Bun

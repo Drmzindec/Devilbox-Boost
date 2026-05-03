@@ -234,7 +234,7 @@ sed -i.bak "s/^HOST_PORT_HTTPS=.*/HOST_PORT_HTTPS=${HTTPS_PORT}/" .env
 print_success "HTTPS port set to ${HTTPS_PORT}"
 
 # TLD Suffix
-ask_question "TLD suffix for projects (e.g., .local, .test, .dev)" "local" "TLD"
+ask_question "TLD suffix for projects (e.g., .loc, .test, .dev)" "loc" "TLD"
 sed -i.bak "s/^TLD_SUFFIX=.*/TLD_SUFFIX=${TLD}/" .env
 print_success "TLD suffix set to .${TLD}"
 

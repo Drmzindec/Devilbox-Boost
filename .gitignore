@@ -253,3 +253,4 @@ $RECYCLE.BIN/
 ###### VS Code ######
 /.vscode
 CLAUDE.md
+log/php-fpm-8.4/php-errors.log
