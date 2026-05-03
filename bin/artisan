@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT_DIR=$(basename "$PWD")
 
 if [ ! -f "artisan" ]; then
     echo "Error: Not in a Laravel project directory (artisan file not found)"
     exit 1
 fi
 
+# Detect project working directory
+WORKDIR=""
+case "$PWD" in
+    $SCRIPT_DIR/data/www/*)
+        REL="${PWD#$SCRIPT_DIR/data/www/}"
+        WORKDIR="/shared/httpd/$REL"
+        ;;
+esac
+
 if [ -t 0 ]; then
-    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec -w "/shared/httpd/$PROJECT_DIR" php php artisan "$@"
+    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec ${WORKDIR:+-w "$WORKDIR"} php php artisan "$@"
 else
-    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec -T -w "/shared/httpd/$PROJECT_DIR" php php artisan "$@"
+    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec -T ${WORKDIR:+-w "$WORKDIR"} php php artisan "$@"
 fi

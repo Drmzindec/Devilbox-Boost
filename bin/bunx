@@ -1,7 +1,20 @@
 #!/usr/bin/env bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Detect project working directory
+WORKDIR=""
+case "$PWD" in
+    $SCRIPT_DIR/data/www/*)
+        REL="${PWD#$SCRIPT_DIR/data/www/}"
+        WORKDIR="/shared/httpd/$REL"
+        ;;
+    $SCRIPT_DIR/data/www)
+        WORKDIR="/shared/httpd"
+        ;;
+esac
+
 if [ -t 0 ]; then
-    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec php bunx "$@"
+    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec ${WORKDIR:+-w "$WORKDIR"} php bunx "$@"
 else
-    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec -T php bunx "$@"
+    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec -T ${WORKDIR:+-w "$WORKDIR"} php bunx "$@"
 fi
