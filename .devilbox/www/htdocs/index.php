@@ -261,10 +261,10 @@ $modern_services = array(
 		'url' => 'http://localhost:9001',
 		'username' => loadClass('Helper')->getEnv('MINIO_ROOT_USER') ?: 'minioadmin',
 		'password' => loadClass('Helper')->getEnv('MINIO_ROOT_PASSWORD') ?: 'minioadmin',
-		'api_port' => 9000,
+		'api_port' => 9100,
 		'config' => array(
-			'Laravel' => "AWS_ACCESS_KEY_ID=minioadmin\nAWS_SECRET_ACCESS_KEY=minioadmin\nAWS_DEFAULT_REGION=us-east-1\nAWS_BUCKET=my-bucket\nAWS_ENDPOINT=http://minio:9000\nAWS_USE_PATH_STYLE_ENDPOINT=true",
-			'PHP' => "\$client = new \\Aws\\S3\\S3Client([\n  'endpoint' => 'http://minio:9000',\n  'credentials' => ['key' => 'minioadmin', 'secret' => 'minioadmin']\n]);"
+			'Laravel' => "AWS_ACCESS_KEY_ID=minioadmin\nAWS_SECRET_ACCESS_KEY=minioadmin\nAWS_DEFAULT_REGION=us-east-1\nAWS_BUCKET=my-bucket\nAWS_ENDPOINT=http://127.0.0.1:9100\nAWS_USE_PATH_STYLE_ENDPOINT=true",
+			'PHP' => "\$client = new \\Aws\\S3\\S3Client([\n  'endpoint' => 'http://127.0.0.1:9100',\n  'credentials' => ['key' => 'minioadmin', 'secret' => 'minioadmin']\n]);"
 		)
 	)
 );
