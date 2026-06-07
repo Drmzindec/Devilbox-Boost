@@ -28,22 +28,28 @@ scan_projects() {
         local project=$(basename "$project_path")
         [ "$project" = "." ] || [ "$project" = ".." ] && continue
 
-        # Skip if htdocs already exists
-        [ -e "$project_path/htdocs" ] || [ -L "$project_path/htdocs" ] && continue
-
+        local desired="."
         if [ -d "$project_path/public" ]; then
-            ln -s public "$project_path/htdocs"
-            log "$project/htdocs -> public"
+            desired="public"
         elif [ -d "$project_path/web" ]; then
-            ln -s web "$project_path/htdocs"
-            log "$project/htdocs -> web"
+            desired="web"
         elif [ -d "$project_path/pub" ]; then
-            ln -s pub "$project_path/htdocs"
-            log "$project/htdocs -> pub"
-        else
-            ln -s . "$project_path/htdocs"
-            log "$project/htdocs -> ."
+            desired="pub"
         fi
+
+        if [ -L "$project_path/htdocs" ]; then
+            local current
+            current=$(readlink "$project_path/htdocs")
+            [ "$current" = "$desired" ] && continue
+            rm "$project_path/htdocs"
+            log "$project/htdocs: $current -> $desired (corrected)"
+        elif [ -e "$project_path/htdocs" ]; then
+            # htdocs is a real directory, don't touch it
+            continue
+        fi
+
+        ln -s "$desired" "$project_path/htdocs"
+        [ -L "$project_path/htdocs" ] && log "$project/htdocs -> $desired"
     done
 }
 
