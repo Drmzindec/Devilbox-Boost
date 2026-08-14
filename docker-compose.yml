@@ -39,6 +39,13 @@ services:
       - "${LOCAL_LISTEN_ADDR}${HOST_PORT_BIND:-1053}:53/tcp"
       - "${LOCAL_LISTEN_ADDR}${HOST_PORT_BIND:-1053}:53/udp"
 
+    healthcheck:
+      test: ["CMD-SHELL", "dig +short +time=1 +tries=1 @127.0.0.1 localhost >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
     environment:
       ##
       ## Debug?
@@ -64,6 +71,14 @@ services:
       ## Security
       ##
       - DNSSEC_VALIDATE=${BIND_DNSSEC_VALIDATE:-no}
+
+      ##
+      ## Allow queries/recursion from the host (queries arrive NAT'ed through
+      ## the published port, so the source IP is not always in localnets).
+      ## This DNS server is only reachable on the port binding above.
+      ##
+      - ALLOW_QUERY=${BIND_ALLOW_QUERY:-any}
+      - ALLOW_RECURSION=${BIND_ALLOW_RECURSION:-any}
 
       ##
       ## Time settings
@@ -166,8 +181,8 @@ services:
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
       - RABBIT_DEFAULT_USER=${RABBIT_DEFAULT_USER:-guest}
       - RABBIT_DEFAULT_PASS=${RABBIT_DEFAULT_PASS:-guest}
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-rustfsadmin}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-rustfsadmin}
 
       ##
       ## MySQL Backups
@@ -352,7 +367,8 @@ services:
       - ${DEVILBOX_PATH}/ca:/ca:rw${MOUNT_OPTIONS}
 
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:80/ -o /dev/null || exit 1"]
+      # busybox wget — the alpine httpd images do not ship curl
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/ >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -367,13 +383,18 @@ services:
   # MySQL Database
   # ------------------------------------------------------------
   mysql:
-    image: devilbox/mysql:${MYSQL_SERVER}-0.21
+    image: ${MYSQL_IMAGE:-mariadb:11.8}
     hostname: mysql
     restart: always
 
     environment:
       - MYSQL_ROOT_PASSWORD
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      # Official MariaDB image: run mariadb-upgrade automatically when the
+      # data volume was created by an older server version (ignored by MySQL)
+      - MARIADB_AUTO_UPGRADE=1
+      - MARIADB_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=yes
 
     ports:
       # [local-machine:]local-port:docker-port
@@ -388,15 +409,17 @@ services:
       # HOST-DIRECTORY : DOCKER-DIRECTORY
 
       # Mount devilbox user-defined cnf files in order
-      # to overwrite the MySQL server configuration
+      # to overwrite the MySQL server configuration.
+      # The official mariadb/mysql images read *.cnf from /etc/mysql/conf.d
+      - ${DEVILBOX_PATH}/cfg/${MYSQL_SERVER}:/etc/mysql/conf.d:ro${MOUNT_OPTIONS}
       - ${DEVILBOX_PATH}/.devilbox/cfg/mysql.cnf:/etc/mysql/conf.d/devilbox.cnf:ro${MOUNT_OPTIONS}
-      - ${DEVILBOX_PATH}/cfg/${MYSQL_SERVER}:/etc/mysql/docker-default.d:ro${MOUNT_OPTIONS}
 
       # Mount MySQL Data directory
       - devilbox-${MYSQL_SERVER}:/var/lib/mysql:rw${MOUNT_OPTIONS}
 
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost --silent"]
+      # mariadb-admin on MariaDB 11+, mysqladmin on MySQL images
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost --silent 2>/dev/null || mysqladmin ping -h localhost --silent"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -639,30 +662,33 @@ services:
 
 
   # ------------------------------------------------------------
-  # MinIO — S3-compatible object storage
+  # RustFS — S3-compatible object storage (MinIO replacement)
   # ------------------------------------------------------------
-  minio:
-    image: minio/minio:${MINIO_SERVER:-latest}
-    hostname: minio
+  rustfs:
+    image: rustfs/rustfs:${RUSTFS_SERVER:-latest}
+    hostname: rustfs
     restart: always
-    command: server /data --console-address ":9001"
     environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - MINIO_REGION=${MINIO_REGION:-us-east-1}
+      - RUSTFS_VOLUMES=/data
+      - RUSTFS_ADDRESS=0.0.0.0:9000
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-rustfsadmin}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-rustfsadmin}
     ports:
-      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MINIO:-9000}:9000"
-      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MINIO_CONSOLE:-9001}:9001"
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_RUSTFS:-9000}:9000"
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_RUSTFS_CONSOLE:-9001}:9001"
     networks:
       app_net:
         ipv4_address: 172.16.238.204
     volumes:
-      - devilbox-minio:/data
+      - devilbox-rustfs:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/health || curl -sf http://localhost:9000/ || exit 1"]
       interval: 30s
       timeout: 20s
       retries: 3
+      start_period: 15s
     depends_on:
       - bind
       - php
@@ -722,6 +748,8 @@ volumes:
   devilbox-mariadb-11.6:
   devilbox-mariadb-11.7:
   devilbox-mariadb-11.8:
+  devilbox-mariadb-latest:
+  devilbox-mysql-8.4:
   devilbox-percona-5.5:
   devilbox-percona-5.6:
   devilbox-percona-5.7:
@@ -778,13 +806,14 @@ volumes:
   devilbox-mongo-6.0:
   devilbox-mongo-7.0:
   devilbox-mongo-8.0:
+  devilbox-mongo-8.2:
   devilbox-mongo-latest:
-  
-  
+
+
   # ------------------------------------------------------------
   # Modern Services
   # ------------------------------------------------------------
   devilbox-meilisearch:
   devilbox-mailpit:
   devilbox-rabbit:
-  devilbox-minio:
+  devilbox-rustfs:

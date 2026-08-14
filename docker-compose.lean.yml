@@ -134,7 +134,8 @@ services:
       - ${DEVILBOX_PATH}/ca:/ca:rw${MOUNT_OPTIONS}
 
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:80/ -o /dev/null || exit 1"]
+      # busybox wget — the alpine httpd images do not ship curl
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/ >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -148,13 +149,18 @@ services:
   # MySQL Database
   # ------------------------------------------------------------
   mysql:
-    image: devilbox/mysql:${MYSQL_SERVER}-0.21
+    image: ${MYSQL_IMAGE:-mariadb:11.8}
     hostname: mysql
     restart: always
 
     environment:
       - MYSQL_ROOT_PASSWORD
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      # Official MariaDB image: run mariadb-upgrade automatically when the
+      # data volume was created by an older server version (ignored by MySQL)
+      - MARIADB_AUTO_UPGRADE=1
+      - MARIADB_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=yes
 
     ports:
       - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MYSQL}:3306"
@@ -164,12 +170,14 @@ services:
         ipv4_address: 172.16.238.12
 
     volumes:
+      # The official mariadb/mysql images read *.cnf from /etc/mysql/conf.d
+      - ${DEVILBOX_PATH}/cfg/${MYSQL_SERVER}:/etc/mysql/conf.d:ro${MOUNT_OPTIONS}
       - ${DEVILBOX_PATH}/.devilbox/cfg/mysql.cnf:/etc/mysql/conf.d/devilbox.cnf:ro${MOUNT_OPTIONS}
-      - ${DEVILBOX_PATH}/cfg/${MYSQL_SERVER}:/etc/mysql/docker-default.d:ro${MOUNT_OPTIONS}
       - devilbox-${MYSQL_SERVER}:/var/lib/mysql:rw${MOUNT_OPTIONS}
 
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost --silent"]
+      # mariadb-admin on MariaDB 11+, mysqladmin on MySQL images
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost --silent 2>/dev/null || mysqladmin ping -h localhost --silent"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -224,4 +232,10 @@ networks:
 
 volumes:
   devilbox-mail:
+  # One volume per supported MYSQL_SERVER value (must match env-example options)
   devilbox-mariadb-10.6:
+  devilbox-mariadb-11.4:
+  devilbox-mariadb-11.8:
+  devilbox-mariadb-latest:
+  devilbox-mysql-8.0:
+  devilbox-mysql-8.4:

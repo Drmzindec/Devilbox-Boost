@@ -8,7 +8,7 @@
 
 # Add your custom vimrc and always load it with vim.
 # Also make sure you add vimrc to this folder.
-alias vim='vim -u /etc/bashrc-devilbox.d/vimrc
+alias vim='vim -u /etc/bashrc-devilbox.d/vimrc'
 
 
 

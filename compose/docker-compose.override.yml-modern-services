@@ -1,9 +1,7 @@
 # vim: set ft=yaml:
 ---
-# Modern Services Bundle - Meilisearch, Mailpit, RabbitMQ, MinIO
+# Modern Services Bundle - Meilisearch, Mailpit, RabbitMQ, RustFS
 # Use this file to enable all modern services at once
-version: '2.3'
-
 services:
 
   # -----------------------------------------------------------------------------------------------
@@ -72,36 +70,39 @@ services:
       - httpd
 
   # -----------------------------------------------------------------------------------------------
-  # MinIO - S3-compatible object storage
+  # RustFS - S3-compatible object storage (MinIO replacement)
   # -----------------------------------------------------------------------------------------------
-  minio:
-    image: minio/minio:${MINIO_SERVER:-latest}
-    hostname: minio
-    command: server /data --console-address ":9001"
+  rustfs:
+    image: rustfs/rustfs:${RUSTFS_SERVER:-latest}
+    hostname: rustfs
     environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - MINIO_REGION=${MINIO_REGION:-us-east-1}
+      - RUSTFS_VOLUMES=/data
+      - RUSTFS_ADDRESS=0.0.0.0:9000
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-rustfsadmin}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-rustfsadmin}
     ports:
-      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MINIO:-9000}:9000"
-      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_MINIO_CONSOLE:-9001}:9001"
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_RUSTFS:-9000}:9000"
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_RUSTFS_CONSOLE:-9001}:9001"
     networks:
       app_net:
         ipv4_address: 172.16.238.204
     volumes:
-      - devilbox-minio:/data
+      - devilbox-rustfs:/data
     depends_on:
       - bind
       - php
       - httpd
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/health || curl -sf http://localhost:9000/ || exit 1"]
       interval: 30s
       timeout: 20s
       retries: 3
+      start_period: 15s
 
 volumes:
   devilbox-meilisearch:
   devilbox-mailpit:
   devilbox-rabbit:
-  devilbox-minio:
+  devilbox-rustfs:

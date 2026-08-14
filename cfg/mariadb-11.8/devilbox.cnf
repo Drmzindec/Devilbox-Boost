@@ -1,0 +1,6 @@
+# Mountpoint placeholder — at runtime .devilbox/cfg/mysql.cnf is mounted over this file.
+# Edit .devilbox/cfg/mysql.cnf to change these settings.
+[mysqld]
+server_id = 1
+log_bin = "mysql-bin"
+sync_binlog = 0

@@ -8,7 +8,7 @@ set -o pipefail
 # Usage: ./docker-images/build-php.sh [VERSION]
 # Example: ./docker-images/build-php.sh 8.3
 
-VERSION="${1:-8.3}"
+VERSION="${1:-8.4}"
 IMAGE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/php-${VERSION}-work"
 
 if [ ! -d "${IMAGE_DIR}" ]; then

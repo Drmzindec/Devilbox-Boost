@@ -70,9 +70,9 @@ fi
 ### MYSQL
 ###
 if [ "${WHICH}" = "all" ] || [ "${WHICH}" = "mysql" ]; then
-	IMAGES="$( grep -Eo '^#*MYSQL_SERVER=[-a-z]+[.0-9]*' "${CWD}/env-example" | sed 's/.*=//g' )"
-	echo "${IMAGES}" | while read version ; do
-		docker pull devilbox/mysql:${version}
+	IMAGES="$( grep -Eo '^#*MYSQL_IMAGE=[-a-zA-Z0-9/:.]+' "${CWD}/env-example" | sed 's/^#*MYSQL_IMAGE=//g' )"
+	echo "${IMAGES}" | while read image ; do
+		docker pull "${image}"
 	done
 fi
 

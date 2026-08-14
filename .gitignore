@@ -78,6 +78,13 @@
 /cfg/percona-5.6/*.cnf
 /cfg/percona-5.7/*.cnf
 /cfg/percona-8.0/*.cnf
+/cfg/mariadb-11.4/*.cnf
+/cfg/mariadb-11.8/*.cnf
+/cfg/mariadb-latest/*.cnf
+/cfg/mysql-8.4/*.cnf
+# devilbox.cnf is a tracked mountpoint placeholder (the live config from
+# .devilbox/cfg/mysql.cnf is mounted over it at runtime) — never ignore it
+!/cfg/*/devilbox.cnf
 
 # Ignore custom PHP.ini configs
 /cfg/php-ini-5.2/*.ini

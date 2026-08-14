@@ -420,6 +420,12 @@ elif [ "${TLD_SUFFIX}" = "localhost" ]; then
 	log_info "See: https://tools.ietf.org/html/draft-west-let-localhost-be-localhost-06"
 	RET_CODE=$(( RET_CODE + 1))
 	WRONG_ENV_FILES_VALUES=1
+elif [ "${TLD_SUFFIX}" = "local" ] && [ "$(uname)" = "Darwin" ]; then
+	log_err "Variable 'TLD_SUFFIX' should not be set to 'local' on macOS."
+	log_err "Apple reserves '.local' for Multicast DNS (Bonjour); browsers will not resolve your projects reliably."
+	log_info "Use 'loc' instead: change TLD_SUFFIX=loc in .env and update /etc/resolver accordingly."
+	RET_CODE=$(( RET_CODE + 1))
+	WRONG_ENV_FILES_VALUES=1
 else
 	log_debug "Variable 'TLD_SUFFIX' has correct value: '${TLD_SUFFIX}'"
 fi
