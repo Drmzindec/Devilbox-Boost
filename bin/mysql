@@ -1,9 +1,1 @@
-#!/usr/bin/env bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MYSQL_PASS=$(grep "^MYSQL_ROOT_PASSWORD=" "$SCRIPT_DIR/.env" 2>/dev/null | cut -d'=' -f2)
-
-if [ -t 0 ]; then
-    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec php mysql -h 127.0.0.1 -u root -p"${MYSQL_PASS:-}" --skip-ssl "$@"
-else
-    docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec -T php mysql -h 127.0.0.1 -u root -p"${MYSQL_PASS:-}" --skip-ssl "$@"
-fi
+.dbox-wrapper

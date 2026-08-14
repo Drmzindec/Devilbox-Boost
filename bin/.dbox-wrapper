@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# Devilbox Boost command wrapper dispatcher.
+#
+# Every command in bin/ is a symlink to this file. The command to run is
+# derived from the symlink's name and executed inside the 'php' container
+# as user 'devilbox' (so files it creates on the host are owned by you,
+# not root), with the host working directory mapped to the matching
+# /shared/httpd/<project> path.
+#
+# Notes:
+# - docker compose is run from the Devilbox root with NO explicit -f flags,
+#   so docker-compose.override.yml and a user's COMPOSE_FILE setting
+#   (e.g. docker-compose.lean.yml) are honored.
+# - A TTY is only allocated when both stdin and stdout are terminals, so
+#   redirections like 'composer install > log' and 'mysql < dump.sql' work.
+
+# Resolve this script's real location even when called through a symlink
+# chain (e.g. a symlink in /usr/local/bin pointing at bin/composer).
+SELF="${BASH_SOURCE[0]}"
+while [ -h "$SELF" ]; do
+    DIR="$(cd "$(dirname "$SELF")" && pwd)"
+    SELF="$(readlink "$SELF")"
+    case "$SELF" in
+        /*) ;;
+        *) SELF="$DIR/$SELF" ;;
+    esac
+done
+SCRIPT_DIR="$(cd "$(dirname "$SELF")/.." && pwd)"
+
+CMD="$(basename "$0")"
+if [ "$CMD" = ".dbox-wrapper" ]; then
+    echo "Error: .dbox-wrapper is not meant to be run directly." >&2
+    echo "Call one of the command symlinks in bin/ instead (composer, artisan, npm, ...)." >&2
+    exit 1
+fi
+
+# Map the host working directory onto the container's /shared/httpd mount.
+# Outside data/www we fall back to /shared/httpd itself.
+WORKDIR="/shared/httpd"
+case "$PWD" in
+    "$SCRIPT_DIR"/data/www/*)
+        WORKDIR="/shared/httpd/${PWD#"$SCRIPT_DIR/data/www/"}"
+        ;;
+    "$SCRIPT_DIR"/data/www)
+        WORKDIR="/shared/httpd"
+        ;;
+esac
+
+# Allocate a TTY only for fully interactive use, otherwise disable it (-T).
+TTY_ARGS=()
+if ! { [ -t 0 ] && [ -t 1 ]; }; then
+    TTY_ARGS=(-T)
+fi
+
+EXEC_ARGS=(--user devilbox -w "$WORKDIR")
+
+run() {
+    cd "$SCRIPT_DIR" || exit 1
+    exec docker compose exec "${TTY_ARGS[@]}" "${EXEC_ARGS[@]}" php "$@"
+}
+
+case "$CMD" in
+    artisan|tinker)
+        if [ ! -f "artisan" ]; then
+            echo "Error: Not in a Laravel project directory (artisan file not found)" >&2
+            exit 1
+        fi
+        if [ "$CMD" = "tinker" ]; then
+            run php artisan tinker "$@"
+        else
+            run php artisan "$@"
+        fi
+        ;;
+    mysql)
+        # Read the root password from .env (-f2- keeps '=' inside the value)
+        # and hand it to the client via MYSQL_PWD so it never appears in the
+        # mysql process arguments inside the container.
+        MYSQL_PASS="$(grep '^MYSQL_ROOT_PASSWORD=' "$SCRIPT_DIR/.env" 2>/dev/null | cut -d'=' -f2-)"
+        EXEC_ARGS+=(--env "MYSQL_PWD=${MYSQL_PASS:-}")
+        run mysql -h 127.0.0.1 -u root --skip-ssl "$@"
+        ;;
+    dbox-shell)
+        run bash -l "$@"
+        ;;
+    *)
+        run "$CMD" "$@"
+        ;;
+esac
