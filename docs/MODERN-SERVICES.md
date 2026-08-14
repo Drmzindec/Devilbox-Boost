@@ -193,9 +193,9 @@ while ($channel->is_consuming()) {
 
 ---
 
-### 4. MinIO - S3-Compatible Storage
+### 4. RustFS - S3-Compatible Storage
 
-**What it is:** High-performance object storage compatible with Amazon S3 API.
+**What it is:** High-performance object storage compatible with the Amazon S3 API, written in Rust. (Replaces MinIO, whose community edition was archived upstream in April 2026.)
 
 **Use cases:**
 - File uploads and storage
@@ -206,7 +206,7 @@ while ($channel->is_consuming()) {
 
 **Enable:**
 ```bash
-# MinIO is included in the main docker-compose.yml
+# RustFS is included in the main docker-compose.yml
 # Just start the stack:
 docker compose up -d
 ```
@@ -214,7 +214,8 @@ docker compose up -d
 **Access:**
 - Console: `http://localhost:9001`
 - API: `http://localhost:9000`
-- Default credentials: `minioadmin` / `minioadmin`
+- Default credentials: `rustfsadmin` / `rustfsadmin`
+- From inside containers: `http://rustfs:9000` (or `http://127.0.0.1:9100` in the PHP container via port forwarding)
 
 **Configure in Laravel:**
 ```bash
@@ -223,13 +224,15 @@ composer require league/flysystem-aws-s3-v3 "^3.0" --with-all-dependencies
 
 ```env
 # .env
-AWS_ACCESS_KEY_ID=minioadmin
-AWS_SECRET_ACCESS_KEY=minioadmin
+AWS_ACCESS_KEY_ID=rustfsadmin
+AWS_SECRET_ACCESS_KEY=rustfsadmin
 AWS_DEFAULT_REGION=us-east-1
 AWS_BUCKET=my-bucket
-AWS_ENDPOINT=http://127.0.0.1:9000
+AWS_ENDPOINT=http://127.0.0.1:9100
 AWS_USE_PATH_STYLE_ENDPOINT=true
 ```
+
+> Inside the PHP container port `9100` forwards to `rustfs:9000` (you can also use `http://rustfs:9000` directly). From your host machine, use `http://localhost:9000`.
 
 ```php
 // config/filesystems.php
@@ -255,11 +258,11 @@ use Aws\S3\S3Client;
 $client = new S3Client([
     'version' => 'latest',
     'region' => 'us-east-1',
-    'endpoint' => 'http://127.0.0.1:9000',
+    'endpoint' => 'http://127.0.0.1:9100',
     'use_path_style_endpoint' => true,
     'credentials' => [
-        'key' => 'minioadmin',
-        'secret' => 'minioadmin',
+        'key' => 'rustfsadmin',
+        'secret' => 'rustfsadmin',
     ],
 ]);
 
@@ -275,7 +278,7 @@ $client->putObject([
 
 // Get file URL
 $url = $client->getObjectUrl('my-bucket', 'photos/vacation.jpg');
-echo $url; // http://127.0.0.1:9000/my-bucket/photos/vacation.jpg
+echo $url; // http://127.0.0.1:9100/my-bucket/photos/vacation.jpg
 ```
 
 ---
@@ -320,13 +323,10 @@ RABBIT_DEFAULT_USER=guest
 RABBIT_DEFAULT_PASS=guest
 RABBIT_DEFAULT_VHOST=my_vhost
 
-# MinIO
-MINIO_SERVER=latest
-HOST_PORT_MINIO=9000
-HOST_PORT_MINIO_CONSOLE=9001
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=minioadmin
-MINIO_REGION=us-east-1
+# RustFS
+RUSTFS_SERVER=latest
+RUSTFS_ACCESS_KEY=rustfsadmin
+RUSTFS_SECRET_KEY=rustfsadmin
 ```
 
 ---
@@ -356,7 +356,7 @@ Approximate resource usage per service:
 | Meilisearch | 100-500MB | 1GB | Low-Medium |
 | Mailpit | 20-50MB | 10MB | Very Low |
 | RabbitMQ | 50-200MB | 100MB | Low |
-| MinIO | 50-100MB | Variable | Low |
+| RustFS | 50-100MB | Variable | Low |
 
 **Total:** ~200-850MB RAM (varies with usage)
 
@@ -372,7 +372,6 @@ If ports are already in use, change them in `.env`:
 HOST_PORT_MEILI=7701
 HOST_PORT_MAILPIT=8026
 HOST_PORT_RABBIT_MGMT=15673
-HOST_PORT_MINIO_CONSOLE=9002
 ```
 
 ### Service Won't Start
@@ -394,7 +393,9 @@ All services use Docker volumes for data persistence:
 - `devilbox-meilisearch`
 - `devilbox-mailpit`
 - `devilbox-rabbit`
-- `devilbox-minio`
+- `devilbox-rustfs`
+
+(If you upgraded from a version that shipped MinIO, the old `devilbox-minio` volume is left intact but is not used by RustFS - see [MIGRATION.md](../MIGRATION.md).)
 
 Data survives container restarts but not `docker compose down -v`.
 
@@ -406,14 +407,14 @@ Data survives container restarts but not `docker compose down -v`.
    - [Meilisearch Docs](https://docs.meilisearch.com/)
    - [Mailpit GitHub](https://github.com/axllent/mailpit)
    - [RabbitMQ Tutorials](https://www.rabbitmq.com/getstarted.html)
-   - [MinIO Docs](https://min.io/docs/minio/linux/index.html)
+   - [RustFS GitHub](https://github.com/rustfs/rustfs)
 
 2. **Integration Examples:**
    - Check `.claude/skills/` for framework-specific guides
    - See `docs/Examples.md` for more code samples
 
 3. **Production:**
-   - Change default passwords!
+   - Change default passwords! (Override `MEILI_MASTER_KEY`, `RABBIT_DEFAULT_USER`/`RABBIT_DEFAULT_PASS`, and `RUSTFS_ACCESS_KEY`/`RUSTFS_SECRET_KEY` in `.env` - commented defaults are in `env-example`)
    - Enable authentication
    - Use managed services for production
 

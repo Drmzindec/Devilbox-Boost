@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 ###############################################################################
 # Devilbox Modern Setup Wizard
@@ -30,6 +30,13 @@ FIRE="🔥"
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
+
+# Defaults for variables that are only set on some paths
+SELECTED_SERVICES=""
+HTTP_PORT="80"
+
+# Always clean up sed backup files, even on Ctrl-C
+trap 'rm -f .env.bak' EXIT
 
 ###############################################################################
 # Helper Functions
@@ -116,7 +123,7 @@ echo -e "${BOLD}Welcome to the Devilbox Modern Setup!${NC}"
 echo ""
 echo "This wizard will help you:"
 echo "  • Configure your environment"
-echo "  • Build custom PHP images (8.3, 8.4)"
+echo "  • Build custom PHP images (8.3, 8.4, 8.5)"
 echo "  • Set up your development stack"
 echo "  • Create your first project"
 echo "  • Install optional tools (MCP server)"
@@ -176,8 +183,9 @@ print_section "${PACKAGE} PHP Version Selection"
 
 echo "Which PHP version(s) do you want to use?"
 echo "  ${BOLD}1)${NC} PHP 8.4 only (recommended for new projects)"
-echo "  ${BOLD}2)${NC} PHP 8.3 only"
-echo "  ${BOLD}3)${NC} Both 8.3 and 8.4 (can switch between them)"
+echo "  ${BOLD}2)${NC} PHP 8.5 only (newest stable)"
+echo "  ${BOLD}3)${NC} PHP 8.3 only"
+echo "  ${BOLD}4)${NC} All of them (can switch between versions)"
 echo ""
 
 while true; do
@@ -191,19 +199,25 @@ while true; do
             break
             ;;
         2)
+            PHP_VERSIONS=("8.5")
+            DEFAULT_PHP="8.5"
+            print_success "Selected: PHP 8.5"
+            break
+            ;;
+        3)
             PHP_VERSIONS=("8.3")
             DEFAULT_PHP="8.3"
             print_success "Selected: PHP 8.3"
             break
             ;;
-        3)
-            PHP_VERSIONS=("8.3" "8.4")
+        4)
+            PHP_VERSIONS=("8.3" "8.4" "8.5")
             DEFAULT_PHP="8.4"
-            print_success "Selected: Both PHP 8.3 and 8.4 (default: 8.4)"
+            print_success "Selected: PHP 8.3, 8.4 and 8.5 (default: 8.4)"
             break
             ;;
         *)
-            print_error "Invalid choice. Please enter 1, 2, or 3"
+            print_error "Invalid choice. Please enter 1, 2, 3 or 4"
             ;;
     esac
 done
@@ -230,7 +244,7 @@ print_success "HTTP port set to ${HTTP_PORT}"
 
 # HTTPS Port
 ask_question "HTTPS port" "443" "HTTPS_PORT"
-sed -i.bak "s/^HOST_PORT_HTTPS=.*/HOST_PORT_HTTPS=${HTTPS_PORT}/" .env
+sed -i.bak "s/^HOST_PORT_HTTPD_SSL=.*/HOST_PORT_HTTPD_SSL=${HTTPS_PORT}/" .env
 print_success "HTTPS port set to ${HTTPS_PORT}"
 
 # TLD Suffix
@@ -239,9 +253,6 @@ sed -i.bak "s/^TLD_SUFFIX=.*/TLD_SUFFIX=${TLD}/" .env
 print_success "TLD suffix set to .${TLD}"
 
 print_info "Your projects will be accessible at: http://project-name.${TLD}"
-
-# Clean up backup files
-rm -f .env.bak
 
 ###############################################################################
 # PATH Setup
@@ -257,19 +268,18 @@ echo "  ${BOLD}mysql${NC} - connects to MySQL"
 echo ""
 
 if ask_yes_no "Add to PATH?" "y"; then
-    # Detect shell
-    if [ -n "$ZSH_VERSION" ]; then
-        SHELL_RC="${HOME}/.zshrc"
-    elif [ -n "$BASH_VERSION" ]; then
-        SHELL_RC="${HOME}/.bashrc"
-    else
-        SHELL_RC="${HOME}/.profile"
-    fi
+    # Detect the user's LOGIN shell ($ZSH_VERSION/$BASH_VERSION would only
+    # reflect the shell running this script, which is always bash)
+    case "$(basename "${SHELL:-bash}")" in
+        zsh)  SHELL_RC="${HOME}/.zshrc" ;;
+        bash) SHELL_RC="${HOME}/.bashrc" ;;
+        *)    SHELL_RC="${HOME}/.profile" ;;
+    esac
 
     PATH_LINE="export PATH=\"${SCRIPT_DIR}/bin:\$PATH\""
 
-    # Check if already in PATH
-    if grep -q "devilbox/bin" "$SHELL_RC" 2>/dev/null; then
+    # Check if already in PATH (match this checkout's actual bin path)
+    if grep -qF "${SCRIPT_DIR}/bin" "$SHELL_RC" 2>/dev/null; then
         print_info "Already in PATH"
     else
         echo "" >> "$SHELL_RC"
@@ -319,12 +329,10 @@ echo "Available services:"
 echo "  ${BOLD}Meilisearch${NC} - Lightning-fast search engine"
 echo "  ${BOLD}Mailpit${NC} - Modern email testing (replaces Mailhog)"
 echo "  ${BOLD}RabbitMQ${NC} - Message queue for async tasks"
-echo "  ${BOLD}MinIO${NC} - S3-compatible object storage"
+echo "  ${BOLD}RustFS${NC} - S3-compatible object storage (MinIO replacement)"
 echo ""
 
 if ask_yes_no "Configure modern services now?" "n"; then
-    SELECTED_SERVICES=""
-
     # Meilisearch
     echo ""
     if ask_yes_no "Enable Meilisearch (search engine)?" "n"; then
@@ -344,10 +352,10 @@ if ask_yes_no "Configure modern services now?" "n"; then
         print_success "RabbitMQ will be enabled"
     fi
 
-    # MinIO
-    if ask_yes_no "Enable MinIO (S3 storage)?" "n"; then
-        SELECTED_SERVICES="${SELECTED_SERVICES} minio"
-        print_success "MinIO will be enabled"
+    # RustFS
+    if ask_yes_no "Enable RustFS (S3 storage)?" "n"; then
+        SELECTED_SERVICES="${SELECTED_SERVICES} rustfs"
+        print_success "RustFS will be enabled"
     fi
 
     # Create docker-compose.override.yml if any services selected
@@ -357,14 +365,20 @@ if ask_yes_no "Configure modern services now?" "n"; then
             if ask_yes_no "Overwrite it?" "n"; then
                 cp compose/docker-compose.override.yml-modern-services docker-compose.override.yml
                 print_success "Created docker-compose.override.yml with modern services"
+                print_info "Services will start with Devilbox"
+                print_info "Selected:${SELECTED_SERVICES}"
+            else
+                print_warning "Kept your existing docker-compose.override.yml"
+                print_info "The selected services were NOT enabled. Merge them manually from:"
+                print_info "  compose/docker-compose.override.yml-modern-services"
+                SELECTED_SERVICES=""
             fi
         else
             cp compose/docker-compose.override.yml-modern-services docker-compose.override.yml
             print_success "Created docker-compose.override.yml with modern services"
+            print_info "Services will start with Devilbox"
+            print_info "Selected:${SELECTED_SERVICES}"
         fi
-
-        print_info "Services will start with Devilbox"
-        print_info "Selected:${SELECTED_SERVICES}"
     else
         print_info "No services selected"
     fi
@@ -410,9 +424,9 @@ if ask_yes_no "Start Devilbox now?" "y"; then
             if [[ "$SELECTED_SERVICES" == *"rabbit"* ]]; then
                 echo "  RabbitMQ: ${BOLD}http://localhost:15672${NC} (guest/guest)"
             fi
-            if [[ "$SELECTED_SERVICES" == *"minio"* ]]; then
-                echo "  MinIO Console: ${BOLD}http://localhost:9001${NC} (minioadmin/minioadmin)"
-                echo "  MinIO API: ${BOLD}http://localhost:9000${NC}"
+            if [[ "$SELECTED_SERVICES" == *"rustfs"* ]]; then
+                echo "  RustFS Console: ${BOLD}http://localhost:9001${NC} (rustfsadmin/rustfsadmin)"
+                echo "  RustFS S3 API: ${BOLD}http://localhost:9000${NC}"
             fi
         fi
     else
@@ -445,7 +459,7 @@ if ask_yes_no "Create a starter project?" "y"; then
             ask_question "Project name (e.g., my-blog)" "" "project_name"
             if [ -n "$project_name" ]; then
                 print_info "Creating Laravel project: ${project_name}"
-                docker compose exec php laravel new "$project_name"
+                docker compose exec --user devilbox -w /shared/httpd php laravel new "$project_name"
                 print_success "Laravel project created!"
                 print_info "Access at: ${BOLD}http://${project_name}.${TLD}${NC}"
                 print_info "Wait 30 seconds for vhost auto-detection to complete"
@@ -455,7 +469,7 @@ if ask_yes_no "Create a starter project?" "y"; then
             ask_question "Project name (e.g., my-site)" "" "project_name"
             if [ -n "$project_name" ]; then
                 print_info "Creating WordPress project: ${project_name}"
-                docker compose exec php wp core download --path="$project_name"
+                docker compose exec --user devilbox -w /shared/httpd php wp core download --path="$project_name"
                 print_success "WordPress downloaded!"
                 print_info "Access at: ${BOLD}http://${project_name}.${TLD}${NC}"
                 print_info "Complete setup in browser"
@@ -533,9 +547,9 @@ echo "  ${CYAN}docker compose exec php laravel new my-project${NC}"
 echo "  ${CYAN}docker compose exec php wp core download --path=my-wp${NC}"
 echo ""
 echo "${BOLD}Documentation:${NC}"
-echo "  ${CYAN}.claude/README.md${NC}              - Development guidelines"
-echo "  ${CYAN}.claude/skills/${NC}                - How-to guides"
-echo "  ${CYAN}ROADMAP-MODERNIZATION.md${NC}       - Project roadmap"
+echo "  ${CYAN}QUICKSTART.md${NC}                  - Getting started guide"
+echo "  ${CYAN}docs/MODERN-TOOLS.md${NC}           - Command wrappers and tooling"
+echo "  ${CYAN}docs/ROADMAP.md${NC}                - Project roadmap"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""

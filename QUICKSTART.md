@@ -138,8 +138,9 @@ open http://my-project.loc
 | **Dashboard** | http://localhost |
 | **phpMyAdmin** | http://localhost/vendor/phpmyadmin-5.2.3/ |
 | **Adminer** | http://localhost/vendor/adminer-5.4.2-devilbox.php |
-| **phpCacheAdmin** | http://localhost/vendor/phpcacheadmin-2.4.1/ |
 | **phpPgAdmin** | http://localhost/vendor/phppgadmin-7.13.0/ |
+| **phpCacheAdmin** | http://localhost/vendor/phpcacheadmin-2.4.1/ |
+| **OpCache GUI** | http://localhost/vendor/opcache-gui-3.6.0.php |
 
 ### Database Credentials
 
@@ -451,11 +452,18 @@ Located in `.claude/skills/`:
 
 ### Database Services
 
-- **MariaDB 10.6** (MySQL 8.0 also available)
+- **MariaDB 11.8 LTS** - official images (MySQL 8.0/8.4 also available)
 - **PostgreSQL 18**
-- **MongoDB 8.0**
-- **Redis 8.6**
+- **MongoDB 8.2**
+- **Redis 8**
 - **Memcached**
+
+### Modern Services
+
+- **Meilisearch** - Fast search engine
+- **Mailpit** - Email testing
+- **RabbitMQ** - Message queue
+- **RustFS** - S3-compatible object storage
 
 ### Admin Tools
 
@@ -463,6 +471,7 @@ Located in `.claude/skills/`:
 - **Adminer 5.4.2** - Lightweight database manager
 - **phpPgAdmin 7.13.0** - PostgreSQL admin
 - **phpCacheAdmin 2.4.1** - Redis/Memcached manager
+- **OpCache GUI 3.6.0** - PHP OpCache monitoring
 
 ---
 

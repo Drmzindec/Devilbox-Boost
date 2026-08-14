@@ -255,16 +255,16 @@ $modern_services = array(
 			'PHP' => "\$connection = new \\PhpAmqpLib\\Connection\\AMQPStreamConnection('127.0.0.1', 5672, 'guest', 'guest');"
 		)
 	),
-	'minio' => array(
-		'name' => 'MinIO',
+	'rustfs' => array(
+		'name' => 'RustFS',
 		'port' => 9001,
 		'url' => 'http://localhost:9001',
-		'username' => loadClass('Helper')->getEnv('MINIO_ROOT_USER') ?: 'minioadmin',
-		'password' => loadClass('Helper')->getEnv('MINIO_ROOT_PASSWORD') ?: 'minioadmin',
+		'username' => loadClass('Helper')->getEnv('RUSTFS_ACCESS_KEY') ?: 'rustfsadmin',
+		'password' => loadClass('Helper')->getEnv('RUSTFS_SECRET_KEY') ?: 'rustfsadmin',
 		'api_port' => 9100,
 		'config' => array(
-			'Laravel' => "AWS_ACCESS_KEY_ID=minioadmin\nAWS_SECRET_ACCESS_KEY=minioadmin\nAWS_DEFAULT_REGION=us-east-1\nAWS_BUCKET=my-bucket\nAWS_ENDPOINT=http://127.0.0.1:9100\nAWS_USE_PATH_STYLE_ENDPOINT=true",
-			'PHP' => "\$client = new \\Aws\\S3\\S3Client([\n  'endpoint' => 'http://127.0.0.1:9100',\n  'credentials' => ['key' => 'minioadmin', 'secret' => 'minioadmin']\n]);"
+			'Laravel' => "AWS_ACCESS_KEY_ID=rustfsadmin\nAWS_SECRET_ACCESS_KEY=rustfsadmin\nAWS_DEFAULT_REGION=us-east-1\nAWS_BUCKET=my-bucket\nAWS_ENDPOINT=http://127.0.0.1:9100\nAWS_USE_PATH_STYLE_ENDPOINT=true",
+			'PHP' => "\$client = new \\Aws\\S3\\S3Client([\n  'endpoint' => 'http://127.0.0.1:9100',\n  'credentials' => ['key' => 'rustfsadmin', 'secret' => 'rustfsadmin']\n]);"
 		)
 	)
 );
@@ -410,7 +410,7 @@ unset($service);
 												<i class="fa fa-envelope" style="color:#64b5f6;"></i> <?php echo $service['name']; ?>
 											<?php elseif ($key == 'rabbit'): ?>
 												<i class="fa fa-exchange" style="color:#ff9800;"></i> <?php echo $service['name']; ?>
-											<?php elseif ($key == 'minio'): ?>
+											<?php elseif ($key == 'rustfs'): ?>
 												<i class="fa fa-database" style="color:#ab47bc;"></i> <?php echo $service['name']; ?>
 											<?php endif; ?>
 											<?php if ($service['running']): ?>
@@ -427,7 +427,7 @@ unset($service);
 												Email testing
 											<?php elseif ($key == 'rabbit'): ?>
 												Message queue
-											<?php elseif ($key == 'minio'): ?>
+											<?php elseif ($key == 'rustfs'): ?>
 												S3 storage
 											<?php endif; ?>
 										</p>
@@ -455,7 +455,7 @@ unset($service);
 												<?php if (isset($service['amqp_port'])): ?>
 													<small style="color:#777;">AMQP Port: <?php echo $service['amqp_port']; ?></small>
 												<?php endif; ?>
-											<?php elseif ($key == 'minio' && isset($service['username']) && isset($service['password'])): ?>
+											<?php elseif ($key == 'rustfs' && isset($service['username']) && isset($service['password'])): ?>
 												<strong style="color:#ab47bc;">User:</strong> <code style="background:#2a2a2a; padding:2px 4px; color:#9ccc65; border-radius:3px;"><?php echo $service['username']; ?></code><br/>
 												<strong style="color:#ab47bc;">Pass:</strong> <code style="background:#2a2a2a; padding:2px 4px; color:#9ccc65; border-radius:3px;"><?php echo $service['password']; ?></code><br/>
 												<?php if (isset($service['api_port'])): ?>
@@ -497,7 +497,7 @@ unset($service);
 											<a class="nav-link" id="rabbitmq-tab" data-toggle="tab" href="#rabbitmq-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">RabbitMQ</a>
 										</li>
 										<li class="nav-item">
-											<a class="nav-link" id="minio-tab" data-toggle="tab" href="#minio-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">MinIO</a>
+											<a class="nav-link" id="rustfs-tab" data-toggle="tab" href="#rustfs-config" role="tab" style="color:#999; background:#2a2a2a; border:1px solid #383737; border-bottom:none;">RustFS</a>
 										</li>
 									</ul>
 									<div class="tab-content" id="servicesTabContent" style="background:#2a2a2a; padding:15px; border:1px solid #383737; border-top:none; border-radius:0 0 4px 4px;">
@@ -573,9 +573,9 @@ $db = $client->my_database;</pre>
 											<h6 style="color:#ff9800; margin-bottom:10px;">Laravel Queue Configuration</h6>
 											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;"><?php echo htmlspecialchars($modern_services['rabbit']['config']['Laravel']); ?></pre>
 										</div>
-										<div class="tab-pane fade" id="minio-config" role="tabpanel">
+										<div class="tab-pane fade" id="rustfs-config" role="tabpanel">
 											<h6 style="color:#ab47bc; margin-bottom:10px;">Laravel S3 Configuration</h6>
-											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;"><?php echo htmlspecialchars($modern_services['minio']['config']['Laravel']); ?></pre>
+											<pre style="background:#1a1a1a; color:#9ccc65; padding:10px; border-radius:4px; font-size:11px; border:1px solid #383737;"><?php echo htmlspecialchars($modern_services['rustfs']['config']['Laravel']); ?></pre>
 										</div>
 									</div>
 									<div style="margin-top:10px;">

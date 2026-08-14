@@ -81,8 +81,8 @@ class Html
 					'path' => '__RABBITMQ__'
 				),
 				array(
-					'name' => 'MinIO Console',
-					'path' => '__MINIO__'
+					'name' => 'RustFS Console',
+					'path' => '__RUSTFS__'
 				)
 			)
 		),
@@ -476,7 +476,7 @@ HTML;
 						$el['path'] = 'http://localhost:15672';
 						$el['target'] = '_blank';
 					}
-					if ($el['path'] == '__MINIO__') {
+					if ($el['path'] == '__RUSTFS__') {
 						$el['path'] = 'http://localhost:9001';
 						$el['target'] = '_blank';
 					}

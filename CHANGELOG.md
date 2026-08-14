@@ -17,6 +17,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-08-14
+
+### Added
+- **Full PHP 8.5 support** — PHP 8.5 is now stable and fully supported (`cfg/php-startup-8.5` added); wizard PHP menu offers 8.4 (recommended), 8.5 (newest stable), 8.3, or all of them
+- **RustFS** — S3-compatible object storage replaces MinIO, whose community edition was archived upstream (April 2026). Same ports (9000 S3 API, 9001 console), new default credentials `rustfsadmin`/`rustfsadmin`. Existing MinIO bucket data does not migrate automatically; the old `devilbox-minio` volume is left intact
+- **Configurable modern-service credentials** — `MEILI_MASTER_KEY`, `RABBIT_DEFAULT_USER`/`RABBIT_DEFAULT_PASS`, `RUSTFS_ACCESS_KEY`/`RUSTFS_SECRET_KEY` and friends can now be overridden in `.env` (commented defaults in `env-example`)
+- New `bin/` commands: `tinker`, `pint`, `phpstan`, `phpunit`, `npx`, `dbox-shell`
+
+### Changed
+- **Official MariaDB/MySQL images** — MySQL service now runs official images via the new `MYSQL_SERVER` (config dir + data volume name) / `MYSQL_IMAGE` (Docker image) pair. Default is MariaDB 11.8 LTS with `MARIADB_AUTO_UPGRADE=1`, so pointing a newer image at an old data volume upgrades it in place. MariaDB 10.6 is EOL July 2026; legacy escape hatch: `MYSQL_IMAGE=devilbox/mysql:mariadb-10.6-0.21`
+- **Default PHP version is now 8.4** (was 8.2)
+- **`bin/` wrappers rewritten as a single dispatcher** — run as the devilbox user and honor `docker-compose.override.yml` files
+- **MCP server v2.0 security rewrite** — 16 tools, no shell execution, service allowlist
+- **Redis default is now `redis:8-alpine`** (tracks 8.x) and **MongoDB default is 8.2**
+- `compose/docker-compose.override.yml-minio` renamed to `compose/docker-compose.override.yml-rustfs`
+
+### Fixed
+- Setup wizard now writes the correct HTTPS port variable (`HOST_PORT_HTTPD_SSL`; the previously documented `HOST_PORT_HTTPS` never existed)
+- Setup wizard zsh PATH detection
+- Xdebug recipe files now use `client_port` 9003 (9000 collided with PHP-FPM)
+
+---
+
 ## [1.0.5] - 2026-05-03
 
 ### Added

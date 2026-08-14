@@ -38,7 +38,7 @@ Create a modern, developer-friendly Docker-based PHP development stack that:
 - [x] **Meilisearch** - Fast search engine with typo-tolerance
 - [x] **Mailpit** - Modern email testing (replaces Mailhog)
 - [x] **RabbitMQ** - Message queue for async tasks
-- [x] **MinIO** - S3-compatible object storage
+- [x] **RustFS** - S3-compatible object storage (replaced MinIO in v1.1.0 after MinIO's community edition was archived upstream)
 - [x] **Lean Mode** - `docker-compose.lean.yml` for minimal 4-container setup
 
 ### AI Integration

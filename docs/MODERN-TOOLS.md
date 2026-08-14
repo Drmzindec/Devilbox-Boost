@@ -68,7 +68,22 @@ These tools were removed as they're deprecated or rarely used:
 
 ## Command Wrappers Available
 
-All tools can be used from your host machine (no need for `./shell.sh`):
+All tools can be used from your host machine (no need for `./shell.sh`).
+Every command in `bin/` is a symlink to a single dispatcher (`bin/.dbox-wrapper`)
+that runs the tool inside the `php` container as user `devilbox` — so files
+created by the tools (vendor/, node_modules/, ...) are owned by you, not root —
+and automatically maps your current directory to the matching
+`/shared/httpd/<project>` path.
+
+| Category | Commands |
+|----------|----------|
+| PHP | `php`, `composer`, `laravel`, `wp` |
+| Testing / QA | `pest`, `phpunit`, `phpstan`, `pint` |
+| Laravel | `artisan`, `tinker` (both require an `artisan` file in your cwd) |
+| JS runtimes / package managers | `node`, `npm`, `npx`, `yarn`, `bun`, `bunx` |
+| Build / lint | `vite`, `eslint`, `prettier` |
+| Database | `mysql` (auto-authenticates as root from `.env`) |
+| Shell | `dbox-shell` (interactive `bash -l` in the php container, keeps your cwd) |
 
 ```bash
 # PHP Tools
@@ -87,7 +102,19 @@ prettier --write src/
 # Laravel (smart - detects your project!)
 artisan migrate
 artisan make:model Post
+tinker               # shortcut for: php artisan tinker
+
+# Database (reads MYSQL_ROOT_PASSWORD from .env; works with redirects)
+mysql my_db < dump.sql
+
+# Interactive shell in the php container (like ./shell.sh, but keeps your cwd)
+dbox-shell
 ```
+
+The wrappers respect `docker-compose.override.yml` and the `COMPOSE_FILE`
+environment variable, so they work with lean mode (`docker-compose.lean.yml`)
+too. A TTY is only allocated when you're running interactively, so piping and
+redirecting output (`composer install > log`) produces clean, escape-free text.
 
 ---
 

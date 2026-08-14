@@ -78,7 +78,7 @@ docker compose exec php laravel new my-blog
 ## ✨ Features
 
 ### 🐘 Modern PHP Stack
-- **PHP 8.3, 8.4 & 8.5** - Zero deprecation warnings
+- **PHP 8.3, 8.4 & 8.5** - PHP 8.4 default, zero deprecation warnings
 - **Laravel Installer** - Instant Laravel projects
 - **WP-CLI** - WordPress management
 - **Pest** - Modern testing framework
@@ -92,17 +92,17 @@ docker compose exec php laravel new my-blog
 - **Prettier & ESLint** - Code quality
 
 ### 🗄️ Database & Caching
-- **MariaDB 10.6** (MySQL 8.0 also available)
+- **MariaDB 11.8 LTS** - official images (MySQL 8.0/8.4 also available)
 - **PostgreSQL 18**
-- **MongoDB 8.0**
-- **Redis 8.6**
+- **MongoDB 8.2**
+- **Redis 8**
 - **Memcached**
 
 ### 🎯 Smart Automation
 - **Auto Vhost Detection** - Laravel, WordPress, Symfony auto-configured
 - **Port Forwarding** - Use `127.0.0.1` for database connections
 - **Setup Wizard** - 10-minute interactive configuration
-- **Command Wrappers** - Run `composer`, `artisan`, `npm` directly on host
+- **Command Wrappers** - Run `composer`, `artisan`, `npm`, `mysql`, `phpstan`, `dbox-shell` and more directly on host (see [docs/MODERN-TOOLS.md](docs/MODERN-TOOLS.md))
 
 ### 🎨 Updated Admin Tools
 - **phpMyAdmin 5.2.3** - Pre-filled login (127.0.0.1, root:root)
@@ -120,7 +120,7 @@ docker compose exec php laravel new my-blog
 - **Meilisearch** - Lightning-fast search engine
 - **Mailpit** - Modern email testing (replaces Mailhog)
 - **RabbitMQ** - Message queue for async tasks
-- **MinIO** - S3-compatible object storage
+- **RustFS** - S3-compatible object storage (replaces the archived MinIO)
 
 ---
 
@@ -186,7 +186,7 @@ docker compose exec php psql -h 127.0.0.1 -U postgres
 | [Roadmap](docs/ROADMAP.md) | Future features and milestones |
 
 ### Service Guides
-- [Modern Services](docs/MODERN-SERVICES.md) - Meilisearch, Mailpit, RabbitMQ, MinIO
+- [Modern Services](docs/MODERN-SERVICES.md) - Meilisearch, Mailpit, RabbitMQ, RustFS
 - [Using Redis](.claude/skills/using-redis.md) - Cache, sessions, queues
 - [Using Memcached](.claude/skills/using-memcached.md) - High-performance caching
 - [Using MySQL](.claude/skills/using-mysql.md) - Advanced SQL features
@@ -242,6 +242,7 @@ See [MIGRATION.md](MIGRATION.md) for detailed manual setup.
 | **Dashboard** | http://localhost |
 | **phpMyAdmin** | http://localhost/vendor/phpmyadmin-5.2.3/ |
 | **Adminer** | http://localhost/vendor/adminer-5.4.2-devilbox.php |
+| **phpPgAdmin** | http://localhost/vendor/phppgadmin-7.13.0/ |
 | **phpCacheAdmin** | http://localhost/vendor/phpcacheadmin-2.4.1/ |
 | **OpCache GUI** | http://localhost/vendor/opcache-gui-3.6.0.php |
 
@@ -254,9 +255,11 @@ Password: root
 
 ---
 
-## 🚀 What's New in v1.0.3
+## 🚀 What's New in v1.1.0
 
-- ✅ **PHP 8.3, 8.4 & 8.5** with custom Docker images
+- ✅ **Official MariaDB/MySQL images** - MariaDB 11.8 LTS default, in-place auto-upgrade
+- ✅ **RustFS** - S3-compatible object storage (replaces the archived MinIO)
+- ✅ **PHP 8.3, 8.4 & 8.5** with custom Docker images (8.4 default)
 - ✅ **Modern tools** - Bun, Vite, Pest, latest Node.js
 - ✅ **Auto vhost detection** - Laravel, WordPress, Symfony
 - ✅ **Updated admin tools** - All PHP 8.5 compatible
@@ -267,7 +270,7 @@ Password: root
 - ✅ **Command wrappers** - Run tools from host
 - ✅ **Quick Start snippets** - Connection examples for all services
 - ✅ **Lean mode** - Minimal 4-container alternative via `docker-compose.lean.yml`
-- ✅ **Modern services built-in** - Meilisearch, Mailpit, RabbitMQ, MinIO in default stack
+- ✅ **Modern services built-in** - Meilisearch, Mailpit, RabbitMQ, RustFS in default stack
 
 See [CHANGELOG.md](CHANGELOG.md) for complete details.
 

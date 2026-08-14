@@ -54,7 +54,7 @@ echo Press ENTER to use defaults shown in [brackets]
 echo.
 
 REM PHP Version
-set /p PHP_VERSION="Select PHP version (8.3 or 8.4) [8.4]: "
+set /p PHP_VERSION="Select PHP version (8.3, 8.4 or 8.5) [8.4]: "
 if "!PHP_VERSION!"=="" set PHP_VERSION=8.4
 
 REM MySQL Password
@@ -70,8 +70,8 @@ set /p HTTPS_PORT="HTTPS port [443]: "
 if "!HTTPS_PORT!"=="" set HTTPS_PORT=443
 
 REM TLD Suffix
-set /p TLD="TLD suffix for projects (.local, .test, .dev) [local]: "
-if "!TLD!"=="" set TLD=local
+set /p TLD="TLD suffix for projects (.loc, .test, .dev) [loc]: "
+if "!TLD!"=="" set TLD=loc
 
 echo.
 echo  - Updating .env with your settings...
@@ -86,7 +86,7 @@ move /y .env.tmp .env >nul
 powershell -Command "(gc .env) -replace '^HOST_PORT_HTTPD=.*', 'HOST_PORT_HTTPD=%HTTP_PORT%' | Out-File -encoding ASCII .env.tmp"
 move /y .env.tmp .env >nul
 
-powershell -Command "(gc .env) -replace '^HOST_PORT_HTTPS=.*', 'HOST_PORT_HTTPS=%HTTPS_PORT%' | Out-File -encoding ASCII .env.tmp"
+powershell -Command "(gc .env) -replace '^HOST_PORT_HTTPD_SSL=.*', 'HOST_PORT_HTTPD_SSL=%HTTPS_PORT%' | Out-File -encoding ASCII .env.tmp"
 move /y .env.tmp .env >nul
 
 powershell -Command "(gc .env) -replace '^TLD_SUFFIX=.*', 'TLD_SUFFIX=%TLD%' | Out-File -encoding ASCII .env.tmp"
@@ -138,7 +138,7 @@ echo Available services:
 echo   Meilisearch - Lightning-fast search engine
 echo   Mailpit     - Modern email testing
 echo   RabbitMQ    - Message queue for async tasks
-echo   MinIO       - S3-compatible object storage
+echo   RustFS      - S3-compatible object storage
 echo.
 set /p ADD_SERVICES="Configure modern services now? (y/n) [n]: "
 if "!ADD_SERVICES!"=="" set ADD_SERVICES=n

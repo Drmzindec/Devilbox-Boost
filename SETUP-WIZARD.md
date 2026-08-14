@@ -44,13 +44,13 @@ Choose which PHP version(s) to install:
 
 ```
 Which PHP version(s) do you want to use?
-  1) PHP 8.4 only (recommended for new projects)
-  2) PHP 8.3 only
-  3) PHP 8.5 (experimental)
-  4) Both 8.3 and 8.4 (can switch between them)
+  1) PHP 8.4 (recommended)
+  2) PHP 8.5 (newest stable)
+  3) PHP 8.3
+  4) All of them
 ```
 
-**Recommendation**: Choose option 3 to have both versions available.
+**Recommendation**: Option 1 (PHP 8.4, the default) for most projects, or option 4 to have all versions available for switching.
 
 **What happens**:
 - Updates `PHP_SERVER` in `.env`
@@ -86,7 +86,7 @@ HTTPS port [443]:
 ```
 
 **Default**: `443`
-**What it does**: Sets `HOST_PORT_HTTPS` in `.env`
+**What it does**: Sets `HOST_PORT_HTTPD_SSL` in `.env`
 
 #### TLD Suffix
 ```
@@ -98,9 +98,9 @@ TLD suffix for projects (e.g., .loc, .test, .dev) [loc]:
 **Result**: Your projects will be accessible at `http://project-name.loc`
 
 **Popular Options**:
-- `.loc` - macOS/Linux friendly
-- `.test` - Recommended for modern development
-- `.dev` - Requires HTTPS (Chrome enforces)
+- `.loc` - Default and recommended (works everywhere, macOS/Linux friendly)
+- `.test` - Also safe (officially reserved for testing)
+- `.dev` - Avoid: it is a real TLD and Chrome forces HTTPS
 
 ### 4. Development Tools Setup
 
@@ -298,7 +298,7 @@ The wizard modifies these files:
 PHP_SERVER=8.4                    # Your selected PHP version
 MYSQL_ROOT_PASSWORD=root          # Your MySQL password
 HOST_PORT_HTTPD=80               # Your HTTP port
-HOST_PORT_HTTPS=443              # Your HTTPS port
+HOST_PORT_HTTPD_SSL=443          # Your HTTPS port
 TLD_SUFFIX=loc                   # Your TLD suffix
 ```
 
@@ -310,6 +310,7 @@ export PATH="/path/to/devilbox/bin:$PATH"
 
 ### Docker Images Built
 - `devilbox-php-8.4:work` (if PHP 8.4 selected)
+- `devilbox-php-8.5:work` (if PHP 8.5 selected)
 - `devilbox-php-8.3:work` (if PHP 8.3 selected)
 
 ---

@@ -324,7 +324,7 @@ open http://localhost
 
    # Use different ports in .env
    HOST_PORT_HTTPD=8080
-   HOST_PORT_HTTPS=8443
+   HOST_PORT_HTTPD_SSL=8443
    ```
 
 2. **Test with one project**
@@ -352,6 +352,91 @@ open http://localhost
 1. **Schedule maintenance window**
 2. **Follow Path A** with full team backup
 3. **Monitor closely** for first 48 hours
+
+---
+
+## Upgrading MariaDB (10.6 EOL)
+
+Devilbox Boost now runs **official MariaDB/MySQL images** instead of the legacy
+`devilbox/mysql` images. The database is configured by a pair of `.env` variables:
+
+- `MYSQL_SERVER` - names the config directory (`cfg/<MYSQL_SERVER>/`) and the data
+  volume (`devilbox-<MYSQL_SERVER>`), e.g. `mariadb-11.8`
+- `MYSQL_IMAGE` - the Docker image to run, e.g. `mariadb:11.8`
+
+The default is **MariaDB 11.8 LTS**. MariaDB 10.6 reaches end of life in **July 2026**,
+so plan your upgrade now.
+
+**Always back up first:**
+
+```bash
+docker compose exec php mysqldump -h 127.0.0.1 -u root -proot --skip-ssl \
+    --all-databases > backup_$(date +%Y%m%d).sql
+```
+
+Then choose one of two upgrade paths:
+
+### Option A: In-place upgrade of existing data
+
+Keep your existing data volume and let MariaDB upgrade it automatically
+(`MARIADB_AUTO_UPGRADE=1` is set, so pointing a newer image at an old data volume
+upgrades it in place):
+
+```env
+MYSQL_SERVER=mariadb-10.6    # keep - reuses the existing devilbox-mariadb-10.6 volume
+MYSQL_IMAGE=mariadb:11.8     # new - upgrades the data in place on next start
+```
+
+```bash
+docker compose stop && docker compose rm -f && docker compose up -d
+```
+
+### Option B: Fresh database
+
+Point both variables at 11.8 for a brand-new, empty database:
+
+```env
+MYSQL_SERVER=mariadb-11.8
+MYSQL_IMAGE=mariadb:11.8
+```
+
+Your old data is untouched and stays in the `devilbox-mariadb-10.6` volume.
+Re-import from your dump if needed:
+
+```bash
+docker compose exec -T php mysql -h 127.0.0.1 -u root -proot --skip-ssl \
+    < backup_YYYYMMDD.sql
+```
+
+### Escape hatch: stay on the legacy image
+
+If you are not ready to upgrade, you can keep running the old devilbox image:
+
+```env
+MYSQL_SERVER=mariadb-10.6
+MYSQL_IMAGE=devilbox/mysql:mariadb-10.6-0.21
+```
+
+---
+
+## MinIO -> RustFS
+
+MinIO's community edition was archived upstream (April 2026), so Devilbox Boost
+replaced it with **RustFS** - an S3-compatible object storage server. Same ports
+(9000 S3 API, 9001 web console), new default credentials `rustfsadmin` / `rustfsadmin`
+(override via `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY` in `.env`).
+
+**Important:** existing MinIO bucket data does **not** carry over automatically -
+RustFS uses a different on-disk format. The old `devilbox-minio` volume is left
+intact, but you need to either:
+
+- **Re-create your buckets** in the RustFS console (`http://localhost:9001`), or
+- **Mirror the data** with an S3 client (e.g. `mc`, `rclone`, or the AWS CLI):
+  temporarily start the old MinIO container, then copy bucket contents from the
+  old MinIO endpoint to the new RustFS endpoint.
+
+Because RustFS is S3-compatible, your application code (Laravel S3/flysystem, AWS SDK)
+works unchanged - just update the credentials in your project `.env`.
 
 ---
 
