@@ -1,13 +1,14 @@
 {
   "name": "@devilbox/mcp-server",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "MCP server for Devilbox - AI-powered development environment assistant",
   "type": "module",
   "bin": {
     "devilbox-mcp": "./index.js"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node test-mcp.js"
   },
   "keywords": [
     "devilbox",
@@ -20,6 +21,6 @@
   "author": "Devilbox Boost Contributors",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4"
+    "@modelcontextprotocol/sdk": "^1.26.0"
   }
 }

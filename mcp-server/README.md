@@ -6,34 +6,49 @@ AI-powered assistant for Devilbox development environment management.
 
 ## What is this?
 
-The Devilbox MCP (Model Context Protocol) server provides AI assistants like Claude with direct control over your Devilbox environment. You can use natural language to manage services, check logs, configure vhosts, and more!
+The Devilbox MCP (Model Context Protocol) server provides AI assistants like Claude with direct control over your Devilbox environment. You can use natural language to manage services, run artisan and composer, query databases, toggle Xdebug, tail PHP error logs, and more!
 
 ## Features
 
 ### 🚀 Service Management
 - **Start/Stop/Restart** services with natural language
 - **Check status** of all running containers
-- **View logs** from any service in real-time
+- **View logs** from any service
 
-### 🌐 Vhost Management
-- **List all projects** and their configuration status
-- **Auto-detect** framework types (Laravel, WordPress, etc.)
-- Integration with auto-vhost feature
+### 🐘 PHP / Laravel Workflow
+- **Run artisan** commands in any project (`devilbox_artisan`)
+- **Run composer** in any project (`devilbox_composer`)
+- **Tail PHP-FPM error logs** straight from the host (`devilbox_php_errors`)
+- **Toggle Xdebug** on/off with a config drop-in + PHP-FPM reload (`devilbox_xdebug`)
+
+### 💾 Database Operations
+- **Run SQL queries** against MySQL/MariaDB or PostgreSQL (`devilbox_sql`)
+- **List databases** across both engines (`devilbox_databases`)
+- Credentials are read from `.env` — nothing is hardcoded
+
+### 🌐 Project & Vhost Management
+- **List all projects** with framework detection and vhost URLs (`devilbox_projects`)
+- **Vhost configuration status** per project (`devilbox_vhosts`)
 
 ### 📊 Monitoring & Health
 - **Health checks** for all services
-- **Connectivity tests** between containers
-- **Disk space** and resource monitoring
+- **Connectivity tests** from the PHP container to MySQL, PostgreSQL, Redis, Memcached and MongoDB
+- **Disk space** and Docker info
 
 ### ⚙️ Configuration
-- **Read and update** .env settings
-- **Manage Docker Compose** services
-- **Execute commands** inside containers
+- **Read and update** `.env` settings (passwords are redacted in full listings)
+- **Execute commands** inside containers (`devilbox_exec`)
 
-### 💾 Database Operations
-- **List databases** (MySQL/PostgreSQL)
-- **Execute queries** through PHP container
-- Database health monitoring
+## Security Model
+
+This server was rewritten to be injection-safe:
+
+- **No host shell, ever.** Every process is spawned with `child_process.spawn` and argument arrays — tool input can never inject into your host shell.
+- **Container commands are explicit.** `devilbox_exec`, `devilbox_artisan` and `devilbox_composer` run their command string via `docker compose exec -T <service> sh -c <command>`, where the command is a single argument. The shell that interprets it lives *inside* the container — that is the tool's purpose.
+- **Service names are allowlisted** against the services actually defined in `docker-compose.yml` and `docker-compose.override.yml`. Unknown names are rejected with the list of valid ones.
+- **Project names are validated** (`[A-Za-z0-9._-]`, must exist in `data/www`) — no path traversal.
+- **Credentials come from `.env`** (`MYSQL_ROOT_PASSWORD`, `PGSQL_ROOT_USER`, `PGSQL_ROOT_PASSWORD`) and are passed via environment variables, never on a shell command line.
+- **Compose commands run with `cwd` set to the Devilbox root**, so `docker-compose.override.yml` merging always works.
 
 ## Installation
 
@@ -111,10 +126,16 @@ Add the same `mcpServers` block shown above.
 | `devilbox_stop` | Stop services | "Stop all services" |
 | `devilbox_restart` | Restart services | "Restart PHP container" |
 | `devilbox_logs` | View container logs | "Show me the last 50 lines from PHP logs" |
-| `devilbox_exec` | Execute command in container | "Run composer install in PHP container" |
-| `devilbox_vhosts` | List all virtual hosts | "What projects do I have?" |
-| `devilbox_config` | Get/set configuration | "What PHP version am I using?" |
-| `devilbox_databases` | List databases | "Show me all MySQL databases" |
+| `devilbox_exec` | Execute command in container | "Run `php -v` in the PHP container" |
+| `devilbox_artisan` | Run artisan in a project | "Run migrations for tapthetable" |
+| `devilbox_composer` | Run composer in a project | "Run composer install in fansframe" |
+| `devilbox_sql` | Run a SQL query | "How many users are in the tapthetable database?" |
+| `devilbox_databases` | List databases | "Show me all databases" |
+| `devilbox_php_errors` | Tail PHP-FPM error log | "Show me recent PHP errors" |
+| `devilbox_xdebug` | Toggle/inspect Xdebug | "Turn on Xdebug" |
+| `devilbox_projects` | List projects with URLs & frameworks | "What projects do I have and what are their URLs?" |
+| `devilbox_vhosts` | List vhost config status | "Which projects have custom vhost templates?" |
+| `devilbox_config` | Get/set `.env` configuration | "What PHP version am I using?" |
 | `devilbox_health` | Health check | "Is Devilbox healthy?" |
 
 ## Usage Examples
@@ -129,22 +150,31 @@ You: "Start my Devilbox environment"
 Claude: *uses devilbox_start* → All services started!
 ```
 
-**Checking Status:**
+**Laravel Development:**
 ```
-You: "Is MySQL running?"
-Claude: *uses devilbox_status* → Yes, MySQL is up and running on port 3306
+You: "Run the migrations for tapthetable and seed the database"
+Claude: *uses devilbox_artisan (migrate --seed)* → Migrations complete!
 ```
 
-**Viewing Logs:**
+**Database Queries:**
 ```
-You: "Show me PHP errors from the last 5 minutes"
-Claude: *uses devilbox_logs* → Here are the recent PHP logs...
+You: "How many rows are in the users table of the fansframe database?"
+Claude: *uses devilbox_sql* → 1,284 users
+```
+
+**Debugging:**
+```
+You: "Something is broken, show me the last PHP errors"
+Claude: *uses devilbox_php_errors* → Here's the stack trace from php-errors.log...
+
+You: "Enable Xdebug so I can step through it"
+Claude: *uses devilbox_xdebug (on)* → Xdebug enabled on port 9003, PHP-FPM reloaded
 ```
 
 **Managing Projects:**
 ```
 You: "What Laravel projects do I have?"
-Claude: *uses devilbox_vhosts* → Found 13 projects in /data/www...
+Claude: *uses devilbox_projects* → Found 11 projects, 6 are Laravel...
 ```
 
 **Configuration:**
@@ -153,20 +183,6 @@ You: "Switch to PHP 8.3"
 Claude: *uses devilbox_config* → Updated PHP_SERVER=8.3, restart to apply
 ```
 
-**Database Management:**
-```
-You: "List all databases"
-Claude: *uses devilbox_databases* → Found 10 databases: companychat, fansframe...
-```
-
-**Health Monitoring:**
-```
-You: "Is everything working correctly?"
-Claude: *uses devilbox_health* → All services healthy, connectivity OK
-```
-
-See [USAGE-EXAMPLES.md](USAGE-EXAMPLES.md) for detailed workflows, troubleshooting, and advanced usage.
-
 ## Tool Parameters
 
 ### devilbox_start / devilbox_stop / devilbox_restart
@@ -174,39 +190,114 @@ See [USAGE-EXAMPLES.md](USAGE-EXAMPLES.md) for detailed workflows, troubleshooti
 ```typescript
 {
   services?: string[]  // Optional: ['php', 'mysql', 'redis']
-                      // If omitted, affects all services
+                       // If omitted, affects all services
 }
 ```
 
-**Examples:**
-- Start everything: `{}`
-- Start specific: `{ "services": ["php", "httpd"] }`
+Service names are validated against the compose files. Valid services:
+`bind, httpd, mailpit, meilisearch, memcd, mongo, mysql, pgsql, php, rabbit, redis, rustfs`
 
 ### devilbox_logs
 
 ```typescript
 {
   service: string,     // Required: 'php', 'httpd', 'mysql', etc.
-  lines?: number       // Optional: number of lines (default: 100)
+  lines?: number       // Optional: number of lines (default: 100, max: 10000)
 }
 ```
-
-**Examples:**
-- Last 100 lines: `{ "service": "php" }`
-- Last 500 lines: `{ "service": "mysql", "lines": 500 }`
 
 ### devilbox_exec
 
 ```typescript
 {
-  service: string,     // Required: container to execute in
-  command: string      // Required: command to run
+  service: string,     // Required: container to execute in (allowlisted)
+  command: string,     // Required: command to run (via sh -c INSIDE the container)
+  user?: string,       // Optional: e.g. 'devilbox' for write-safe file operations
+  workdir?: string     // Optional: absolute path inside the container
 }
 ```
 
 **Examples:**
-- `{ "service": "php", "command": "composer --version" }`
-- `{ "service": "mysql", "command": "mysql -V" }`
+- `{ "service": "php", "command": "php -v" }`
+- `{ "service": "php", "command": "npm run build", "user": "devilbox", "workdir": "/shared/httpd/myapp" }`
+
+### devilbox_artisan
+
+```typescript
+{
+  project: string,     // Required: directory name under data/www
+  args?: string        // Optional: artisan arguments (default: "list")
+}
+```
+
+Runs `php artisan <args>` as user `devilbox` in `/shared/httpd/<project>`.
+
+**Examples:**
+- `{ "project": "tapthetable", "args": "migrate --seed" }`
+- `{ "project": "tapthetable", "args": "route:list" }`
+- `{ "project": "tapthetable", "args": "queue:work --once" }`
+
+### devilbox_composer
+
+```typescript
+{
+  project: string,     // Required: directory name under data/www
+  args: string         // Required: composer arguments
+}
+```
+
+**Examples:**
+- `{ "project": "fansframe", "args": "install" }`
+- `{ "project": "fansframe", "args": "require laravel/pint --dev" }`
+- `{ "project": "fansframe", "args": "dump-autoload" }`
+
+### devilbox_sql
+
+```typescript
+{
+  engine?: 'mysql' | 'pgsql',  // Default: 'mysql'
+  query: string,               // Required: the SQL to run
+  database?: string            // Optional: database to run it against
+}
+```
+
+The query is piped to the client binary inside the database container via stdin. Credentials come from `.env` (`MYSQL_ROOT_PASSWORD`, `PGSQL_ROOT_USER`, `PGSQL_ROOT_PASSWORD`).
+
+**Examples:**
+- `{ "query": "SHOW TABLES;", "database": "tapthetable" }`
+- `{ "engine": "pgsql", "query": "SELECT version();" }`
+
+### devilbox_databases
+
+```typescript
+{
+  type?: 'mysql' | 'pgsql' | 'all'  // Default: 'all'
+}
+```
+
+### devilbox_php_errors
+
+```typescript
+{
+  lines?: number,       // Default: 50
+  php_version?: string  // Default: PHP_SERVER from .env (e.g. "8.4")
+}
+```
+
+Reads `log/php-fpm-<version>/php-errors.log` directly from the host filesystem — no containers involved.
+
+### devilbox_xdebug
+
+```typescript
+{
+  action: 'status' | 'on' | 'off',  // Required
+  mode?: string,                    // Default: "debug,develop"
+  port?: number,                    // Default: 9003
+  trigger?: boolean                 // Default: false (debug every request)
+}
+```
+
+`on` writes `cfg/php-ini-<version>/zzz-mcp-xdebug.ini` (sorted last, so it overrides `custom.ini`) and reloads PHP-FPM with `kill -USR2 1`. `off` removes the drop-in and reloads. If a reload doesn't apply the change, restart the php container.
 
 ### devilbox_config
 
@@ -219,61 +310,36 @@ See [USAGE-EXAMPLES.md](USAGE-EXAMPLES.md) for detailed workflows, troubleshooti
 ```
 
 **Examples:**
-- Get all: `{ "action": "get" }`
+- Get all (passwords redacted): `{ "action": "get" }`
 - Get one: `{ "action": "get", "key": "PHP_SERVER" }`
 - Set value: `{ "action": "set", "key": "PHP_SERVER", "value": "8.4" }`
 
-### devilbox_databases
+## Testing
 
-```typescript
-{
-  type?: 'mysql' | 'pgsql'  // Default: 'mysql'
-}
+```bash
+# Offline-friendly test suite (protocol, tools list, filesystem tools, allowlist)
+npm test
+
+# Start the server manually
+node index.js
+
+# Explore interactively with the MCP inspector
+npx @modelcontextprotocol/inspector node index.js
 ```
 
-## Integration with Claude Code
-
-The MCP server integrates seamlessly with Claude Code:
-
-1. **Automatic Context**: Claude knows your Devilbox setup
-2. **Intelligent Suggestions**: Recommends actions based on logs
-3. **Error Diagnosis**: Analyzes errors and suggests fixes
-4. **Configuration Help**: Guides you through setup
-
-## Testing Status
-
-All 10 tools have been tested and verified working:
-
-| Tool | Status | Notes |
-|------|--------|-------|
-| `devilbox_status` | ✅ | Verified with 8 running containers |
-| `devilbox_start` | ✅ | Service start tested |
-| `devilbox_stop` | ✅ | Service stop tested |
-| `devilbox_restart` | ✅ | Service restart tested |
-| `devilbox_logs` | ✅ | PHP/httpd/mysql logs retrieved |
-| `devilbox_exec` | ✅ | Commands executed successfully |
-| `devilbox_vhosts` | ✅ | 13 projects detected |
-| `devilbox_config` | ✅ | Read/write .env working |
-| `devilbox_databases` | ✅ | MySQL listing working (SSL issue fixed) |
-| `devilbox_health` | ✅ | Full health check operational |
-
-### Known Issues (Fixed)
-
-- ✅ MySQL SSL Error: Fixed by adding `--skip-ssl` flag to database queries
-
 ## Troubleshooting
+
+### "Service 'foo' not known"
+
+Tool arguments for service names are allowlisted. The error message lists all valid services — pick one of those.
 
 ### "Command not found: docker compose"
 
 Make sure Docker Desktop is running and `docker compose` is available (Docker Desktop includes it by default).
 
-### "Permission denied"
+### "Project 'foo' not found in data/www"
 
-Run: `chmod +x /path/to/Devilbox-Boost/mcp-server/index.js`
-
-### "Cannot connect to Docker daemon"
-
-Start Docker Desktop and ensure it's running.
+Project names must match a directory in `data/www`. The error lists available projects.
 
 ### "Module not found: @modelcontextprotocol/sdk"
 
@@ -283,21 +349,13 @@ For more troubleshooting tips, see [USAGE-EXAMPLES.md](USAGE-EXAMPLES.md).
 
 ## Development
 
-### Testing Tools Locally
-
-```bash
-# Start the server
-node index.js
-
-# In another terminal, test with MCP inspector
-npx @modelcontextprotocol/inspector node index.js
-```
-
 ### Adding New Tools
 
 1. Add tool definition to `tools` array
 2. Implement handler in `toolHandlers`
-3. Test with Claude Code
+3. Use `run()` / `dockerCompose()` / `composeExec()` / `execInContainer()` — never build shell strings
+4. Validate service names with `validateService()` and projects with `validateProject()`
+5. Add a test in `test-mcp.js` and run `npm test`
 
 ## Architecture
 
@@ -306,9 +364,9 @@ Claude Code
     ↓
 MCP Protocol (stdio)
     ↓
-Devilbox MCP Server (Node.js)
+Devilbox MCP Server (Node.js, spawn + argv arrays — no host shell)
     ↓
-Docker CLI / docker compose
+docker compose (cwd = Devilbox root, override merging intact)
     ↓
 Devilbox Containers
 ```
@@ -317,18 +375,9 @@ Devilbox Containers
 
 - MCP server runs with your user permissions
 - No network exposure (stdio only)
-- Direct file system access (be careful with config changes)
-- All Docker commands run as your user
-
-## Roadmap
-
-- [ ] Database backup/restore tools
-- [ ] SSL certificate management
-- [ ] Performance metrics (CPU, RAM, disk I/O)
-- [ ] Log analysis with AI summaries
-- [ ] Automated troubleshooting
-- [ ] Project scaffolding (create new Laravel/WordPress projects)
-- [ ] Import/export configurations
+- No host shell — all processes spawned with argument arrays
+- Service and project names validated against real compose services / directories
+- Credentials read from `.env`, passed via environment variables, redacted in config listings
 
 ## Credits
 
@@ -342,6 +391,5 @@ MIT License - Same as Devilbox
 
 ---
 
-**Version**: 1.0.0
+**Version**: 2.0.0
 **Author**: Devilbox Boost Contributors
-**Date**: February 14, 2026

@@ -61,217 +61,223 @@ The installer creates a `.mcp.json` in the Devilbox-Boost project root (for Clau
 NAME               IMAGE                              COMMAND                  SERVICE   CREATED          STATUS          PORTS
 devilbox-bind-1    cytopia/bind:alpine-0.35           "/docker-entrypoint.…"   bind      3 hours ago      Up 3 hours      0.0.0.0:1053->53/tcp
 devilbox-httpd-1   devilbox/apache-2.4:alpine-1.2     "/docker-entrypoint.…"   httpd     3 hours ago      Up 32 minutes   0.0.0.0:80->80/tcp
-devilbox-memcd-1   memcached:1.6-alpine               "docker-entrypoint.s…"   memcd     3 hours ago      Up 3 hours      0.0.0.0:11211->11211/tcp
-devilbox-mongo-1   mongo:8.0                          "docker-entrypoint.s…"   mongo     3 hours ago      Up 3 hours      0.0.0.0:27017->27017/tcp
 devilbox-mysql-1   devilbox/mysql:mariadb-10.6-0.21   "/docker-entrypoint.…"   mysql     3 hours ago      Up 3 hours      0.0.0.0:3306->3306/tcp
-devilbox-pgsql-1   postgres:18-alpine                 "docker-entrypoint.s…"   pgsql     3 hours ago      Up 3 hours      0.0.0.0:5432->5432/tcp
 devilbox-php-1     devilbox-php-8.4:work              "/usr/local/bin/dock…"   php       33 minutes ago   Up 33 minutes   9000/tcp
-devilbox-redis-1   redis:8.6-alpine                   "docker-entrypoint.s…"   redis     3 hours ago      Up 3 hours      0.0.0.0:6379->6379/tcp
+...
 ```
-
-**Analysis:** All 8 services running, PHP container restarted recently.
 
 ---
 
 ### 2. List Projects
 
-**Natural language:** "What Laravel projects do I have?"
+**Natural language:** "What projects do I have and what are their URLs?"
 
-**Tool:** `devilbox_vhosts`
+**Tool:** `devilbox_projects`
 
 **Example Response:**
 ```
-Found 13 projects:
+Found 11 projects in data/www (TLD: .local):
 
-⚠️  avatar (no vhost config)
-⚠️  company-chat-app (no vhost config)
-⚠️  companychat (no vhost config)
-⚠️  composer.json (no vhost config)
-⚠️  composer.lock (no vhost config)
-⚠️  composer.phar (no vhost config)
-⚠️  eatoutthebox (no vhost config)
-⚠️  fansframe (no vhost config)
-⚠️  moducraft (no vhost config)
-⚠️  moducraft-v2 (no vhost config)
-⚠️  note-app (no vhost config)
-⚠️  tapthetable (no vhost config)
-⚠️  testbench (no vhost config)
+- tapthetable
+    URL:       http://tapthetable.local
+    Framework: Laravel
+    Vhost:     auto-detected
+- fansframe
+    URL:       http://fansframe.local
+    Framework: Laravel
+    Vhost:     custom template (.devilbox/)
+...
 ```
 
-**Analysis:** 13 projects detected in `/data/www`, auto-detection via vhost-auto-config is handling configuration.
+Framework detection recognizes Laravel (`artisan`), WordPress (`wp-config.php` / `wp-content`), Symfony (`bin/console`), generic composer projects, plain PHP and static sites.
 
 ---
 
-### 3. View Logs
+### 3. Run Artisan Commands
 
-**Natural language:** "Show me the last 20 lines from PHP logs"
+**Natural language:** "Run the pending migrations for tapthetable"
 
-**Tool:** `devilbox_logs`
+**Tool:** `devilbox_artisan` with `{ "project": "tapthetable", "args": "migrate" }`
 
-**Parameters:**
-```json
-{
-  "service": "php",
-  "lines": 20
-}
-```
-
-**Example Response:**
-```
-php-1  | [vhost-auto-config] Scanning for projects in /shared/httpd...
-php-1  | 172.16.238.11 -  14/Feb/2026:08:37:56 +0000 "GET /_ajax_callback.php" 200
-php-1  | 172.16.238.11 -  14/Feb/2026:08:39:02 +0000 "GET /index.php" 200
-php-1  | [vhost-auto-config] Scanning for projects in /shared/httpd...
-```
-
-**Use cases:**
-- Debug PHP errors
-- Monitor Apache/Nginx access logs
-- Track database connection issues
-- Watch service startup messages
-
----
-
-### 4. Execute Commands
-
-**Natural language:** "What PHP version am I running?"
-
-**Tool:** `devilbox_exec`
-
-**Parameters:**
-```json
-{
-  "service": "php",
-  "command": "php -v"
-}
-```
-
-**Example Response:**
-```
-PHP 8.4.18 (cli) (built: Feb 13 2026 18:38:21) (NTS)
-Copyright (c) The PHP Group
-Zend Engine v4.4.18, Copyright (c) Zend Technologies
-    with Zend OPcache v8.4.18, Copyright (c), by Zend Technologies
-    with Xdebug v3.5.0, Copyright (c) 2002-2025, by Derick Rethans
-```
+Runs `php artisan migrate` as user `devilbox` inside `/shared/httpd/tapthetable` — no permission-mangled files.
 
 **More examples:**
 
-Run composer:
-```json
-{
-  "service": "php",
-  "command": "composer --version"
-}
-```
+| You say | Tool call |
+|---------|-----------|
+| "Show me all routes in tapthetable" | `{ "project": "tapthetable", "args": "route:list" }` |
+| "Clear the caches" | `{ "project": "tapthetable", "args": "optimize:clear" }` |
+| "Make a model with migration" | `{ "project": "tapthetable", "args": "make:model Order -m" }` |
+| "Run one queued job" | `{ "project": "tapthetable", "args": "queue:work --once" }` |
+| "Roll back the last migration" | `{ "project": "tapthetable", "args": "migrate:rollback --step=1" }` |
 
-Check MySQL from PHP container:
-```json
-{
-  "service": "php",
-  "command": "mysql -h 127.0.0.1 -u root -proot --skip-ssl -e 'SELECT VERSION();'"
-}
-```
-
-List PHP modules:
-```json
-{
-  "service": "php",
-  "command": "php -m"
-}
-```
+If the project isn't a Laravel app, the tool tells you so and points at `devilbox_projects`.
 
 ---
 
-### 5. List Databases
+### 4. Run Composer
 
-**Natural language:** "Show me all MySQL databases"
+**Natural language:** "Install the composer dependencies for fansframe"
 
-**Tool:** `devilbox_databases`
+**Tool:** `devilbox_composer` with `{ "project": "fansframe", "args": "install" }`
 
-**Parameters:**
+**More examples:**
+- `{ "project": "fansframe", "args": "require laravel/pint --dev" }`
+- `{ "project": "fansframe", "args": "update --with-all-dependencies" }`
+- `{ "project": "fansframe", "args": "dump-autoload -o" }`
+
+Composer runs as user `devilbox` so `vendor/` stays owned by you.
+
+---
+
+### 5. Run SQL Queries
+
+**Natural language:** "How many users signed up this week in the tapthetable database?"
+
+**Tool:** `devilbox_sql` with:
 ```json
 {
-  "type": "mysql"
+  "engine": "mysql",
+  "database": "tapthetable",
+  "query": "SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL 7 DAY;"
 }
 ```
 
 **Example Response:**
 ```
-Database
-companychat
-eatoutthebox
-fansframe
-information_schema
-moducraft
-mysql
-performance_schema
-sys
-tapthetable
-testbench
++----------+
+| COUNT(*) |
++----------+
+|       42 |
++----------+
 ```
 
-**PostgreSQL Example:**
-```json
-{
-  "type": "pgsql"
-}
+**PostgreSQL:** `{ "engine": "pgsql", "query": "SELECT version();" }`
+
+Notes:
+- The query is piped to the client binary **inside the database container** via stdin — nothing touches your host shell.
+- Credentials come from `.env` (`MYSQL_ROOT_PASSWORD`, `PGSQL_ROOT_USER`, `PGSQL_ROOT_PASSWORD`) and are passed as environment variables.
+
+---
+
+### 6. List Databases
+
+**Natural language:** "List all my databases"
+
+**Tool:** `devilbox_databases` (default `type: "all"` covers both engines)
+
+**Example Response:**
+```
+=== MySQL/MariaDB ===
++--------------------+
+| Database           |
++--------------------+
+| tapthetable        |
+| fansframe          |
+| information_schema |
+...
+
+=== PostgreSQL ===
+List of databases ...
 ```
 
 ---
 
-### 6. Read Configuration
+### 7. Tail PHP Errors
 
-**Natural language:** "What's my current PHP version setting?"
+**Natural language:** "Something 500s — show me the last PHP errors"
 
-**Tool:** `devilbox_config`
+**Tool:** `devilbox_php_errors` with `{ "lines": 50 }`
 
-**Parameters:**
-```json
-{
-  "action": "get",
-  "key": "PHP_SERVER"
-}
+**Example Response:**
+```
+Last 50 lines of log/php-fpm-8.4/php-errors.log:
+
+[13-Aug-2026 22:14:03 UTC] PHP Fatal error:  Uncaught Error: Class "App\Services\Missing" not found in ...
 ```
 
-**Get all config:**
-```json
-{
-  "action": "get"
-}
-```
-
-**Response:** Returns entire `.env` file contents parsed as key=value pairs.
+Reads the log file directly from the host — works even when containers are down. Pass `php_version` (e.g. `"8.2"`) to inspect a different version's log.
 
 ---
 
-### 7. Update Configuration
+### 8. Toggle Xdebug
 
-**Natural language:** "Switch to PHP 8.3"
+**Natural language:** "Enable Xdebug so I can step through this request"
 
-**Tool:** `devilbox_config`
+**Tool:** `devilbox_xdebug` with `{ "action": "on" }`
 
-**Parameters:**
-```json
-{
-  "action": "set",
-  "key": "PHP_SERVER",
-  "value": "8.3"
-}
+**Example Response:**
+```
+Xdebug enabled (mode=debug,develop, port=9003, start_with_request=yes).
+Wrote cfg/php-ini-8.4/zzz-mcp-xdebug.ini.
+PHP-FPM reloaded (kill -USR2 1). If the change does not apply, restart the php container: devilbox_restart ["php"].
 ```
 
-**Response:** `Updated PHP_SERVER=8.3`
+**Options:**
+- `{ "action": "on", "trigger": true }` — only debug requests carrying `XDEBUG_TRIGGER` (faster for everything else)
+- `{ "action": "on", "port": 9000 }` — for IDEs listening on the legacy port
+- `{ "action": "off" }` — remove the drop-in and reload
+- `{ "action": "status" }` — show drop-in state and what PHP reports
 
-**Important:** After config changes:
-```bash
-docker compose stop
-docker compose rm -f
-docker compose up -d
+The drop-in file sorts after `custom.ini`, so it cleanly overrides the performance-first `xdebug.mode = off` default without editing your own config.
+
+---
+
+### 9. View Container Logs
+
+**Natural language:** "Show me the last 200 lines of MySQL logs"
+
+**Tool:** `devilbox_logs` with `{ "service": "mysql", "lines": 200 }`
+
+---
+
+### 10. Execute Commands in Containers
+
+**Natural language:** "What PHP extensions are loaded?"
+
+**Tool:** `devilbox_exec` with `{ "service": "php", "command": "php -m" }`
+
+**More examples:**
+- `{ "service": "php", "command": "node -v && npm -v" }`
+- `{ "service": "php", "command": "npm run build", "user": "devilbox", "workdir": "/shared/httpd/tapthetable" }`
+- `{ "service": "redis", "command": "redis-cli INFO memory" }`
+- `{ "service": "mysql", "command": "mysqladmin status -uroot -p\"$MYSQL_ROOT_PASSWORD\"" }`
+
+The command runs via `sh -c` **inside** the chosen container. The service name is allowlisted; an invalid name returns:
+
+```
+Error: Service 'foo' not known. Valid services: bind, httpd, mailpit, meilisearch, memcd, mongo, mysql, pgsql, php, rabbit, redis, rustfs
 ```
 
 ---
 
-### 8. Health Check
+### 11. Manage Services
+
+**Natural language:** "Restart PHP and the webserver"
+
+**Tool:** `devilbox_restart` with `{ "services": ["php", "httpd"] }`
+
+Also: `devilbox_start` (uses `docker compose up -d`, so override merging and dependency ordering work) and `devilbox_stop`.
+
+---
+
+### 12. Configuration
+
+**Natural language:** "What PHP version am I running?"
+
+**Tool:** `devilbox_config` with `{ "action": "get", "key": "PHP_SERVER" }`
+
+**Natural language:** "Switch me to PHP 8.2"
+
+**Tool:** `devilbox_config` with `{ "action": "set", "key": "PHP_SERVER", "value": "8.2" }`
+
+Then: "Restart everything" → `devilbox_restart`.
+
+**Note:** `{ "action": "get" }` without a key lists the whole `.env`, with `*PASSWORD*`/`*SECRET*`/`*TOKEN*` values redacted. Request a specific key to see its real value.
+
+---
+
+### 13. Health Check
 
 **Natural language:** "Is everything working correctly?"
 
@@ -280,231 +286,91 @@ docker compose up -d
 **Example Response:**
 ```
 === Service Status ===
-NAME               IMAGE                    SERVICE   STATUS
-devilbox-bind-1    cytopia/bind:alpine...   bind      Up 3 hours
-devilbox-httpd-1   devilbox/apache-2.4...   httpd     Up 32 minutes
-devilbox-mysql-1   devilbox/mysql:maria...  mysql     Up 3 hours
-...
-
-=== Disk Space ===
-Filesystem      Size   Used  Avail Capacity
-/dev/disk3s1s1  460Gi  15Gi  391Gi     4%
+(docker compose ps output)
 
 === Docker Info ===
-macOS | 27.5.1
+Docker Desktop | Docker 27.4.0
 
-✅ PHP → MySQL connectivity: OK
-```
+=== Disk Space ===
+Filesystem     Size   Used  Avail Capacity  Mounted on
+...
 
-**What it checks:**
-- Service status
-- Disk space
-- Docker version
-- Container connectivity
-
----
-
-### 9. Start Services
-
-**Natural language:** "Start MySQL and Redis"
-
-**Tool:** `devilbox_start`
-
-**Parameters:**
-```json
-{
-  "services": ["mysql", "redis"]
-}
-```
-
-**Start everything:**
-```json
-{}
-```
-
----
-
-### 10. Restart Services
-
-**Natural language:** "Restart PHP container to apply changes"
-
-**Tool:** `devilbox_restart`
-
-**Parameters:**
-```json
-{
-  "services": ["php"]
-}
+=== Connectivity (from php container) ===
+[OK]   php -> mysql:3306
+[OK]   php -> pgsql:5432
+[OK]   php -> redis:6379
+[OK]   php -> memcd:11211
+[OK]   php -> mongo:27017
 ```
 
 ---
 
 ## Real-World Workflows
 
-### Workflow 1: Debug Production Error
+### Morning startup
 
-**Scenario:** User reports 500 error on `companychat.loc`
-
-**Conversation:**
 ```
-You: "I'm getting a 500 error on companychat.loc, help me debug"
-
-Claude:
-1. *Uses devilbox_logs with service=httpd*
-2. Sees Apache error: "PHP Fatal error: Allowed memory exhausted"
-3. *Uses devilbox_config to get PHP_MEMORY_LIMIT*
-4. Suggests: "Your PHP memory limit is 128M, increase it to 256M"
-5. *Uses devilbox_config to set PHP_MEMORY_LIMIT=256M*
-6. *Uses devilbox_restart with service=php*
-7. "Try again, the error should be resolved"
+You: "Start devilbox and check everything is healthy"
+Claude: devilbox_start → devilbox_health → "All services up, connectivity OK"
 ```
 
----
+### Debugging a broken page
 
-### Workflow 2: New Project Setup
-
-**Scenario:** Setting up a new Laravel project
-
-**Conversation:**
 ```
-You: "I want to create a new Laravel project called 'shopify-clone'"
-
-Claude:
-1. *Uses devilbox_exec*: "composer create-project laravel/laravel shopify-clone"
-2. *Uses devilbox_vhosts* to confirm project appears
-3. *Uses devilbox_databases* to check existing databases
-4. Suggests creating database: "Create database 'shopify_clone'?"
-5. *Uses devilbox_exec*: "mysql -h 127.0.0.1 -u root -proot --skip-ssl -e 'CREATE DATABASE shopify_clone;'"
-6. "Project ready at http://shopify-clone.loc"
+You: "tapthetable.local is throwing a 500, figure out why"
+Claude: devilbox_php_errors → finds the stack trace
+        devilbox_artisan {"project":"tapthetable","args":"optimize:clear"} → cache cleared
+        "The error was a stale config cache referencing a removed provider. Fixed."
 ```
 
----
+### Setting up a freshly cloned project
 
-### Workflow 3: Performance Investigation
-
-**Scenario:** Slow database queries
-
-**Conversation:**
 ```
-You: "My app is slow, check if MySQL is the bottleneck"
+You: "I just cloned fansframe into data/www — get it running"
+Claude: devilbox_composer {"project":"fansframe","args":"install"}
+        devilbox_sql {"query":"CREATE DATABASE IF NOT EXISTS fansframe;"}
+        devilbox_artisan {"project":"fansframe","args":"migrate --seed"}
+        devilbox_projects → "Ready at http://fansframe.local"
+```
 
-Claude:
-1. *Uses devilbox_health* to verify connectivity
-2. *Uses devilbox_logs with service=mysql* to check slow query log
-3. *Uses devilbox_exec*: "mysql -h 127.0.0.1 -u root -proot --skip-ssl -e 'SHOW PROCESSLIST;'"
-4. Analyzes running queries
-5. Suggests adding indexes or optimizing queries
+### Step-debugging session
+
+```
+You: "I need to step through the checkout flow"
+Claude: devilbox_xdebug {"action":"on","trigger":true}
+        "Xdebug is on (trigger mode). Add XDEBUG_TRIGGER to your request or use the browser extension."
+...later...
+You: "Done debugging"
+Claude: devilbox_xdebug {"action":"off"} → "Xdebug off, PHP-FPM reloaded"
+```
+
+### Database inspection
+
+```
+You: "Which tables in tapthetable are biggest?"
+Claude: devilbox_sql {"database":"information_schema","query":"SELECT table_name, ROUND((data_length+index_length)/1024/1024,1) AS mb FROM tables WHERE table_schema='tapthetable' ORDER BY mb DESC LIMIT 10;"}
 ```
 
 ---
 
-### Workflow 4: Version Switch
+## Error Messages You Might See
 
-**Scenario:** Project needs PHP 8.1
-
-**Conversation:**
-```
-You: "I need to test this project with PHP 8.1"
-
-Claude:
-1. *Uses devilbox_config to get current PHP_SERVER*
-2. Shows: "Currently on PHP 8.4"
-3. *Uses devilbox_config to set PHP_SERVER=8.1*
-4. *Uses devilbox_restart with all services*
-5. *Uses devilbox_exec*: "php -v" to confirm
-6. "Now running PHP 8.1.32"
-```
+| Message | Meaning / Fix |
+|---------|---------------|
+| `Service 'x' not known. Valid services: ...` | Typo or non-existent service; pick from the list |
+| `Project 'x' not found in data/www. Available projects: ...` | Project directory doesn't exist |
+| `Project 'x' has no artisan file` | Not a Laravel project — use `devilbox_exec` or `devilbox_composer` |
+| `PHP error log not found at log/php-fpm-X.Y/...` | Wrong version; check `PHP_SERVER` in `.env` or pass `php_version` |
+| `Command timed out after 120s` | Long-running command; run it in a terminal instead |
+| `Cannot connect to the Docker daemon` | Start Docker Desktop |
 
 ---
 
-## Testing Results
+## Testing the Server
 
-All tools tested successfully:
-
-| Tool | Status | Notes |
-|------|--------|-------|
-| `devilbox_status` | ✅ | Shows all 8 running containers |
-| `devilbox_vhosts` | ✅ | Lists 13 projects correctly |
-| `devilbox_logs` | ✅ | Retrieves PHP/httpd/mysql logs |
-| `devilbox_exec` | ✅ | Successfully executes php -v, composer, etc |
-| `devilbox_databases` | ✅ | Lists 10 MySQL databases (fixed SSL issue) |
-| `devilbox_config` | ✅ | Reads/writes .env successfully |
-| `devilbox_health` | ✅ | Comprehensive health check working |
-| `devilbox_start` | ✅ | Service start working |
-| `devilbox_stop` | ✅ | Service stop working |
-| `devilbox_restart` | ✅ | Service restart working |
-
-### Issues Found & Fixed
-
-1. **MySQL SSL Error**
-   - **Issue:** `ERROR 2026 (HY000): TLS/SSL error: SSL is required`
-   - **Fix:** Added `--skip-ssl` flag to mysql command in mcp-server/index.js:339
-   - **Status:** ✅ Fixed
-
----
-
-## Troubleshooting
-
-### "Cannot connect to Docker daemon"
-
-**Solution:** Start Docker Desktop
-
-### "docker-compose: command not found"
-
-**Solution:** Ensure Docker Desktop is installed and running
-
-### "Permission denied: /path/to/Devilbox-Boost/mcp-server/index.js"
-
-**Solution:**
-```bash
-chmod +x /path/to/Devilbox-Boost/mcp-server/index.js
-```
-
-### "Module not found: @modelcontextprotocol/sdk"
-
-**Solution:**
 ```bash
 cd /path/to/Devilbox-Boost/mcp-server
-npm install
+npm test
 ```
 
----
-
-## Tips for Claude Code Integration
-
-### Best Practices
-
-1. **Be specific with requests:** Instead of "check logs", say "show me the last 50 lines of PHP errors"
-
-2. **Provide context:** "I'm getting a 404 on fansframe.loc, help me debug"
-
-3. **Ask for analysis:** "What's using the most memory in my containers?"
-
-4. **Chain actions:** "List databases, then show me the tables in 'companychat'"
-
-### Natural Language Examples
-
-- "Is Redis running?"
-- "Restart the PHP container"
-- "What databases exist?"
-- "Show me recent Apache errors"
-- "Switch to PHP 8.2"
-- "What's my current MySQL version?"
-- "Execute composer install in the PHP container"
-- "Create a new database called 'test_db'"
-
----
-
-## Next Steps
-
-1. Test MCP server with more complex scenarios
-2. Add error recovery suggestions to tool responses
-3. Implement automated backup/restore tools
-4. Add SSL certificate management
-5. Create project scaffolding tools (Laravel, WordPress, etc.)
-
----
-
-**Version:** 1.0.0
-**Last Updated:** February 14, 2026
-**Tested With:** Devilbox running PHP 8.4, MariaDB 10.6, PostgreSQL 18, Redis 8.6
+The test suite initializes the server over stdio, verifies all 16 tools are registered, exercises the filesystem-backed tools (`devilbox_vhosts`, `devilbox_projects`, `devilbox_config`) and confirms the service allowlist rejects hostile input like `php; rm -rf /`. It does not require Docker to be running.

@@ -69,13 +69,15 @@ Just talk to Claude naturally:
 
 ## What You Get
 
-- ✅ **10 AI-powered tools** for Devilbox management
+- ✅ **16 AI-powered tools** for Devilbox management
 - ✅ **Natural language interface** - no commands to memorize
 - ✅ **Automatic Claude Code integration** - zero manual config
 - ✅ **Real-time service monitoring** - status, logs, health
-- ✅ **Smart project detection** - lists all your vhosts
-- ✅ **Database operations** - list databases, run queries
+- ✅ **Laravel workflow** - artisan, composer, Xdebug toggle, PHP error log tail
+- ✅ **Smart project detection** - frameworks and vhost URLs for every project
+- ✅ **Database operations** - list databases, run SQL queries (MySQL & PostgreSQL)
 - ✅ **Configuration management** - read/write .env settings
+- ✅ **Injection-safe by design** - no host shell, allowlisted services
 
 ---
 
