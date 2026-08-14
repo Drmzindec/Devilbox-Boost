@@ -685,7 +685,12 @@ const toolHandlers = {
 
     if (engine === 'mysql') {
       const password = env.MYSQL_ROOT_PASSWORD ?? '';
-      const argv = ['mysql', '-uroot', '--skip-ssl', '--table'];
+      // MariaDB 11+ images ship `mariadb` (no `mysql` symlink); MySQL images
+      // ship `mysql`. --skip-ssl only exists on the mariadb client.
+      const pickClient =
+        'CLIENT="$(command -v mariadb || command -v mysql)"; ' +
+        'case "$CLIENT" in *mariadb) exec "$CLIENT" --skip-ssl "$@";; *) exec "$CLIENT" "$@";; esac';
+      const argv = ['sh', '-c', pickClient, 'sql-client', '-uroot', '--table'];
       if (database) argv.push('-D', database);
       const { stdout, stderr } = await composeExec('mysql', argv, {
         envVars: { MYSQL_PWD: password },
