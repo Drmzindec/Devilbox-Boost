@@ -1,10 +1,13 @@
 {
   "name": "@devilbox/mcp-server",
-  "version": "2.0.0",
-  "description": "MCP server for Devilbox - AI-powered development environment assistant",
+  "version": "2.1.0",
+  "description": "MCP server for Devilbox Boost - lets Claude Code manage the stack (MCP TypeScript SDK v2)",
   "type": "module",
   "bin": {
     "devilbox-mcp": "./index.js"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "scripts": {
     "start": "node index.js",
@@ -21,6 +24,6 @@
   "author": "Devilbox Boost Contributors",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.26.0"
+    "@modelcontextprotocol/server": "^2.3.1"
   }
 }

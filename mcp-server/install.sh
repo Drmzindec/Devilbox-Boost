@@ -49,6 +49,14 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
+# The MCP TypeScript SDK v2 requires Node.js 20 or newer.
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
+if [ "${NODE_MAJOR}" -lt 20 ]; then
+    echo -e "${RED}✗ Node.js 20+ is required for the MCP server (found: $(node -v 2>/dev/null || echo none)).${NC}"
+    echo -e "${YELLOW}  Upgrade Node.js (https://nodejs.org or nvm) and re-run this installer.${NC}"
+    exit 1
+fi
+
 npm install --silent
 echo -e "${GREEN}✓ Dependencies installed${NC}"
 

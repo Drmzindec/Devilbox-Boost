@@ -341,9 +341,11 @@ Make sure Docker Desktop is running and `docker compose` is available (Docker De
 
 Project names must match a directory in `data/www`. The error lists available projects.
 
-### "Module not found: @modelcontextprotocol/sdk"
+### "Cannot find package '@modelcontextprotocol/server'"
 
-Run: `npm install` in the mcp-server directory
+Run `npm install` in the mcp-server directory (or `./install.sh`). Since v2.1.0 the
+server uses the MCP TypeScript SDK v2 (`@modelcontextprotocol/server`), which needs
+**Node.js 20 or newer**; `node -v` must print v20 or higher.
 
 For more troubleshooting tips, see [USAGE-EXAMPLES.md](USAGE-EXAMPLES.md).
 

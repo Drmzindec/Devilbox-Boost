@@ -19,12 +19,8 @@
  * - Credentials are read from the repo's .env (never hardcoded).
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { McpServer, fromJsonSchema } from '@modelcontextprotocol/server';
+import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { spawn } from 'child_process';
 import { readFile, writeFile, access, readdir, unlink, open, stat } from 'fs/promises';
 import { join, dirname, resolve } from 'path';
@@ -1018,47 +1014,41 @@ async function reloadPhpFpm() {
 }
 
 /**
- * Initialize MCP server
+ * Initialize MCP server (MCP TypeScript SDK v2, @modelcontextprotocol/server).
+ *
+ * Tools keep their plain JSON Schema definitions above; fromJsonSchema() turns
+ * each one into a validated input schema, so malformed arguments are rejected
+ * by the SDK before a handler ever runs.
  */
-const server = new Server(
-  {
-    name: 'devilbox',
-    version: '2.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
-
-/**
- * List tools handler
- */
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools,
-}));
-
-/**
- * Call tool handler
- */
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-
-  const handler = toolHandlers[name];
-  if (!handler) {
-    throw new Error(`Unknown tool: ${name}`);
-  }
-
-  try {
-    return await handler(args || {});
-  } catch (error) {
-    return {
-      content: [{ type: 'text', text: `Error: ${error.message}` }],
-      isError: true,
-    };
-  }
+const server = new McpServer({
+  name: 'devilbox',
+  version: '2.1.0',
 });
+
+for (const tool of tools) {
+  const handler = toolHandlers[tool.name];
+  if (!handler) {
+    throw new Error(`No handler registered for tool: ${tool.name}`);
+  }
+
+  server.registerTool(
+    tool.name,
+    {
+      description: tool.description,
+      inputSchema: fromJsonSchema(tool.inputSchema),
+    },
+    async (args) => {
+      try {
+        return await handler(args || {});
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: `Error: ${error.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+}
 
 /**
  * Start server
