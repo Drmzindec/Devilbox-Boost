@@ -374,48 +374,61 @@ docker compose exec php mysqldump -h 127.0.0.1 -u root -proot --skip-ssl \
     --all-databases > backup_$(date +%Y%m%d).sql
 ```
 
-Then choose one of two upgrade paths:
+Then choose one of two upgrade paths. Both keep `MYSQL_SERVER` and `MYSQL_IMAGE`
+pointing at the **same** release (`./check-config.sh` now fails if they drift), so the
+config dir `cfg/mariadb-11.8/` and the data volume `devilbox-mariadb-11.8` are named
+after what is actually running.
 
-### Option A: In-place upgrade of existing data
+### Option A: Carry your data over (recommended)
 
-Keep your existing data volume and let MariaDB upgrade it automatically
-(`MARIADB_AUTO_UPGRADE=1` is set, so pointing a newer image at an old data volume
-upgrades it in place):
-
-```env
-MYSQL_SERVER=mariadb-10.6    # keep - reuses the existing devilbox-mariadb-10.6 volume
-MYSQL_IMAGE=mariadb:11.8     # new - upgrades the data in place on next start
-```
+Copy the old data volume to the new name and let MariaDB upgrade it on first start
+(`MARIADB_AUTO_UPGRADE=1` is set in docker-compose.yml). Replace `devilbox-boost`
+with your compose project name if it differs (`docker compose ls` shows it):
 
 ```bash
-docker compose stop && docker compose rm -f && docker compose up -d
+docker compose stop mysql
+docker volume create devilbox-boost_devilbox-mariadb-11.8
+docker run --rm \
+    -v devilbox-boost_devilbox-mariadb-10.6:/from:ro \
+    -v devilbox-boost_devilbox-mariadb-11.8:/to \
+    alpine sh -c 'cp -a /from/. /to/'
+cp cfg/mariadb-10.6/devilbox-custom.cnf cfg/mariadb-11.8/ 2>/dev/null || true
 ```
-
-### Option B: Fresh database
-
-Point both variables at 11.8 for a brand-new, empty database:
 
 ```env
 MYSQL_SERVER=mariadb-11.8
 MYSQL_IMAGE=mariadb:11.8
 ```
 
-Your old data is untouched and stays in the `devilbox-mariadb-10.6` volume.
-Re-import from your dump if needed:
+```bash
+docker compose up -d mysql
+docker compose exec mysql mariadb -uroot -proot -e 'SHOW DATABASES;'
+```
+
+The old `devilbox-mariadb-10.6` volume is left untouched; remove it with
+`docker volume rm devilbox-boost_devilbox-mariadb-10.6` once you are happy.
+
+### Option B: Fresh database
+
+Point both variables at 11.8 for a brand-new, empty database and re-import your dump:
+
+```env
+MYSQL_SERVER=mariadb-11.8
+MYSQL_IMAGE=mariadb:11.8
+```
 
 ```bash
+docker compose stop && docker compose rm -f && docker compose up -d
 docker compose exec -T php mysql -h 127.0.0.1 -u root -proot --skip-ssl \
     < backup_YYYYMMDD.sql
 ```
 
-### Escape hatch: stay on the legacy image
+### Removed in v1.0.6
 
-If you are not ready to upgrade, you can keep running the old devilbox image:
-
-```env
-MYSQL_SERVER=mariadb-10.6
-MYSQL_IMAGE=devilbox/mysql:mariadb-10.6-0.21
-```
+The end-of-life options `MYSQL_SERVER=mariadb-10.6`, `MYSQL_SERVER=mysql-8.0` and the
+legacy `devilbox/mysql:*` image, together with their `cfg/` directories and volume
+definitions, are gone. A `.env` that still names them fails `./check-config.sh` and
+`docker compose up` (undefined volume) - follow Option A or B above.
 
 ---
 

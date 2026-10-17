@@ -353,6 +353,30 @@ else
 	log_debug "Variable 'MYSQL_SERVER' has correct value: ${MYSQL_SERVER}"
 fi
 
+# MYSQL_SERVER (cfg dir + volume name, flavour-version) and MYSQL_IMAGE (flavour:version)
+# must describe the same database release, otherwise config and data end up under
+# a misleading name (e.g. MariaDB 11.8 data in a devilbox-mariadb-10.6 volume).
+MYSQL_IMAGE="$( get_env_value "MYSQL_IMAGE" )"
+if [ -n "${MYSQL_IMAGE}" ]; then
+	MYSQL_IMAGE_FLAVOUR="${MYSQL_IMAGE%%:*}"
+	MYSQL_IMAGE_VERSION="${MYSQL_IMAGE#*:}"
+	case "${MYSQL_SERVER}" in
+		*-latest) MYSQL_SERVER_VERSION="latest" ;;
+		*)        MYSQL_SERVER_VERSION="${MYSQL_SERVER##*-}" ;;
+	esac
+	MYSQL_SERVER_FLAVOUR="${MYSQL_SERVER%-*}"
+	if [ "${MYSQL_IMAGE_FLAVOUR}" != "${MYSQL_SERVER_FLAVOUR}" ] || [ "${MYSQL_IMAGE_VERSION}" != "${MYSQL_SERVER_VERSION}" ]; then
+		log_err "Variables 'MYSQL_SERVER' (${MYSQL_SERVER}) and 'MYSQL_IMAGE' (${MYSQL_IMAGE}) do not match."
+		log_err "Use a matching pair, e.g. MYSQL_SERVER=mariadb-11.8 with MYSQL_IMAGE=mariadb:11.8 (see MIGRATION.md to move data)."
+		RET_CODE=$(( RET_CODE + 1))
+		WRONG_ENV_FILES_VALUES=1
+	else
+		log_debug "Variables 'MYSQL_SERVER' and 'MYSQL_IMAGE' match: ${MYSQL_SERVER} / ${MYSQL_IMAGE}"
+	fi
+else
+	log_note "Variable 'MYSQL_IMAGE' is not set in .env; docker-compose.yml falls back to mariadb:11.8. Set MYSQL_IMAGE to match MYSQL_SERVER=${MYSQL_SERVER}."
+fi
+
 PGSQL_SERVER="$( get_env_value "PGSQL_SERVER" )"
 if ! grep -E "^#?PGSQL_SERVER=${PGSQL_SERVER}\$" env-example >/dev/null; then
 	log_err "Variable 'PGSQL_SERVER' has wrong value: ${PGSQL_SERVER}"

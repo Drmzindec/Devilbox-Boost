@@ -35,56 +35,12 @@
 						</thead>
 						<tbody>
 							<tr>
+								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/Drmzindec/Devilbox-Boost">Devilbox-Boost</a></td>
+								<td>Devilbox Boost (this project). PHP 8.3 / 8.4 / 8.5 images are built locally from <code>docker-images/</code></td>
+							</tr>
+							<tr>
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/cytopia/devilbox">devilbox</a></td>
-								<td>The Devilbox</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-php-fpm-5.2">docker-php-fpm-5.2</a></td>
-								<td>Legacy PHP 5.2 base images (<code>amd64</code> and <code>i386</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-php-fpm-5.3">docker-php-fpm-5.3</a></td>
-								<td>Legacy PHP 5.3 base images (<code>amd64</code> and <code>arm64</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-php-fpm-5.4">docker-php-fpm-5.4</a></td>
-								<td>Legacy PHP 5.4 base images (<code>amd64</code> and <code>arm64</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-php-fpm-5.5">docker-php-fpm-5.5</a></td>
-								<td>Legacy PHP 5.5 base images (<code>amd64</code> and <code>arm64</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-php-fpm-8.0">docker-php-fpm-8.0</a></td>
-								<td>PHP 8.0 base images (<code>amd64</code> and <code>arm64</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-php-fpm-8.1">docker-php-fpm-8.1</a></td>
-								<td>PHP 8.1 base images (<code>amd64</code> and <code>arm64</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-php-fpm-8.2">docker-php-fpm-8.2</a></td>
-								<td>PHP 8.2 base images (<code>amd64</code> and <code>arm64</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-php-fpm-8.3">docker-php-fpm-8.3</a></td>
-								<td>PHP 8.3 base images (<code>amd64</code> and <code>arm64</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-php-fpm">docker-php-fpm</a></td>
-								<td>PHP-FPM Devilbox images (<code>amd64</code> and <code>arm64</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-php-fpm-community">docker-php-fpm-community</a></td>
-								<td>PHP-FPM Community images (<code>amd64</code> and <code>arm64</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-mysql">docker-mysql</a></td>
-								<td>MySQL, MariaDB and PerconaDB images (<code>amd64</code> and <code>arm64</code>)</td>
-							</tr>
-							<tr>
-								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-apache-2.2">docker-apache-2.2</a></td>
-								<td>Apache 2.2 images (<code>amd64</code> and <code>arm64</code>)</td>
+								<td>The original Devilbox (upstream, unmaintained since 2023)</td>
 							</tr>
 							<tr>
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/devilbox/docker-apache-2.4">docker-apache-2.4</a></td>

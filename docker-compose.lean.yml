@@ -233,9 +233,7 @@ networks:
 volumes:
   devilbox-mail:
   # One volume per supported MYSQL_SERVER value (must match env-example options)
-  devilbox-mariadb-10.6:
   devilbox-mariadb-11.4:
   devilbox-mariadb-11.8:
   devilbox-mariadb-latest:
-  devilbox-mysql-8.0:
   devilbox-mysql-8.4:
