@@ -34,6 +34,39 @@ if [ "$CMD" = ".dbox-wrapper" ]; then
     exit 1
 fi
 
+# Outside the Devilbox tree, defer to the host's own binary when one exists.
+# bin/ is often placed at the front of PATH, which would otherwise hijack
+# host node/npm/npx/php/composer in unrelated projects - directories the
+# container cannot see anyway. Devilbox-only commands (artisan, wp,
+# dbox-shell, ...) and tools without a host counterpart still run inside
+# the container as before.
+resolve_path() {
+    local target="$1" dir
+    while [ -h "$target" ]; do
+        dir="$(cd "$(dirname "$target")" && pwd)"
+        target="$(readlink "$target")"
+        case "$target" in
+            /*) ;;
+            *) target="$dir/$target" ;;
+        esac
+    done
+    printf '%s\n' "$(cd "$(dirname "$target")" && pwd)/$(basename "$target")"
+}
+
+case "$PWD" in
+    "$SCRIPT_DIR"|"$SCRIPT_DIR"/*) ;;
+    *)
+        if [ "$CMD" != "dbox-shell" ]; then
+            while IFS= read -r candidate; do
+                [ -n "$candidate" ] || continue
+                # Skip ourselves (bin/<cmd>) and any symlink pointing back at us.
+                [ "$(resolve_path "$candidate")" = "$SELF" ] && continue
+                exec "$candidate" "$@"
+            done < <(type -aP "$CMD" 2>/dev/null)
+        fi
+        ;;
+esac
+
 # Map the host working directory onto the container's /shared/httpd mount.
 # Outside data/www we fall back to /shared/httpd itself.
 WORKDIR="/shared/httpd"
