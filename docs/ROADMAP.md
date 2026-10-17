@@ -19,7 +19,7 @@ Create a modern, developer-friendly Docker-based PHP development stack that:
 ### Core Modernization
 - [x] **PHP 8.3, 8.4 & 8.5 Support** - Custom Docker images with zero deprecation warnings
 - [x] **Modern JavaScript Tools** - Bun, Vite, Deno, latest Node.js, Vue/React/Angular CLIs
-- [x] **Updated Admin Tools** - All PHP 8.4 compatible (phpMyAdmin 5.2.3, Adminer 5.4.2, phpCacheAdmin 2.4.1)
+- [x] **Updated Admin Tools** - All PHP 8.4 compatible (phpMyAdmin 5.2.3, Adminer 6.1.2, phpCacheAdmin 2.7.2)
 - [x] **Port Forwarding** - Direct `127.0.0.1` database connections from PHP container
 - [x] **PHPStan & Rector** - Static analysis and automated refactoring pre-installed
 - [x] **Prettier & ESLint** - Code quality tools pre-installed
@@ -38,7 +38,7 @@ Create a modern, developer-friendly Docker-based PHP development stack that:
 - [x] **Meilisearch** - Fast search engine with typo-tolerance
 - [x] **Mailpit** - Modern email testing (replaces Mailhog)
 - [x] **RabbitMQ** - Message queue for async tasks
-- [x] **RustFS** - S3-compatible object storage (replaced MinIO in v1.1.0 after MinIO's community edition was archived upstream)
+- [x] **RustFS** - S3-compatible object storage (replaced MinIO in v1.0.6 after MinIO's community edition was archived upstream)
 - [x] **Lean Mode** - `docker-compose.lean.yml` for minimal 4-container setup
 
 ### AI Integration

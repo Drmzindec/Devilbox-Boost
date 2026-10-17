@@ -137,10 +137,10 @@ open http://my-project.loc
 |---------|-----|
 | **Dashboard** | http://localhost |
 | **phpMyAdmin** | http://localhost/vendor/phpmyadmin-5.2.3/ |
-| **Adminer** | http://localhost/vendor/adminer-5.4.2-devilbox.php |
+| **Adminer** | http://localhost/vendor/adminer-6.1.2-devilbox.php |
 | **phpPgAdmin** | http://localhost/vendor/phppgadmin-7.13.0/ |
-| **phpCacheAdmin** | http://localhost/vendor/phpcacheadmin-2.4.1/ |
-| **OpCache GUI** | http://localhost/vendor/opcache-gui-3.6.0.php |
+| **phpCacheAdmin** | http://localhost/vendor/phpcacheadmin-2.7.2/ |
+| **OpCache GUI** | http://localhost/vendor/opcache-gui-3.6.1.php |
 
 ### Database Credentials
 
@@ -454,7 +454,7 @@ Located in `.claude/skills/`:
 
 - **MariaDB 11.8 LTS** - official images (MySQL 8.0/8.4 also available)
 - **PostgreSQL 18**
-- **MongoDB 8.2**
+- **MongoDB 9.0**
 - **Redis 8**
 - **Memcached**
 
@@ -468,10 +468,10 @@ Located in `.claude/skills/`:
 ### Admin Tools
 
 - **phpMyAdmin 5.2.3** - MySQL administration
-- **Adminer 5.4.2** - Lightweight database manager
+- **Adminer 6.1.2** - Lightweight database manager
 - **phpPgAdmin 7.13.0** - PostgreSQL admin
-- **phpCacheAdmin 2.4.1** - Redis/Memcached manager
-- **OpCache GUI 3.6.0** - PHP OpCache monitoring
+- **phpCacheAdmin 2.7.2** - Redis/Memcached manager
+- **OpCache GUI 3.6.1** - PHP OpCache monitoring
 
 ---
 

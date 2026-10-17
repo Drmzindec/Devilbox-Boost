@@ -94,7 +94,7 @@ docker compose exec php laravel new my-blog
 ### 🗄️ Database & Caching
 - **MariaDB 11.8 LTS** - official images (MySQL 8.0/8.4 also available)
 - **PostgreSQL 18**
-- **MongoDB 8.2**
+- **MongoDB 9.0**
 - **Redis 8**
 - **Memcached**
 
@@ -106,9 +106,9 @@ docker compose exec php laravel new my-blog
 
 ### 🎨 Updated Admin Tools
 - **phpMyAdmin 5.2.3** - Pre-filled login (127.0.0.1, root:root)
-- **Adminer 5.4.2** - Lightweight database manager
-- **phpCacheAdmin 2.4.1** - Redis/Memcached unified UI
-- **OpCache GUI 3.6.0** - Performance monitoring
+- **Adminer 6.1.2** - Lightweight database manager
+- **phpCacheAdmin 2.7.2** - Redis/Memcached unified UI
+- **OpCache GUI 3.6.1** - Performance monitoring
 - **phpPgAdmin 7.13.0** - PostgreSQL admin
 
 ### 🤖 AI Integration (Optional)
@@ -198,7 +198,8 @@ docker compose exec php psql -h 127.0.0.1 -U postgres
 ## 🔧 Requirements
 
 - **OS:** macOS, Linux, or Windows (WSL2)
-- **Docker:** Desktop 20.10+
+- **Docker:** Desktop 20.10+ (Compose v2)
+- **Node.js:** 20+ on the host (only for the MCP server / Claude Code integration)
 - **RAM:** 8GB minimum (16GB recommended)
 - **Disk:** 20GB free space
 
@@ -241,10 +242,10 @@ See [MIGRATION.md](MIGRATION.md) for detailed manual setup.
 |---------|-----|
 | **Dashboard** | http://localhost |
 | **phpMyAdmin** | http://localhost/vendor/phpmyadmin-5.2.3/ |
-| **Adminer** | http://localhost/vendor/adminer-5.4.2-devilbox.php |
+| **Adminer** | http://localhost/vendor/adminer-6.1.2-devilbox.php |
 | **phpPgAdmin** | http://localhost/vendor/phppgadmin-7.13.0/ |
-| **phpCacheAdmin** | http://localhost/vendor/phpcacheadmin-2.4.1/ |
-| **OpCache GUI** | http://localhost/vendor/opcache-gui-3.6.0.php |
+| **phpCacheAdmin** | http://localhost/vendor/phpcacheadmin-2.7.2/ |
+| **OpCache GUI** | http://localhost/vendor/opcache-gui-3.6.1.php |
 
 **Database Credentials:**
 ```
@@ -255,16 +256,18 @@ Password: root
 
 ---
 
-## 🚀 What's New in v1.1.0
+## 🚀 What's New in v1.0.6
 
-- ✅ **Official MariaDB/MySQL images** - MariaDB 11.8 LTS default, in-place auto-upgrade
+- ✅ **Official MariaDB/MySQL images** - MariaDB 11.8 LTS default, `check-config.sh` keeps `MYSQL_SERVER`/`MYSQL_IMAGE` in sync
+- ✅ **MongoDB 9.0 & Redis 8.x defaults** - PostgreSQL 18, Memcached 1.6
+- ✅ **End-of-life versions dropped** - PHP ≤ 8.2, MariaDB 10.x, MySQL 8.0, PostgreSQL ≤ 14, Apache 2.2 and friends removed
+- ✅ **MCP server on SDK v2** - `@modelcontextprotocol/server`, schema-validated tools, Node.js 20+
 - ✅ **RustFS** - S3-compatible object storage (replaces the archived MinIO)
 - ✅ **PHP 8.3, 8.4 & 8.5** with custom Docker images (8.4 default)
 - ✅ **Modern tools** - Bun, Vite, Pest, latest Node.js
 - ✅ **Auto vhost detection** - Laravel, WordPress, Symfony
 - ✅ **Updated admin tools** - All PHP 8.5 compatible
 - ✅ **Interactive wizard** - 10-minute setup
-- ✅ **MCP server** - Claude Code AI integration
 - ✅ **Comprehensive docs** - Guides for all services
 - ✅ **Port forwarding** - Direct 127.0.0.1 connections
 - ✅ **Command wrappers** - Run tools from host

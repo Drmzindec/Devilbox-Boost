@@ -17,23 +17,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.1.0] - 2026-08-14
+## [1.0.6] - 2026-10-17
 
 ### Added
+- **`check-config.sh` validates the `MYSQL_SERVER` / `MYSQL_IMAGE` pair** — the config dir, data volume and Docker image must now describe the same database release, so data can no longer silently live under a misleading volume name
+- **bin/ wrappers defer to host binaries outside the Devilbox tree** — with `bin/` on your PATH, `node`, `npm`, `npx`, `php`, `composer` etc. now run the host's own binary when you are not inside the Devilbox directory (the container cannot see those paths anyway). Devilbox-only commands (`artisan`, `wp`, `dbox-shell`, ...) still run in the container
 - **Full PHP 8.5 support** — PHP 8.5 is now stable and fully supported (`cfg/php-startup-8.5` added); wizard PHP menu offers 8.4 (recommended), 8.5 (newest stable), 8.3, or all of them
 - **RustFS** — S3-compatible object storage replaces MinIO, whose community edition was archived upstream (April 2026). Same ports (9000 S3 API, 9001 console), new default credentials `rustfsadmin`/`rustfsadmin`. Existing MinIO bucket data does not migrate automatically; the old `devilbox-minio` volume is left intact
 - **Configurable modern-service credentials** — `MEILI_MASTER_KEY`, `RABBIT_DEFAULT_USER`/`RABBIT_DEFAULT_PASS`, `RUSTFS_ACCESS_KEY`/`RUSTFS_SECRET_KEY` and friends can now be overridden in `.env` (commented defaults in `env-example`)
 - New `bin/` commands: `tinker`, `pint`, `phpstan`, `phpunit`, `npx`, `dbox-shell`
 
 ### Changed
-- **Official MariaDB/MySQL images** — MySQL service now runs official images via the new `MYSQL_SERVER` (config dir + data volume name) / `MYSQL_IMAGE` (Docker image) pair. Default is MariaDB 11.8 LTS with `MARIADB_AUTO_UPGRADE=1`, so pointing a newer image at an old data volume upgrades it in place. MariaDB 10.6 is EOL July 2026; legacy escape hatch: `MYSQL_IMAGE=devilbox/mysql:mariadb-10.6-0.21`
+- **MCP server migrated to the MCP TypeScript SDK v2** (`@modelcontextprotocol/server` 2.3.x, server v2.1.0). Tool definitions are unchanged; inputs are now schema-validated by the SDK before a handler runs. Requires **Node.js 20+** (`install.sh` checks this). Re-run `npm install` in `mcp-server/` after updating
+- **New defaults: MongoDB 9.0 and Redis `8-alpine`** (currently 8.10). `MONGO_SERVER=8.2` / `8.0` / `7.0` remain selectable
+- **Admin tools updated** — Adminer 6.1.2 (was 5.4.2), phpCacheAdmin 2.7.2 (was 2.4.1), OpCache GUI 3.6.1 (was 3.6.0). Old versions removed from `.devilbox/www/htdocs/vendor/`
+- **Official MariaDB/MySQL images** — MySQL service now runs official images via the new `MYSQL_SERVER` (config dir + data volume name) / `MYSQL_IMAGE` (Docker image) pair. Default is MariaDB 11.8 LTS with `MARIADB_AUTO_UPGRADE=1`, so pointing a newer image at an old data volume upgrades it in place. MariaDB 10.6 (EOL July 2026) and the legacy `devilbox/mysql` image were removed, see MIGRATION.md
 - **Default PHP version is now 8.4** (was 8.2)
 - **`bin/` wrappers rewritten as a single dispatcher** — run as the devilbox user and honor `docker-compose.override.yml` files
 - **MCP server v2.0 security rewrite** — 16 tools, no shell execution, service allowlist
-- **Redis default is now `redis:8-alpine`** (tracks 8.x) and **MongoDB default is 8.2**
-- `compose/docker-compose.override.yml-minio` renamed to `compose/docker-compose.override.yml-rustfs`
+- `compose/docker-compose.override.yml-minio` renamed to `compose/docker-compose.override.yml-rustfs`. **Existing `.env` files must update `FORWARD_PORTS_TO_LOCALHOST`** from `9100:minio:9000,9101:minio:9001` to `9100:rustfs:9000,9101:rustfs:9001`, otherwise the PHP container's port forwarding for object storage silently fails
+
+### Removed (end-of-life)
+Boost only ships PHP 8.3+ custom images, so everything that existed solely for upstream's legacy images is gone:
+- `env-example` options, `cfg/` and `log/` directories and compose volume definitions for PHP ≤ 8.2, Apache 2.2, MariaDB ≤ 10.11 (incl. the old 10.6 default), MySQL 5.x / 8.0, Percona, PostgreSQL ≤ 14, Redis ≤ 7.2, Memcached 1.4/1.5 and MongoDB ≤ 6.0
+- Compose templates `php-community`, `php-multi` (PHP 5.4–8.2 side-by-side) and `mailhog` (replaced by Mailpit); the `-all` template no longer overrides the PHP image
+- Legacy dashboard tools only reachable from PHP < 8: phpMyAdmin 4.0 / 4.9.7 / 5.1.3, phpPgAdmin 5.6.0 / 7.12.1, Adminer 4.6.3 (≈ 90 MB less in the repo)
+- Upstream CI matrices (`params-*.yml`, `test-*.yml`) that tested devilbox/php-fpm 5.3–8.2 images Boost never ran
+- See MIGRATION.md if your `.env` still references a removed `MYSQL_SERVER`
 
 ### Fixed
+- Dashboard version string was still reporting v1.0.5
 - Setup wizard now writes the correct HTTPS port variable (`HOST_PORT_HTTPD_SSL`; the previously documented `HOST_PORT_HTTPS` never existed)
 - Setup wizard zsh PATH detection
 - Xdebug recipe files now use `client_port` 9003 (9000 collided with PHP-FPM)
