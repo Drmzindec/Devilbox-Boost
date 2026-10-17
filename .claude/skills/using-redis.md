@@ -393,7 +393,7 @@ SLOWLOG GET 10
 
 ```bash
 # Open in browser
-open http://localhost/vendor/phpcacheadmin-2.4.1/
+open http://localhost/vendor/phpcacheadmin-2.7.2/
 
 # Features:
 # - View all keys
@@ -482,4 +482,4 @@ SLOWLOG GET 10
 - **phpredis Documentation**: https://github.com/phpredis/phpredis
 - **Predis Documentation**: https://github.com/predis/predis
 - **Laravel Redis**: https://laravel.com/docs/redis
-- **Monitor in Devilbox**: http://localhost/vendor/phpcacheadmin-2.4.1/
+- **Monitor in Devilbox**: http://localhost/vendor/phpcacheadmin-2.7.2/

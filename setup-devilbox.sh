@@ -409,7 +409,7 @@ if ask_yes_no "Start Devilbox now?" "y"; then
             echo "  Dashboard: ${BOLD}http://localhost:${HTTP_PORT}${NC}"
         fi
         echo "  phpMyAdmin: ${BOLD}http://localhost/vendor/phpmyadmin-5.2.3/${NC}"
-        echo "  Adminer: ${BOLD}http://localhost/vendor/adminer-5.4.2-devilbox.php${NC}"
+        echo "  Adminer: ${BOLD}http://localhost/vendor/adminer-6.1.2-devilbox.php${NC}"
 
         # Show modern service links if enabled
         if [ -n "$SELECTED_SERVICES" ]; then
@@ -534,7 +534,7 @@ else
     echo "  Dashboard:    http://localhost:${HTTP_PORT}"
 fi
 echo "  phpMyAdmin:   http://localhost/vendor/phpmyadmin-5.2.3/"
-echo "  Adminer:      http://localhost/vendor/adminer-5.4.2-devilbox.php"
+echo "  Adminer:      http://localhost/vendor/adminer-6.1.2-devilbox.php"
 echo ""
 echo "${BOLD}Common Commands:${NC}"
 echo "  ${CYAN}docker compose ps${NC}              - View running containers"

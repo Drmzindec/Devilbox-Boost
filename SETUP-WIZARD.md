@@ -181,7 +181,7 @@ Start Devilbox now? [Y/n]:
 **Access points displayed**:
 - Dashboard: `http://localhost`
 - phpMyAdmin: `http://localhost/vendor/phpmyadmin-5.2.3/`
-- Adminer: `http://localhost/vendor/adminer-5.4.2-devilbox.php`
+- Adminer: `http://localhost/vendor/adminer-6.1.2-devilbox.php`
 
 ### 7. Create Your First Project
 
@@ -267,7 +267,7 @@ Quick Reference:
 Access Points:
   Dashboard:    http://localhost
   phpMyAdmin:   http://localhost/vendor/phpmyadmin-5.2.3/
-  Adminer:      http://localhost/vendor/adminer-5.4.2-devilbox.php
+  Adminer:      http://localhost/vendor/adminer-6.1.2-devilbox.php
 
 Common Commands:
   docker compose ps              - View running containers

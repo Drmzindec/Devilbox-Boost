@@ -7,9 +7,9 @@ Update Devilbox web-based admin tools to latest PHP 8.4 compatible versions.
 | Tool | Current | Location |
 |------|---------|----------|
 | phpMyAdmin | 5.2.3 | `/vendor/phpmyadmin-5.2.3/` |
-| Adminer | 5.4.2 | `/vendor/adminer-5.4.2-en.php` |
-| phpCacheAdmin | 2.4.1 | `/vendor/phpcacheadmin-2.4.1/` |
-| OpCache GUI | 3.6.0 | `/vendor/opcache-gui-3.6.0.php` |
+| Adminer | 5.4.2 | `/vendor/adminer-6.1.2-en.php` |
+| phpCacheAdmin | 2.4.1 | `/vendor/phpcacheadmin-2.7.2/` |
+| OpCache GUI | 3.6.0 | `/vendor/opcache-gui-3.6.1.php` |
 | phpPgAdmin | 7.13.0 | `/vendor/phppgadmin-7.13.0/` |
 
 ## Adding New Tool
@@ -93,19 +93,19 @@ For auto-login functionality:
 
 ```php
 <?php
-// vendor/adminer-5.4.2-devilbox.php
+// vendor/adminer-6.1.2-devilbox.php
 if (!isset($_POST['auth'])) {
     $_GET['server'] = $_GET['server'] ?? '127.0.0.1';
     $_GET['username'] = $_GET['username'] ?? 'root';
 }
-include './adminer-5.4.2-en.php';
+include './adminer-6.1.2-en.php';
 ```
 
 ### phpCacheAdmin Config
 
 ```php
 <?php
-// vendor/phpcacheadmin-2.4.1/config.php
+// vendor/phpcacheadmin-2.7.2/config.php
 return [
     'redis' => [
         ['name' => 'Devilbox Redis', 'host' => '127.0.0.1', 'port' => 6379],

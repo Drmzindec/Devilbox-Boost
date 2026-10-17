@@ -7,7 +7,7 @@ This directory contains guidelines and skills for AI coding assistants working w
 **Devilbox** is a modern PHP development stack based on Docker. This repository contains an enhanced version with:
 
 - **Smart Vhost Auto-Detection** - Automatically detects Laravel, WordPress, etc.
-- **Modern Admin Tools** - phpMyAdmin 5.2.3, Adminer 5.4.2, phpCacheAdmin 2.4.1
+- **Modern Admin Tools** - phpMyAdmin 5.2.3, Adminer 6.1.2, phpCacheAdmin 2.7.2
 - **MCP Server** - AI-powered management via Claude Code
 - **Custom PHP Images** - PHP 8.3 & 8.4 with modern tools (Bun, Vite, Pest, etc.)
 - **Port Forwarding** - Standard Laravel `.env` works out of the box
@@ -133,8 +133,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 open http://localhost
 
 # Test specific tools
-open http://localhost/vendor/adminer-5.4.2-devilbox.php
-open http://localhost/vendor/phpcacheadmin-2.4.1/
+open http://localhost/vendor/adminer-6.1.2-devilbox.php
+open http://localhost/vendor/phpcacheadmin-2.7.2/
 open http://localhost/vendor/phpmyadmin-5.2.3/
 ```
 
@@ -219,7 +219,7 @@ See `.claude/skills/` directory for reusable tasks:
 cd mcp-server && node test-mcp.js
 
 # Verify admin tools
-open http://localhost/vendor/adminer-5.4.2-devilbox.php
+open http://localhost/vendor/adminer-6.1.2-devilbox.php
 
 # Check dashboard health
 open http://localhost

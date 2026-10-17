@@ -113,7 +113,7 @@ docker-compose exec php telnet 127.0.0.1 11211
 # Quit with: quit
 
 # Check phpCacheAdmin
-open http://localhost/vendor/phpcacheadmin-2.4.1/
+open http://localhost/vendor/phpcacheadmin-2.7.2/
 ```
 
 ## Web Server Issues

@@ -25,13 +25,13 @@ All Devilbox web-based administration tools have been updated to their latest ve
 - **URL**: http://localhost/vendor/phppgadmin-7.13.0/
 - **Status**: Already current (no update needed)
 - **Features**:
-  - PHP 8.2+ compatibility
+  - PHP 8.3+ compatibility
   - PostgreSQL 15+ support
 
-#### Adminer 5.4.2
+#### Adminer 6.1.2
 - **Purpose**: Multi-database management (MySQL, PostgreSQL, SQLite, MongoDB, etc.)
-- **Location**: `/vendor/adminer-5.4.2-devilbox.php`
-- **URL**: http://localhost/vendor/adminer-5.4.2-devilbox.php
+- **Location**: `/vendor/adminer-6.1.2-devilbox.php`
+- **URL**: http://localhost/vendor/adminer-6.1.2-devilbox.php
 - **Previous Version**: 4.8.1
 - **Released**: December 2025
 - **Features**:
@@ -45,10 +45,10 @@ All Devilbox web-based administration tools have been updated to their latest ve
 
 ### Cache Management
 
-#### phpCacheAdmin 2.4.1 (NEW!)
+#### phpCacheAdmin 2.7.2 (NEW!)
 - **Purpose**: Unified Redis, Memcached, APCu, OPcache, and Realpath cache management
-- **Location**: `/vendor/phpcacheadmin-2.4.1/`
-- **URL**: http://localhost/vendor/phpcacheadmin-2.4.1/
+- **Location**: `/vendor/phpcacheadmin-2.7.2/`
+- **URL**: http://localhost/vendor/phpcacheadmin-2.7.2/
 - **Released**: February 2024
 - **Replaces**: phpMemcachedAdmin (2014) + phpRedMin (2017)
 
@@ -68,7 +68,7 @@ All Devilbox web-based administration tools have been updated to their latest ve
 
 **Configuration:**
 ```php
-// /vendor/phpcacheadmin-2.4.1/config.php
+// /vendor/phpcacheadmin-2.7.2/config.php
 return [
     'redis' => [
         ['name' => 'Devilbox Redis', 'host' => '127.0.0.1', 'port' => 6379],
@@ -85,10 +85,10 @@ return [
 
 ### OpCache Management
 
-#### OpCache GUI 3.6.0
+#### OpCache GUI 3.6.1
 - **Purpose**: OPcache monitoring and management
-- **Location**: `/vendor/opcache-gui-3.6.0.php`
-- **URL**: http://localhost/vendor/opcache-gui-3.6.0.php
+- **Location**: `/vendor/opcache-gui-3.6.1.php`
+- **URL**: http://localhost/vendor/opcache-gui-3.6.1.php
 - **Previous**: ocp.php (old viewer)
 - **Released**: July 2025
 - **Features**:
@@ -106,11 +106,11 @@ All tools are accessible from the Devilbox dashboard under **Tools** menu:
 
 ```
 Tools
-├── Adminer 5.4.2
+├── Adminer 6.1.2
 ├── phpMyAdmin 5.2.3
 ├── phpPgAdmin 7.13.0
-├── phpCacheAdmin 2.4.1
-└── OpCache GUI 3.6.0
+├── phpCacheAdmin 2.7.2
+└── OpCache GUI 3.6.1
 ```
 
 The menu automatically selects the correct version based on your PHP version.
@@ -119,22 +119,15 @@ The menu automatically selects the correct version based on your PHP version.
 
 ## Version Selection Logic
 
-Defined in `.devilbox/www/include/lib/Html.php`:
+Defined in `.devilbox/www/include/lib/Html.php`. Devilbox Boost only ships PHP 8.3+,
+so the dashboard links to a single version of each tool:
 
-### phpMyAdmin
-- PHP < 5.5 → phpMyAdmin 4.0
-- PHP < 7.1 → phpMyAdmin 4.9.7
-- PHP >= 7.1 → **phpMyAdmin 5.2.3**
+- **phpMyAdmin 5.2.3**
+- **Adminer 6.1.2** (prefilled Devilbox login wrapper)
+- **phpPgAdmin 7.13.0**
 
-### Adminer
-- PHP < 5.4 → Adminer 4.6.3
-- PHP < 8.0 → Adminer 4.8.1
-- PHP >= 8.0 → **Adminer 5.4.2**
-
-### phpPgAdmin
-- PHP < 7.1 → phpPgAdmin 5.6.0
-- PHP < 7.2 → phpPgAdmin 7.12.1
-- PHP >= 7.2 → **phpPgAdmin 7.13.0**
+The legacy builds that older PHP versions needed (phpMyAdmin 4.x/5.1, Adminer 4.x,
+phpPgAdmin 5.6/7.12) were removed in v1.0.6.
 
 ---
 
@@ -147,13 +140,13 @@ cp /vendor/phpmyadmin-5.1.3/config.inc.php /vendor/phpmyadmin-5.2.3/config.inc.p
 ```
 
 ### phpCacheAdmin
-Custom configuration created at `/vendor/phpcacheadmin-2.4.1/config.php` with Devilbox service connections.
+Custom configuration created at `/vendor/phpcacheadmin-2.7.2/config.php` with Devilbox service connections.
 
 ### OpCache GUI
 No configuration needed - single-file deployment.
 
 ### Adminer
-Custom wrapper created at `/vendor/adminer-5.4.2-devilbox.php` that:
+Custom wrapper created at `/vendor/adminer-6.1.2-devilbox.php` that:
 - Prefills the server field with `127.0.0.1` (port forwarding)
 - Uses JavaScript to set the value on page load
 - Ensures users connect via localhost proxy instead of container IPs
@@ -171,18 +164,18 @@ The following outdated tools have been replaced:
 ### phpMemcachedAdmin 1.3.0
 - **Last Updated**: 2014 (12 years old)
 - **Status**: Abandoned
-- **Replaced By**: phpCacheAdmin 2.4.1
+- **Replaced By**: phpCacheAdmin 2.7.2
 - **Reason**: Severely outdated, no PHP 8+ support
 
 ### phpRedMin
 - **Last Commit**: June 27, 2017 (9 years old)
 - **Status**: Abandoned
-- **Replaced By**: phpCacheAdmin 2.4.1
+- **Replaced By**: phpCacheAdmin 2.7.2
 - **Reason**: No longer maintained, PHP 8 incompatible
 
 ### ocp.php (Old OpCache Panel)
 - **Status**: Outdated
-- **Replaced By**: OpCache GUI 3.6.0
+- **Replaced By**: OpCache GUI 3.6.1
 - **Reason**: No JIT support, outdated UI
 
 ---
@@ -194,10 +187,10 @@ All tools tested with **PHP 8.4.18** on **macOS** with **Docker Desktop**:
 | Tool | Status | Notes |
 |------|--------|-------|
 | phpMyAdmin 5.2.3 | ✅ Working | No warnings, full functionality |
-| Adminer 5.4.2 | ✅ Working | Multi-DB support confirmed |
+| Adminer 6.1.2 | ✅ Working | Multi-DB support confirmed |
 | phpPgAdmin 7.13.0 | ✅ Working | PostgreSQL 15 compatible |
-| phpCacheAdmin 2.4.1 | ✅ Working | All dashboards functional |
-| OpCache GUI 3.6.0 | ✅ Working | JIT stats displayed correctly |
+| phpCacheAdmin 2.7.2 | ✅ Working | All dashboards functional |
+| OpCache GUI 3.6.1 | ✅ Working | JIT stats displayed correctly |
 
 ---
 
@@ -252,9 +245,9 @@ docker-compose restart httpd
 | **Responsive UI** | ❌ No | ✅ Yes |
 | **Tools Required** | 2 separate tools | 1 unified tool |
 
-### OpCache GUI 3.6.0 vs ocp.php
+### OpCache GUI 3.6.1 vs ocp.php
 
-| Feature | ocp.php | OpCache GUI 3.6.0 |
+| Feature | ocp.php | OpCache GUI 3.6.1 |
 |---------|---------|-------------------|
 | **PHP 8.4 Support** | ⚠️ Limited | ✅ Full |
 | **JIT Statistics** | ❌ No | ✅ Yes |

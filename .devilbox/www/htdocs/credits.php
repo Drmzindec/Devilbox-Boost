@@ -63,7 +63,7 @@
 						</thead>
 						<tbody>
 							<tr>
-								<td>Adminer 5.4.2</td>
+								<td>Adminer 6.1.2</td>
 								<td>Apache License 2.0 or GPL 2</td>
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/vrana/adminer">vrana/adminer</a></td>
 							</tr>
@@ -83,12 +83,12 @@
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/FortAwesome/Font-Awesome">FortAwesome/Font-Awesome</a></td>
 							</tr>
 							<tr>
-								<td>OpCache GUI 3.6.0</td>
+								<td>OpCache GUI 3.6.1</td>
 								<td>MIT</td>
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/amnuts/opcache-gui">amnuts/opcache-gui</a></td>
 							</tr>
 							<tr>
-								<td>phpCacheAdmin 2.4.1</td>
+								<td>phpCacheAdmin 2.7.2</td>
 								<td>Apache 2.0</td>
 								<td><i class="fa fa-github-alt" aria-hidden="true"></i> <a target="_blank" href="https://github.com/RobiNN1/phpCacheAdmin">RobiNN1/phpCacheAdmin</a></td>
 							</tr>

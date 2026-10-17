@@ -147,12 +147,12 @@ class Html
 				),
 				array(
 					'name' => 'phpCacheAdmin',
-					'path' => '/vendor/phpcacheadmin-2.4.1/index.php',
+					'path' => '/vendor/phpcacheadmin-2.7.2/index.php',
 					'target' => '_blank'
 				),
 				array(
 					'name' => 'OpCache GUI',
-					'path' => '/vendor/opcache-gui-3.6.0.php',
+					'path' => '/vendor/opcache-gui-3.6.1.php',
 					'target' => '_blank'
 				)
 			)
@@ -434,33 +434,16 @@ HTML;
 
 				foreach ($elements['menu'] as $el) {
 
-					// Replace
+					// Replace placeholders with the bundled admin tools.
+					// Devilbox Boost only ships PHP 8.3+, so a single version of each tool is enough.
 					if ($el['path'] == '__PHPMYADMIN__') {
-						if (version_compare(loadClass('Php')->getVersion(), '5.5', '<')) {
-							$el['path'] = '/vendor/phpmyadmin-4.0/index.php';
-						} elseif (version_compare(loadClass('Php')->getVersion(), '7.1', '<')) {
-							$el['path'] = '/vendor/phpmyadmin-4.9.7/index.php';
-						} else {
-							$el['path'] = '/vendor/phpmyadmin-5.2.3/index.php';
-						}
+						$el['path'] = '/vendor/phpmyadmin-5.2.3/index.php';
 					}
 					if ($el['path'] == '__PHPPGADMIN__') {
-						if (version_compare(loadClass('Php')->getVersion(), '7.1', '<')) {
-							$el['path'] = '/vendor/phppgadmin-5.6.0/';
-						} elseif (version_compare(loadClass('Php')->getVersion(), '7.2', '<')) {
-							$el['path'] = '/vendor/phppgadmin-7.12.1/';
-						} else {
-							$el['path'] = '/vendor/phppgadmin-7.13.0/';
-						}
+						$el['path'] = '/vendor/phppgadmin-7.13.0/';
 					}
 					if ($el['path'] == '__ADMINER__') {
-						if (version_compare(loadClass('Php')->getVersion(), '5.4', '<')) {
-							$el['path'] = '/vendor/adminer-4.6.3-en.php';
-						} elseif (version_compare(loadClass('Php')->getVersion(), '8.0', '<')){
-							$el['path'] = '/vendor/adminer-5.4.2-devilbox.php';
-						} else {
-							$el['path'] = '/vendor/adminer-5.4.2-devilbox.php';
-						}
+						$el['path'] = '/vendor/adminer-6.1.2-devilbox.php';
 					}
 
 					// Modern Services - External URLs

@@ -411,7 +411,7 @@ quit            # Exit
 
 ```bash
 # Open in browser
-open http://localhost/vendor/phpcacheadmin-2.4.1/
+open http://localhost/vendor/phpcacheadmin-2.7.2/
 
 # Features:
 # - View all keys
@@ -494,4 +494,4 @@ docker-compose exec php php -m | grep memcached
 - **Memcached Wiki**: https://github.com/memcached/memcached/wiki
 - **PHP Memcached**: https://www.php.net/manual/en/book.memcached.php
 - **Laravel Cache**: https://laravel.com/docs/cache
-- **Monitor in Devilbox**: http://localhost/vendor/phpcacheadmin-2.4.1/
+- **Monitor in Devilbox**: http://localhost/vendor/phpcacheadmin-2.7.2/

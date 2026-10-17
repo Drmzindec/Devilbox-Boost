@@ -766,7 +766,7 @@ docker-compose exec php mysql -h 127.0.0.1 -u root -proot --skip-ssl -e "
 "
 
 # View slow queries (in container)
-docker-compose exec mysql-8.0 tail -f /var/log/mysql/slow.log
+docker compose exec mysql tail -f /var/log/mysql/slow.log
 ```
 
 ## Troubleshooting
@@ -855,4 +855,4 @@ OPTIMIZE TABLE users;
 - **Laravel Database**: https://laravel.com/docs/database
 - **WordPress Database**: https://developer.wordpress.org/apis/wpdb/
 - **phpMyAdmin**: http://localhost/vendor/phpmyadmin-5.2.3/
-- **Adminer**: http://localhost/vendor/adminer-5.4.2-devilbox.php
+- **Adminer**: http://localhost/vendor/adminer-6.1.2-devilbox.php
