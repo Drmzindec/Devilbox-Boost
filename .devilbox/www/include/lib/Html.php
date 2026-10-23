@@ -9,80 +9,97 @@ class Html
 	 * @var array
 	 */
 	private $_menu = array(
+		// Top-level pages mirror the companion app: Overview, Projects, then groups.
 		array(
 			array(
-				'name' => 'Home',
+				'name' => 'Overview',
 				'path' => '/index.php'
 			),
 			array(
-				'name' => 'Virtual Hosts',
+				'name' => 'Projects',
 				'path' => '/vhosts.php'
-			),
-			array(
-				'name' => 'C&C',
-				'path' => '/cnc.php'
-			),
-			array(
-				'name' => 'Emails',
-				'path' => '/mail.php'
 			)
-		),
-		array(
-			'name' => 'Configs',
-			'menu' => array(
-				array(
-					'name' => 'PHP',
-					'path' => '/config_php.php'
-				),
-				array(
-					'name' => 'Httpd',
-					'path' => '/config_httpd.php'
-				),
-			),
 		),
 		array(
 			'name' => 'Databases',
 			'menu' => array(
 				array(
-					'name' => 'MySQL DB',
+					'name' => 'MySQL / MariaDB',
 					'path' => '/db_mysql.php'
 				),
 				array(
-					'name' => 'PgSQL DB',
+					'name' => 'PostgreSQL',
 					'path' => '/db_pgsql.php'
 				),
 				array(
-					'name' => 'MongoDB DB',
+					'name' => 'MongoDB',
 					'path' => '/db_mongo.php'
 				),
 				array(
-					'name' => 'Redis DB',
+					'name' => 'Redis',
 					'path' => '/db_redis.php'
 				),
 				array(
-					'name' => 'Memcached DB',
+					'name' => 'Memcached',
 					'path' => '/db_memcd.php'
+				),
+				array(
+					'name' => 'Adminer',
+					'path' => '__ADMINER__',
+					'target' => '_blank'
+				),
+				array(
+					'name' => 'phpMyAdmin',
+					'path' => '__PHPMYADMIN__',
+					'target' => '_blank'
+				),
+				array(
+					'name' => 'phpPgAdmin',
+					'path' => '__PHPPGADMIN__',
+					'target' => '_blank'
 				)
 			)
 		),
 		array(
-			'name' => 'Modern Services',
+			'name' => 'Tools',
 			'menu' => array(
 				array(
-					'name' => 'Meilisearch',
-					'path' => '__MEILISEARCH__'
+					'name' => 'Emails',
+					'path' => '/mail.php'
 				),
 				array(
 					'name' => 'Mailpit',
-					'path' => '__MAILPIT__'
+					'path' => '__MAILPIT__',
+					'target' => '_blank'
+				),
+				array(
+					'name' => 'phpCacheAdmin',
+					'path' => '/vendor/phpcacheadmin-2.7.2/index.php',
+					'target' => '_blank'
+				),
+				array(
+					'name' => 'OpCache GUI',
+					'path' => '/vendor/opcache-gui-3.6.1.php',
+					'target' => '_blank'
+				),
+				array(
+					'name' => 'Meilisearch',
+					'path' => '__MEILISEARCH__',
+					'target' => '_blank'
 				),
 				array(
 					'name' => 'RabbitMQ',
-					'path' => '__RABBITMQ__'
+					'path' => '__RABBITMQ__',
+					'target' => '_blank'
 				),
 				array(
 					'name' => 'RustFS Console',
-					'path' => '__RUSTFS__'
+					'path' => '__RUSTFS__',
+					'target' => '_blank'
+				),
+				array(
+					'name' => 'Command & Control',
+					'path' => '/cnc.php'
 				)
 			)
 		),
@@ -120,40 +137,25 @@ class Html
 				array(
 					'name' => 'Memcached Info',
 					'path' => '/info_memcd.php'
-				),
-				array(
-					'name' => 'PHP Error Log',
-					'path' => '/log_php.php'
-				),
+				)
 			)
 		),
 		array(
-			'name' => 'Tools',
+			array(
+				'name' => 'Logs',
+				'path' => '/log_php.php'
+			)
+		),
+		array(
+			'name' => 'Config',
 			'menu' => array(
 				array(
-					'name' => 'Adminer',
-					'path' => '__ADMINER__',
-					'target' => '_blank'
+					'name' => 'PHP',
+					'path' => '/config_php.php'
 				),
 				array(
-					'name' => 'phpMyAdmin',
-					'path' => '__PHPMYADMIN__',
-					'target' => '_blank'
-				),
-				array(
-					'name' => 'phpPgAdmin',
-					'path' => '__PHPPGADMIN__',
-					'target' => '_blank'
-				),
-				array(
-					'name' => 'phpCacheAdmin',
-					'path' => '/vendor/phpcacheadmin-2.7.2/index.php',
-					'target' => '_blank'
-				),
-				array(
-					'name' => 'OpCache GUI',
-					'path' => '/vendor/opcache-gui-3.6.1.php',
-					'target' => '_blank'
+					'name' => 'Httpd',
+					'path' => '/config_httpd.php'
 				)
 			)
 		)
@@ -198,6 +200,7 @@ class Html
 	public function getHead($font_awesome = false)
 	{
 		$css_fa = ($font_awesome) ? '<link href="/vendor/font-awesome/font-awesome.min.css" rel="stylesheet">' : '';
+		$v = $this->_assetVersion();
 
 		$html = <<<HTML
 			<meta charset="utf-8">
@@ -209,19 +212,19 @@ class Html
 			<meta name="author" content="cytopia">
 
 			<!-- Favicons -->
-			<link rel="apple-touch-icon" sizes="57x57" href="/assets/favicon/apple-icon-57x57.png">
-			<link rel="apple-touch-icon" sizes="60x60" href="/assets/favicon/apple-icon-60x60.png">
-			<link rel="apple-touch-icon" sizes="72x72" href="/assets/favicon/apple-icon-72x72.png">
-			<link rel="apple-touch-icon" sizes="76x76" href="/assets/favicon/apple-icon-76x76.png">
-			<link rel="apple-touch-icon" sizes="114x114" href="/assets/favicon/apple-icon-114x114.png">
-			<link rel="apple-touch-icon" sizes="120x120" href="/assets/favicon/apple-icon-120x120.png">
-			<link rel="apple-touch-icon" sizes="144x144" href="/assets/favicon/apple-icon-144x144.png">
-			<link rel="apple-touch-icon" sizes="152x152" href="/assets/favicon/apple-icon-152x152.png">
-			<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-icon-180x180.png">
-			<link rel="icon" type="image/png" sizes="192x192"  href="/assets/favicon/android-icon-192x192.png">
-			<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
-			<link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon/favicon-96x96.png">
-			<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+			<link rel="apple-touch-icon" sizes="57x57" href="/assets/favicon/apple-icon-57x57.png?v={$v}">
+			<link rel="apple-touch-icon" sizes="60x60" href="/assets/favicon/apple-icon-60x60.png?v={$v}">
+			<link rel="apple-touch-icon" sizes="72x72" href="/assets/favicon/apple-icon-72x72.png?v={$v}">
+			<link rel="apple-touch-icon" sizes="76x76" href="/assets/favicon/apple-icon-76x76.png?v={$v}">
+			<link rel="apple-touch-icon" sizes="114x114" href="/assets/favicon/apple-icon-114x114.png?v={$v}">
+			<link rel="apple-touch-icon" sizes="120x120" href="/assets/favicon/apple-icon-120x120.png?v={$v}">
+			<link rel="apple-touch-icon" sizes="144x144" href="/assets/favicon/apple-icon-144x144.png?v={$v}">
+			<link rel="apple-touch-icon" sizes="152x152" href="/assets/favicon/apple-icon-152x152.png?v={$v}">
+			<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-icon-180x180.png?v={$v}">
+			<link rel="icon" type="image/png" sizes="192x192"  href="/assets/favicon/android-icon-192x192.png?v={$v}">
+			<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png?v={$v}">
+			<link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon/favicon-96x96.png?v={$v}">
+			<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png?v={$v}">
 			<link rel="manifest" href="/manifest.json">
 			<meta name="msapplication-TileColor" content="#ffffff">
 			<meta name="msapplication-TileImage" content="/assets/favicon/ms-icon-144x144.png">
@@ -241,6 +244,7 @@ HTML;
 	public function getNavbar()
 	{
 		$menu = $this->_buildMenu();
+		$v = $this->_assetVersion();
 		$logout = '';
 		if (loadClass('Helper')->isLoginProtected()) {
 			$logout =	'<ul class="navbar-nav">'.
@@ -254,7 +258,7 @@ HTML;
 					<span class="navbar-toggler-icon"></span>
 				</button>
 				<a class="navbar-brand" href="/index.php">
-					<img src="/assets/img/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">devilbox
+					<img src="/assets/img/logo.png?v={$v}" width="30" height="30" class="d-inline-block align-top" alt="">devilbox
 				</a>
 
 				<div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -285,6 +289,7 @@ HTML;
 				<div class="container justify-content-end">
 					<ul class="nav navbar-nav">
 						<li class="nav-item nav-link">Render time: {$render_time} sec</li>
+						<li class="nav-item"><a class="nav-link" target="_blank" href="https://moducraft.io">Created by <code>moducraft.io</code></a></li>
 						<li class="nav-item"><a class="nav-link" target="_blank" href="https://github.com/Drmzindec/Devilbox-Boost"><code>Github</code></a></li>
 						<li class="nav-item"><a class="nav-link" href="/credits.php"><code>Credits</code></a></li>
 						<li class="nav-item"><a class="nav-link" href="/support.php"><code>Support</code></a></li>
@@ -385,6 +390,16 @@ HTML;
 	 * Private functions
 	 *
 	 *********************************************************************************/
+
+	/**
+	 * Cache-busting token for icons/logo, derived from the Boost version.
+	 * @return string
+	 */
+	private function _assetVersion()
+	{
+		$version = isset($GLOBALS['DEVILBOX_VERSION']) ? $GLOBALS['DEVILBOX_VERSION'] : 'boost';
+		return rawurlencode(preg_replace('/[^A-Za-z0-9.]+/', '-', $version));
+	}
 
 	private function _buildMenu()
 	{
