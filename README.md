@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🚀 Devilbox Boost
+<img src="branding/icon-256.png" width="128" height="128" alt="Devilbox Boost icon">
+
+# Devilbox Boost
 
 **Modern PHP 8.3/8.4/8.5 development stack powered by Docker**
 

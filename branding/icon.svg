@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b1d8f"/>
+      <stop offset="0.55" stop-color="#b8186d"/>
+      <stop offset="1" stop-color="#ff6a2b"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#ffe3c4"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.3" cy="0.2" r="0.9">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#2a0a3a" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- macOS squircle background -->
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#bg)"/>
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#glow)"/>
+
+  <!-- container outline: a rounded box, open at the top right where the bolt enters -->
+  <path d="M292 318 h236 M292 318 a40 40 0 0 0 -40 40 v330 a40 40 0 0 0 40 40 h440 a40 40 0 0 0 40 -40 v-250"
+        fill="none" stroke="#ffffff" stroke-opacity="0.92" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- boost bolt -->
+  <path d="M640 222 L470 520 h120 L560 790 L764 452 h-124 Z" fill="url(#bolt)" filter="url(#shadow)"/>
+</svg>

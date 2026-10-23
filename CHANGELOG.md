@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **New Devilbox Boost icon and banner** (`branding/`): a rounded "container with a bolt" mark on a violet-to-orange gradient replaces the original triangular Devilbox logo. Used by the companion app, the intranet favicon/navbar/login banner, the docs and the README. Source SVGs live in `branding/`; render with `resvg`
 - **Companion app (`companion/`)** — a native Tauri 2 menu bar app for macOS: stack status with start/stop/restart, a project launcher for `data/www` (open site, editor, terminal, Finder), database list with one-click open in Sequel Ace / TablePlus (`mysql://` URL), Adminer or phpMyAdmin, and the bundled web tools (phpMyAdmin, Adminer, phpPgAdmin, phpCacheAdmin, OPcache GUI, Mailpit, RabbitMQ, Meilisearch, RustFS) each in their own window. The intranet pages are embedded in the main window. See `companion/README.md`
 - **Dashboard vhost links follow your TLS setting** — `vhosts.php` now links projects as `https://<project>.<tld>` when `HTTPD_VHOST_SSL_TYPE` is `ssl`, `both` or `redir` (honouring `HOST_PORT_HTTPD_SSL`), and keeps `http://` for `plain`. New `Httpd::getVhostScheme()/getVhostPort()/getVhostUrl()` helpers
 - `sockets` PHP extension in the 8.3 / 8.4 / 8.5 work images (needed by `pestphp/pest-plugin-browser` and other socket-based packages). Rebuild with `./docker-images/build-php.sh <version>`
