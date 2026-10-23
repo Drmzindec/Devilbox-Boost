@@ -29,6 +29,9 @@
     "active": true,
     "targets": ["app", "dmg"],
     "category": "DeveloperTool",
+    "publisher": "moducraft.io",
+    "copyright": "Created by moducraft.io. Open source under the MIT license.",
+    "homepage": "https://moducraft.io",
     "shortDescription": "Devilbox Boost companion",
     "longDescription": "Menu bar status, project launcher and admin tools for the Devilbox Boost Docker PHP stack.",
     "icon": [

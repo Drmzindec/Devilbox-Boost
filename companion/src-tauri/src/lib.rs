@@ -1,5 +1,6 @@
 //! Devilbox Boost companion: a small Tauri app that watches the Docker stack,
-//! lists the projects in data/www and launches the bundled admin tools.
+//! lists the projects in data/www, launches the bundled admin tools, imports
+//! database dumps and warns when a container or PHP-FPM worker dies.
 //!
 //! Everything that talks to Docker shells out to `docker compose` inside the
 //! Devilbox root, exactly like the MCP server does, so both stay in sync.
@@ -11,11 +12,20 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
 use std::time::Duration;
-use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::{TrayIcon, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_opener::OpenerExt;
+
+mod files;
+mod ops;
+mod platform;
+mod sites;
+mod term;
+
+pub const QUICK_OPEN_SHORTCUT: &str = "CommandOrControl+Shift+D";
 
 // ---------------------------------------------------------------------------
 // Settings
@@ -32,6 +42,16 @@ pub struct Settings {
     pub editor: String,
     /// macOS application name used for "Open terminal".
     pub terminal: String,
+    /// Desktop notifications when a container stops or PHP-FPM crashes.
+    pub notifications: bool,
+    /// Scheduled site updates (only while the app is running).
+    pub schedule_enabled: bool,
+    /// "HH:MM" local time.
+    pub schedule_time: String,
+    /// "wordpress", "php" or "all".
+    pub schedule_scope: String,
+    /// "YYYY-MM-DD" of the last scheduled run.
+    pub schedule_last_run: String,
 }
 
 impl Default for Settings {
@@ -41,15 +61,28 @@ impl Default for Settings {
             db_client: "Sequel Ace".into(),
             editor: "Visual Studio Code".into(),
             terminal: "Terminal".into(),
+            notifications: true,
+            schedule_enabled: false,
+            schedule_time: "03:00".into(),
+            schedule_scope: "wordpress".into(),
+            schedule_last_run: String::new(),
         }
     }
 }
 
-struct AppState {
-    settings: Mutex<Settings>,
+#[derive(Default)]
+struct Watch {
+    /// service -> state as of the previous poll; empty until the first poll ran.
+    previous: HashMap<String, String>,
+    primed: bool,
+    /// whether the last log check already saw crashes (edge-triggered alerts).
+    php_crashing: bool,
+}
+
+pub struct AppState {
+    pub settings: Mutex<Settings>,
     tray: Mutex<Option<TrayIcon>>,
-    tray_status: Mutex<Option<MenuItem<tauri::Wry>>>,
-    tray_toggle: Mutex<Option<MenuItem<tauri::Wry>>>,
+    watch: Mutex<Watch>,
 }
 
 fn settings_path(app: &AppHandle) -> PathBuf {
@@ -106,7 +139,7 @@ fn load_settings(app: &AppHandle) -> Settings {
     s
 }
 
-fn save_settings(app: &AppHandle, s: &Settings) -> Result<(), String> {
+pub(crate) fn save_settings(app: &AppHandle, s: &Settings) -> Result<(), String> {
     let json = serde_json::to_string_pretty(s).map_err(|e| e.to_string())?;
     fs::write(settings_path(app), json).map_err(|e| e.to_string())
 }
@@ -115,7 +148,7 @@ fn current_settings(state: &State<AppState>) -> Settings {
     state.settings.lock().unwrap().clone()
 }
 
-fn root_or_err(state: &State<AppState>) -> Result<PathBuf, String> {
+pub(crate) fn root_or_err(state: &State<AppState>) -> Result<PathBuf, String> {
     let s = current_settings(state);
     if s.root.is_empty() || !is_devilbox_root(Path::new(&s.root)) {
         return Err("Devilbox folder not set. Pick it in Settings.".into());
@@ -158,9 +191,10 @@ pub struct Environment {
     pub mongo: String,
     pub mysql_root_password: String,
     pub mysql_host_port: String,
+    pub shortcut: String,
 }
 
-fn environment_for(root: &Path) -> Environment {
+pub(crate) fn environment_for(root: &Path) -> Environment {
     let env = read_env(root);
     let get = |k: &str, d: &str| env.get(k).cloned().unwrap_or_else(|| d.to_string());
     let ssl_type = get("HTTPD_VHOST_SSL_TYPE", "plain").to_lowercase();
@@ -186,6 +220,7 @@ fn environment_for(root: &Path) -> Environment {
         mongo: get("MONGO_SERVER", ""),
         mysql_root_password: get("MYSQL_ROOT_PASSWORD", "root"),
         mysql_host_port: get("HOST_PORT_MYSQL", "3306"),
+        shortcut: QUICK_OPEN_SHORTCUT.replace("CommandOrControl", if cfg!(target_os = "macos") { "Cmd" } else { "Ctrl" }),
     }
 }
 
@@ -193,8 +228,8 @@ fn environment_for(root: &Path) -> Environment {
 // docker compose
 // ---------------------------------------------------------------------------
 
-fn docker_path() -> String {
-    for p in ["/usr/local/bin/docker", "/opt/homebrew/bin/docker", "/Applications/Docker.app/Contents/Resources/bin/docker"] {
+pub(crate) fn docker_path() -> String {
+    for p in platform::docker_candidates() {
         if Path::new(p).is_file() {
             return p.to_string();
         }
@@ -202,7 +237,7 @@ fn docker_path() -> String {
     "docker".to_string()
 }
 
-fn compose(root: &Path, args: &[&str]) -> Result<String, String> {
+pub(crate) fn compose(root: &Path, args: &[&str]) -> Result<String, String> {
     let out = Command::new(docker_path())
         .arg("compose")
         .args(args)
@@ -305,6 +340,18 @@ fn summarize(status: &[ServiceStatus]) -> (usize, usize) {
     (running, status.len())
 }
 
+/// Count PHP-FPM worker crashes logged in the last `window` seconds.
+fn php_crashes_since(root: &Path, window: u64) -> usize {
+    let since = format!("{window}s");
+    compose(root, &["logs", "--no-color", "--since", &since, "php"])
+        .map(|log| {
+            log.lines()
+                .filter(|l| l.contains("exited on signal") || l.contains("SIGSEGV") || l.contains("segfault"))
+                .count()
+        })
+        .unwrap_or(0)
+}
+
 // ---------------------------------------------------------------------------
 // Projects
 // ---------------------------------------------------------------------------
@@ -318,7 +365,7 @@ pub struct Project {
     pub db: String,
 }
 
-fn grab<'a>(text: &'a str, key: &str) -> Option<String> {
+fn grab(text: &str, key: &str) -> Option<String> {
     // Matches define('KEY', 'value') in wp-config.php and KEY=value in .env
     for line in text.lines() {
         let t = line.trim();
@@ -335,10 +382,9 @@ fn grab<'a>(text: &'a str, key: &str) -> Option<String> {
     None
 }
 
-fn detect_project(dir: &Path, env: &Environment) -> Project {
-    let name = dir.file_name().unwrap_or_default().to_string_lossy().to_string();
+fn detect_kind(dir: &Path) -> &'static str {
     let has = |rel: &str| dir.join(rel).exists();
-    let kind = if has("please") {
+    if has("please") {
         "statamic"
     } else if has("artisan") {
         "laravel"
@@ -346,15 +392,30 @@ fn detect_project(dir: &Path, env: &Environment) -> Project {
         "wordpress"
     } else if has("bin/console") {
         "symfony"
-    } else if has("next.config.mjs") || has("next.config.js") {
+    } else if has("bin/cake") || has("webroot") {
+        "cakephp"
+    } else if has("craft") {
+        "craft"
+    } else if has("yii") {
+        "yii"
+    } else if has("web/core/lib/Drupal.php") || has("core/lib/Drupal.php") {
+        "drupal"
+    } else if has("bin/magento") {
+        "magento"
+    } else if has("next.config.mjs") || has("next.config.js") || has("next.config.ts") {
         "next.js"
-    } else if has("index.html") {
+    } else if has("index.html") || has("dist/index.html") {
         "static"
-    } else if has("index.php") || has("public/index.php") {
+    } else if has("index.php") || has("public/index.php") || has("www/index.php") {
         "php"
     } else {
         "other"
-    };
+    }
+}
+
+fn detect_project(dir: &Path, env: &Environment) -> Project {
+    let name = dir.file_name().unwrap_or_default().to_string_lossy().to_string();
+    let kind = detect_kind(dir);
     let db = if kind == "wordpress" {
         fs::read_to_string(dir.join("wp-config.php")).ok().and_then(|t| grab(&t, "DB_NAME"))
     } else {
@@ -370,7 +431,7 @@ fn detect_project(dir: &Path, env: &Environment) -> Project {
     }
 }
 
-fn projects_sync(root: &Path) -> Vec<Project> {
+pub(crate) fn projects_sync(root: &Path) -> Vec<Project> {
     let env = environment_for(root);
     let mut list: Vec<Project> = fs::read_dir(root.join("data").join("www"))
         .map(|rd| {
@@ -384,6 +445,56 @@ fn projects_sync(root: &Path) -> Vec<Project> {
         .unwrap_or_default();
     list.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     list
+}
+
+// ---------------------------------------------------------------------------
+// Dump import
+// ---------------------------------------------------------------------------
+
+fn shell_quote(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "'\\''"))
+}
+
+/// Generic SQL import: stream a .sql / .sql.gz / .zip dump into a database,
+/// dropping CREATE DATABASE/USE statements for the production DB name and
+/// repairing the `DEFAULT x AS` binary-default quirk some hosts export.
+fn import_generic(root: &Path, env: &Environment, db: &str, file: &Path, fresh: bool) -> Result<String, String> {
+    let name = file.to_string_lossy();
+    let reader = if name.ends_with(".gz") {
+        format!("gzip -dc {}", shell_quote(&name))
+    } else if name.ends_with(".zip") {
+        format!("unzip -p {} '*.sql'", shell_quote(&name))
+    } else {
+        format!("cat {}", shell_quote(&name))
+    };
+    let pw = format!("-p{}", env.mysql_root_password);
+    let mut log = String::new();
+    if fresh {
+        compose(root, &["exec", "-T", "mysql", "sh", "-c", &format!(
+            "mariadb -uroot {pw} -e 'DROP DATABASE IF EXISTS `{db}`; CREATE DATABASE `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci' 2>/dev/null || mysql -uroot {pw} -e 'DROP DATABASE IF EXISTS `{db}`; CREATE DATABASE `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'"
+        )])?;
+        log.push_str(&format!("Recreated database {db}\n"));
+    } else {
+        compose(root, &["exec", "-T", "mysql", "sh", "-c", &format!(
+            "mariadb -uroot {pw} -e 'CREATE DATABASE IF NOT EXISTS `{db}`' 2>/dev/null || mysql -uroot {pw} -e 'CREATE DATABASE IF NOT EXISTS `{db}`'"
+        )])?;
+    }
+    let pipeline = format!(
+        "set -o pipefail; {reader} | LC_ALL=C sed -E '/^(CREATE DATABASE|USE `)/d; s/DEFAULT x AS `([0-9A-Fa-f]+)`/DEFAULT x'\"'\"'\\1'\"'\"'/g' | {docker} compose exec -T mysql sh -c {inner}",
+        docker = docker_path(),
+        inner = shell_quote(&format!("command -v mariadb >/dev/null 2>&1 && mariadb -uroot {pw} --max-allowed-packet=256M {db} || mysql -uroot {pw} --max-allowed-packet=256M {db}")),
+    );
+    let out = Command::new("bash").arg("-c").arg(&pipeline).current_dir(root).output().map_err(|e| e.to_string())?;
+    log.push_str(&String::from_utf8_lossy(&out.stdout));
+    log.push_str(&String::from_utf8_lossy(&out.stderr));
+    if !out.status.success() {
+        return Err(format!("import failed:\n{log}"));
+    }
+    let tables = compose(root, &["exec", "-T", "mysql", "sh", "-c", &format!(
+        "mariadb -uroot {pw} -N -e \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='{db}'\" 2>/dev/null || mysql -uroot {pw} -N -e \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='{db}'\""
+    )]).unwrap_or_default();
+    log.push_str(&format!("Imported {} into {db}: {} tables\n", file.file_name().unwrap_or_default().to_string_lossy(), tables.trim()));
+    Ok(log)
 }
 
 // ---------------------------------------------------------------------------
@@ -427,6 +538,20 @@ async fn pick_root(app: AppHandle) -> Result<Option<String>, String> {
 }
 
 #[tauri::command]
+async fn pick_dump(app: AppHandle) -> Result<Option<String>, String> {
+    let picked = app
+        .dialog()
+        .file()
+        .add_filter("SQL dumps", &["sql", "gz", "zip"])
+        .set_title("Choose a database dump")
+        .blocking_pick_file();
+    match picked {
+        Some(p) => Ok(Some(p.into_path().map_err(|e| e.to_string())?.to_string_lossy().to_string())),
+        None => Ok(None),
+    }
+}
+
+#[tauri::command]
 async fn stack_status(state: State<'_, AppState>) -> Result<Vec<ServiceStatus>, String> {
     let root = root_or_err(&state)?;
     tauri::async_runtime::spawn_blocking(move || stack_status_sync(&root))
@@ -452,6 +577,8 @@ async fn stack_action(app: AppHandle, state: State<'_, AppState>, action: String
     })
     .await
     .map_err(|e| e.to_string())?;
+    // A deliberate stop must not raise a "container stopped" alert.
+    app.state::<AppState>().watch.lock().unwrap().primed = false;
     refresh_tray(&app);
     result
 }
@@ -499,6 +626,46 @@ async fn databases(state: State<'_, AppState>) -> Result<Vec<String>, String> {
     .map_err(|e| e.to_string())?
 }
 
+/// Import a dump. WordPress projects go through tools/import-wp-dumps.sh, which
+/// also detects the table prefix and writes wp-config.php; everything else is a
+/// plain SQL import into `db`.
+#[tauri::command]
+async fn import_dump(state: State<'_, AppState>, project: Option<String>, db: String, file: String, fresh: bool) -> Result<String, String> {
+    let root = root_or_err(&state)?;
+    if db.trim().is_empty() || !db.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
+        return Err("Database name may only contain letters, digits, _ and -".into());
+    }
+    let path = PathBuf::from(&file);
+    if !path.is_file() {
+        return Err(format!("{file} is not a file"));
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let env = environment_for(&root);
+        let script = root.join("tools").join("import-wp-dumps.sh");
+        let is_wp = project.as_deref().map(|p| root.join("data/www").join(p).join("wp-content").is_dir()).unwrap_or(false);
+        if is_wp && script.is_file() {
+            let out = Command::new("bash")
+                .arg(&script)
+                .arg("--file")
+                .arg(&path)
+                .arg(project.as_deref().unwrap_or_default())
+                .current_dir(&root)
+                .output()
+                .map_err(|e| e.to_string())?;
+            let text = format!("{}{}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+            if out.status.success() && !text.contains("FAIL") {
+                Ok(text)
+            } else {
+                Err(format!("WordPress import reported a problem:\n{text}"))
+            }
+        } else {
+            import_generic(&root, &env, &db, &path, fresh)
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// Open (or focus) a dedicated window for a web tool. Used for pages that
 /// refuse to be framed (phpMyAdmin, Adminer send X-Frame-Options: DENY).
 #[tauri::command]
@@ -524,17 +691,13 @@ fn open_url(app: AppHandle, url: String) -> Result<(), String> {
     app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
 }
 
-/// `open -a <App> <target>` on macOS; falls back to the system opener elsewhere.
+/// Open a path or URL with a GUI app ("Finder" = the platform file manager).
 #[tauri::command]
 fn open_with(app: AppHandle, app_name: String, target: String) -> Result<(), String> {
-    if cfg!(target_os = "macos") && !app_name.trim().is_empty() {
-        let out = Command::new("open").arg("-a").arg(&app_name).arg(&target).output().map_err(|e| e.to_string())?;
-        if out.status.success() {
-            return Ok(());
-        }
-        return Err(format!("could not open with {app_name}: {}", String::from_utf8_lossy(&out.stderr).trim()));
+    if app_name.trim().is_empty() {
+        return app.opener().open_path(target, None::<&str>).map_err(|e| e.to_string());
     }
-    app.opener().open_path(target, None::<&str>).map_err(|e| e.to_string())
+    platform::open_with(&app_name, &target)
 }
 
 #[tauri::command]
@@ -542,31 +705,70 @@ fn open_db_client(state: State<AppState>, db: String) -> Result<(), String> {
     let root = root_or_err(&state)?;
     let env = environment_for(&root);
     let s = current_settings(&state);
+    if s.db_client.trim().is_empty() {
+        return Err("No SQL client selected in Settings".into());
+    }
     let url = format!(
         "mysql://root:{}@127.0.0.1:{}/{}?name={}&env=local",
         env.mysql_root_password, env.mysql_host_port, db, db
     );
-    let out = Command::new("open").arg("-a").arg(&s.db_client).arg(&url).output().map_err(|e| e.to_string())?;
-    if out.status.success() {
-        Ok(())
-    } else {
-        Err(format!(
-            "{} could not be opened (is it installed?): {}",
-            s.db_client,
-            String::from_utf8_lossy(&out.stderr).trim()
-        ))
-    }
+    platform::open_with(&s.db_client, &url).map_err(|e| format!("{} could not be opened (is it installed?): {e}", s.db_client))
+}
+
+#[tauri::command]
+fn test_notification(app: AppHandle) -> Result<(), String> {
+    notify(&app, "Devilbox Boost", "Notifications are working.");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
-// Tray
+// Tray, polling, alerts
 // ---------------------------------------------------------------------------
+
+pub(crate) fn notify(app: &AppHandle, title: &str, body: &str) {
+    let _ = app.notification().builder().title(title).body(body).show();
+}
 
 fn show_main(app: &AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.show();
         let _ = w.unminimize();
         let _ = w.set_focus();
+    }
+}
+
+/// Compare this poll with the previous one and raise desktop alerts for
+/// containers that stopped on their own and for PHP-FPM worker crashes.
+fn check_alerts(app: &AppHandle, root: &Path, status: &[ServiceStatus]) {
+    let state = app.state::<AppState>();
+    let settings = current_settings(&state);
+    let mut watch = state.watch.lock().unwrap();
+    let current: HashMap<String, String> = status.iter().map(|s| (s.service.clone(), s.state.clone())).collect();
+    if settings.notifications && watch.primed {
+        let mut gone: Vec<String> = Vec::new();
+        for (service, prev_state) in &watch.previous {
+            let now = current.get(service).cloned().unwrap_or_else(|| "missing".into());
+            if prev_state == "running" && now != "running" {
+                let detail = status.iter().find(|s| &s.service == service).map(|s| s.status.clone()).unwrap_or(now.clone());
+                gone.push(format!("{service} ({detail})"));
+            }
+        }
+        if !gone.is_empty() {
+            notify(app, "Devilbox container stopped", &gone.join(", "));
+        }
+    }
+    watch.previous = current;
+    watch.primed = true;
+
+    // PHP-FPM crash detection: edge-triggered on the 20s log window.
+    if settings.notifications && status.iter().any(|s| s.service == "php" && s.state == "running") {
+        let crashes = php_crashes_since(root, 20);
+        if crashes > 0 && !watch.php_crashing {
+            notify(app, "PHP-FPM workers are crashing", &format!(
+                "{crashes} crash line(s) in the last 20 seconds. Check Overview › php › Logs. If JIT is on, turn it off in cfg/php-ini-*/custom.ini."
+            ));
+        }
+        watch.php_crashing = crashes > 0;
     }
 }
 
@@ -577,6 +779,7 @@ fn refresh_tray(app: &AppHandle) {
         None => ("Devilbox folder not set".to_string(), "Start stack".to_string(), Vec::new()),
         Some(root) => match stack_status_sync(&root) {
             Ok(status) => {
+                check_alerts(app, &root, &status);
                 let (running, total) = summarize(&status);
                 let text = if total == 0 {
                     "Stack is down".to_string()
@@ -593,13 +796,10 @@ fn refresh_tray(app: &AppHandle) {
             Err(e) => (format!("Docker unavailable: {}", e.lines().next().unwrap_or("")), "Start stack".to_string(), Vec::new()),
         },
     };
-    if let Some(item) = state.tray_status.lock().unwrap().as_ref() {
-        let _ = item.set_text(&text);
-    }
-    if let Some(item) = state.tray_toggle.lock().unwrap().as_ref() {
-        let _ = item.set_text(&toggle);
-    }
     if let Some(tray) = state.tray.lock().unwrap().as_ref() {
+        if let Ok(menu) = build_menu(app, &text, &toggle, &status) {
+            let _ = tray.set_menu(Some(menu));
+        }
         let _ = tray.set_tooltip(Some(format!("Devilbox Boost: {text}")));
         let (running, total) = summarize(&status);
         let glyph = if total == 0 || running == 0 { "○" } else if running == total { "●" } else { "◐" };
@@ -608,28 +808,68 @@ fn refresh_tray(app: &AppHandle) {
     let _ = app.emit("stack-status", &status);
 }
 
-fn build_tray(app: &AppHandle) -> tauri::Result<()> {
-    let status_item = MenuItem::with_id(app, "status", "Checking stack…", false, None::<&str>)?;
-    let open_item = MenuItem::with_id(app, "open", "Open Devilbox Boost", true, Some("CmdOrCtrl+Shift+D"))?;
-    let toggle_item = MenuItem::with_id(app, "toggle", "Start stack", true, None::<&str>)?;
-    let restart_item = MenuItem::with_id(app, "restart", "Restart stack", true, None::<&str>)?;
-    let intranet_item = MenuItem::with_id(app, "intranet", "Open intranet in browser", true, None::<&str>)?;
-    let quit_item = PredefinedMenuItem::quit(app, Some("Quit Devilbox Boost"))?;
-    let menu = Menu::with_items(
-        app,
-        &[
-            &status_item,
-            &PredefinedMenuItem::separator(app)?,
-            &open_item,
-            &intranet_item,
-            &PredefinedMenuItem::separator(app)?,
-            &toggle_item,
-            &restart_item,
-            &PredefinedMenuItem::separator(app)?,
-            &quit_item,
-        ],
-    )?;
+/// Tools reachable from the tray: label, title, url. Depends on which services run.
+fn tray_tools(env: &Environment, status: &[ServiceStatus]) -> Vec<(String, String, String)> {
+    let ui = &env.ui_url;
+    let port = |names: &[&str], target: u32| -> Option<u32> {
+        names.iter().find_map(|n| status.iter().find(|s| &s.service == n).and_then(|s| s.ports.iter().find(|p| p.target == target).map(|p| p.published)))
+    };
+    let mut v = vec![
+        ("intranet".to_string(), "Intranet".to_string(), ui.clone()),
+        ("phpmyadmin".to_string(), "phpMyAdmin".to_string(), format!("{ui}/vendor/phpmyadmin-5.2.3/index.php")),
+        ("adminer".to_string(), "Adminer".to_string(), format!("{ui}/vendor/adminer-6.1.2-devilbox.php?username=root")),
+        ("phpcacheadmin".to_string(), "phpCacheAdmin".to_string(), format!("{ui}/vendor/phpcacheadmin-2.7.2/index.php")),
+        ("opcache".to_string(), "OPcache GUI".to_string(), format!("{ui}/vendor/opcache-gui-3.6.1.php")),
+    ];
+    if let Some(p) = port(&["mailpit"], 8025) { v.push(("mailpit".into(), "Mailpit".into(), format!("http://localhost:{p}"))); }
+    if let Some(p) = port(&["rabbitmq", "rabbit"], 15672) { v.push(("rabbitmq".into(), "RabbitMQ".into(), format!("http://localhost:{p}"))); }
+    if let Some(p) = port(&["meilisearch"], 7700) { v.push(("meilisearch".into(), "Meilisearch".into(), format!("http://localhost:{p}"))); }
+    if let Some(p) = port(&["rustfs", "minio"], 9001) { v.push(("rustfs".into(), "RustFS console".into(), format!("http://localhost:{p}"))); }
+    v
+}
 
+fn build_menu(app: &AppHandle, status_text: &str, toggle_text: &str, status: &[ServiceStatus]) -> tauri::Result<Menu<tauri::Wry>> {
+    let status_item = MenuItem::with_id(app, "status", status_text, false, None::<&str>)?;
+    let open_item = MenuItem::with_id(app, "open", "Open Devilbox Boost", true, Some(QUICK_OPEN_SHORTCUT))?;
+    let toggle_item = MenuItem::with_id(app, "toggle", toggle_text, true, None::<&str>)?;
+    let restart_item = MenuItem::with_id(app, "restart", "Restart stack", true, None::<&str>)?;
+    let quit_item = PredefinedMenuItem::quit(app, Some("Quit Devilbox Boost"))?;
+    let menu = Menu::new(app)?;
+    menu.append(&status_item)?;
+    menu.append(&PredefinedMenuItem::separator(app)?)?;
+    menu.append(&open_item)?;
+    let state = app.state::<AppState>();
+    if let Ok(root) = root_or_err(&state) {
+        let env = environment_for(&root);
+        let tools = Submenu::new(app, "Tools", true)?;
+        for (label, title, url) in tray_tools(&env, status) {
+            tools.append(&MenuItem::with_id(app, format!("tool:{label}|{title}|{url}"), &title, true, None::<&str>)?)?;
+        }
+        tools.append(&PredefinedMenuItem::separator(app)?)?;
+        tools.append(&MenuItem::with_id(app, "intranet", "Open intranet in browser", true, None::<&str>)?)?;
+        menu.append(&tools)?;
+        let projects = projects_sync(&root);
+        if !projects.is_empty() {
+            let sub = Submenu::new(app, format!("Projects ({})", projects.len()), true)?;
+            for p in projects.iter().take(40) {
+                sub.append(&MenuItem::with_id(app, format!("proj:{}", p.url), &p.name, true, None::<&str>)?)?;
+            }
+            if projects.len() > 40 {
+                sub.append(&MenuItem::with_id(app, "open", format!("… {} more in the app", projects.len() - 40), true, None::<&str>)?)?;
+            }
+            menu.append(&sub)?;
+        }
+    }
+    menu.append(&PredefinedMenuItem::separator(app)?)?;
+    menu.append(&toggle_item)?;
+    menu.append(&restart_item)?;
+    menu.append(&PredefinedMenuItem::separator(app)?)?;
+    menu.append(&quit_item)?;
+    Ok(menu)
+}
+
+fn build_tray(app: &AppHandle) -> tauri::Result<()> {
+    let menu = build_menu(app, "Checking stack…", "Start stack", &[])?;
     let tray = TrayIconBuilder::with_id("main")
         .icon(app.default_window_icon().cloned().expect("app icon"))
         .icon_as_template(false)
@@ -638,7 +878,18 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| {
             let app = app.clone();
-            match event.id().as_ref() {
+            let id = event.id().as_ref().to_string();
+            if let Some(url) = id.strip_prefix("proj:") {
+                let _ = app.opener().open_url(url, None::<&str>);
+                return;
+            }
+            if let Some(rest) = id.strip_prefix("tool:") {
+                let mut parts = rest.splitn(3, '|');
+                let (label, title, url) = (parts.next().unwrap_or("tool"), parts.next().unwrap_or("Tool"), parts.next().unwrap_or(""));
+                let _ = open_tool(app.clone(), label.to_string(), title.to_string(), url.to_string());
+                return;
+            }
+            match id.as_str() {
                 "open" => show_main(&app),
                 "intranet" => {
                     let state = app.state::<AppState>();
@@ -648,7 +899,6 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
                     }
                 }
                 "toggle" | "restart" => {
-                    let id = event.id().as_ref().to_string();
                     std::thread::spawn(move || {
                         let state = app.state::<AppState>();
                         if let Ok(root) = root_or_err(&state) {
@@ -664,6 +914,7 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
                                 _ => &["restart"],
                             };
                             let _ = compose(&root, args);
+                            app.state::<AppState>().watch.lock().unwrap().primed = false;
                         }
                         refresh_tray(&app);
                     });
@@ -677,13 +928,32 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
             }
         })
         .build(app)?;
-
-    let state = app.state::<AppState>();
-    *state.tray.lock().unwrap() = Some(tray);
-    *state.tray_status.lock().unwrap() = Some(status_item);
-    *state.tray_toggle.lock().unwrap() = Some(toggle_item);
+    *app.state::<AppState>().tray.lock().unwrap() = Some(tray);
     Ok(())
 }
+
+#[cfg(desktop)]
+fn register_quick_open(app: &AppHandle) -> tauri::Result<()> {
+    use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+    app.plugin(
+        tauri_plugin_global_shortcut::Builder::new()
+            .with_handler(|app, _shortcut, event| {
+                if event.state() == ShortcutState::Pressed {
+                    show_main(app);
+                    let _ = app.emit("quick-open", ());
+                }
+            })
+            .build(),
+    )?;
+    if let Err(e) = app.global_shortcut().register(QUICK_OPEN_SHORTCUT) {
+        eprintln!("quick-open shortcut not registered: {e}");
+    }
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -714,6 +984,7 @@ mod tests {
     fn environment_derives_https_vhost_urls() {
         let dir = std::env::temp_dir().join(format!("dbx-test-{}", std::process::id()));
         fs::create_dir_all(dir.join("data/www/demo")).unwrap();
+        fs::create_dir_all(dir.join("data/www/cake/webroot")).unwrap();
         fs::write(dir.join("docker-compose.yml"), "services: {}\n").unwrap();
         fs::write(dir.join(".env"), "TLD_SUFFIX=loc\nHTTPD_VHOST_SSL_TYPE=both\nHOST_PORT_HTTPD_SSL=8443\nPHP_SERVER=8.4\n").unwrap();
         fs::write(dir.join("data/www/demo/artisan"), "").unwrap();
@@ -723,12 +994,19 @@ mod tests {
         assert_eq!(env.vhost_port, ":8443");
         assert_eq!(env.ui_url, "https://localhost:8443");
         let projects = projects_sync(&dir);
-        assert_eq!(projects.len(), 1);
-        assert_eq!(projects[0].kind, "laravel");
-        assert_eq!(projects[0].url, "https://demo.loc:8443");
-        assert_eq!(projects[0].db, "demo_db");
+        assert_eq!(projects.len(), 2);
+        assert_eq!(projects[0].kind, "cakephp");
+        assert_eq!(projects[1].kind, "laravel");
+        assert_eq!(projects[1].url, "https://demo.loc:8443");
+        assert_eq!(projects[1].db, "demo_db");
         assert!(is_devilbox_root(&dir));
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn shell_quote_escapes_single_quotes() {
+        assert_eq!(shell_quote("a'b"), "'a'\\''b'");
+        assert_eq!(shell_quote("/tmp/x y.sql"), "'/tmp/x y.sql'");
     }
 }
 
@@ -741,22 +1019,27 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
+        .manage(ops::DevState::default())
+        .manage(term::TermState::default())
         .manage(AppState {
             settings: Mutex::new(Settings::default()),
             tray: Mutex::new(None),
-            tray_status: Mutex::new(None),
-            tray_toggle: Mutex::new(None),
+            watch: Mutex::new(Watch::default()),
         })
         .setup(|app| {
             let handle = app.handle().clone();
             let settings = load_settings(&handle);
             *app.state::<AppState>().settings.lock().unwrap() = settings;
             build_tray(&handle)?;
+            #[cfg(desktop)]
+            register_quick_open(&handle)?;
 
             // Poll the stack in the background and keep tray + UI current.
             let poller = handle.clone();
             std::thread::spawn(move || loop {
                 refresh_tray(&poller);
+                sites::maybe_run_schedule(&poller);
                 std::thread::sleep(Duration::from_secs(15));
             });
             Ok(())
@@ -775,16 +1058,56 @@ pub fn run() {
             get_environment,
             save_settings_cmd,
             pick_root,
+            pick_dump,
             stack_status,
             stack_action,
             stack_logs,
             projects,
             databases,
+            import_dump,
             open_tool,
             open_url,
             open_with,
-            open_db_client
+            open_db_client,
+            test_notification,
+            sites::check_updates,
+            sites::update_site,
+            sites::update_all,
+            sites::create_site,
+            sites::project_types,
+            sites::presets,
+            ops::doctor,
+            ops::snapshots,
+            ops::snapshot_action,
+            ops::workers_status,
+            ops::worker_action,
+            ops::worker_logs,
+            ops::media_status,
+            ops::media_set,
+            ops::project_logs,
+            ops::dev_server_status,
+            ops::dev_server_start,
+            ops::dev_server_stop,
+            ops::db_clients,
+            ops::detect_apps,
+            ops::file_manager_name,
+            ops::git_status,
+            term::terminal_open,
+            term::terminal_write,
+            term::terminal_resize,
+            term::terminal_close,
+            files::list_dir,
+            files::make_dir,
+            files::upload_files,
+            files::upload_plan,
+            files::pick_files
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Devilbox Boost companion");
+        .build(tauri::generate_context!())
+        .expect("error while building Devilbox Boost companion")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                ops::stop_all_dev_servers(app);
+                term::close_all(app);
+            }
+        });
 }

@@ -104,3 +104,49 @@ pre.log { background: #0f1218; color: #d7dce5; padding: 12px; border-radius: var
   padding: 10px 16px; border-radius: 8px; font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.25); max-width: 70vw;
 }
 .toast.error { background: var(--bad); }
+kbd { font: inherit; font-size: 12px; padding: 1px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; background: var(--panel); }
+label.row { gap: 8px; cursor: pointer; }
+.credit { display: block; padding: 10px 10px 4px; font-size: 11.5px; color: var(--sidebar-text); opacity: .7; cursor: pointer; text-decoration: none; }
+.credit:hover { opacity: 1; } .credit strong { color: #fff; font-weight: 600; }
+.dropzone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 22px; text-align: center; color: var(--muted); margin: 12px 0; transition: border-color .15s, background .15s; }
+.dropzone.over { border-color: var(--accent); background: rgba(214,51,108,.06); color: var(--text); }
+.crumbs { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 8px 0 12px; font-size: 13px; }
+.crumbs a { color: var(--accent); cursor: pointer; }
+.crumbs span.sep { color: var(--muted); }
+td.num { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.job { margin-top: 14px; }
+
+/* ---- fixes & additions ------------------------------------------------------- */
+.card { min-width: 0; overflow: hidden; }
+.card p, .card h3 { overflow-wrap: anywhere; }
+select.text, input.text, input.search {
+  min-height: 36px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background-color: var(--panel); color: var(--text); font: inherit;
+}
+select.text {
+  appearance: none; -webkit-appearance: none; padding-right: 36px; cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%236b7280' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+select.text:focus, input.text:focus, input.search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(214,51,108,.15); }
+input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 14px 0 16px; flex-wrap: wrap; }
+.tab { all: unset; cursor: pointer; padding: 8px 12px; border-radius: 8px 8px 0 0; color: var(--muted); }
+.tab:hover { color: var(--text); } .tab.active { color: var(--text); border-bottom: 2px solid var(--accent); }
+.back { all: unset; cursor: pointer; color: var(--accent); font-size: 13px; }
+.term { height: 480px; background: #0f1218; border-radius: var(--radius); padding: 8px; }
+.term .xterm { height: 100%; }
+.finding { display: grid; grid-template-columns: 56px 160px 1fr; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--border); align-items: start; }
+.finding:last-child { border-bottom: 0; }
+.finding .scope { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 1100px) { .two { grid-template-columns: 1fr; } }
+.help-btn { all: unset; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; vertical-align: middle; margin-left: 6px; }
+.help-btn:hover { color: var(--accent); border-color: var(--accent); }
+.help-panel { margin: 10px 0 16px; border-left: 3px solid var(--accent); }
+.help-panel p { font-size: 13px; color: var(--text); margin: 6px 0; }
+
+.frame-view { flex-direction: column; }
+.frame-bar { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-bottom: 1px solid var(--border); background: var(--panel); }
+.frame-bar .spacer { flex: 1; }

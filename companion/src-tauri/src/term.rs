@@ -1,0 +1,151 @@
+//! Embedded terminals: a PTY running `docker compose exec … php bash -l` in a
+//! project folder, bridged to xterm.js in the window through events.
+
+use crate::{docker_path, root_or_err, AppState};
+use portable_pty::{native_pty_system, Child, CommandBuilder, MasterPty, PtySize};
+use serde::Serialize;
+use std::collections::HashMap;
+use std::io::{Read, Write};
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Mutex;
+use tauri::{AppHandle, Emitter, State};
+
+struct Session {
+    master: Box<dyn MasterPty + Send>,
+    writer: Box<dyn Write + Send>,
+    child: Box<dyn Child + Send + Sync>,
+}
+
+#[derive(Default)]
+pub struct TermState {
+    sessions: Mutex<HashMap<u32, Session>>,
+    next_id: AtomicU32,
+}
+
+#[derive(Serialize, Clone)]
+struct TermData {
+    id: u32,
+    data: String,
+}
+
+#[derive(Serialize, Clone)]
+struct TermExit {
+    id: u32,
+}
+
+/// Decode PTY bytes as UTF-8, carrying an incomplete trailing sequence over to
+/// the next read so multibyte characters never get split.
+fn decode(buf: &mut Vec<u8>) -> String {
+    match std::str::from_utf8(buf) {
+        Ok(s) => {
+            let out = s.to_string();
+            buf.clear();
+            out
+        }
+        Err(e) => {
+            let valid = e.valid_up_to();
+            if e.error_len().is_some() {
+                // genuinely invalid byte: replace and move on
+                let out = String::from_utf8_lossy(buf).to_string();
+                buf.clear();
+                out
+            } else {
+                let out = String::from_utf8_lossy(&buf[..valid]).to_string();
+                let rest = buf.split_off(valid);
+                *buf = rest;
+                out
+            }
+        }
+    }
+}
+
+#[tauri::command]
+pub fn terminal_open(app: AppHandle, terms: State<TermState>, state: State<AppState>, project: Option<String>, cols: u16, rows: u16) -> Result<u32, String> {
+    let root = root_or_err(&state)?;
+    let pty = native_pty_system();
+    let pair = pty
+        .openpty(PtySize { rows: rows.max(5), cols: cols.max(20), pixel_width: 0, pixel_height: 0 })
+        .map_err(|e| e.to_string())?;
+    let mut cmd = CommandBuilder::new(docker_path());
+    let workdir = match project.as_deref() {
+        Some(p) if !p.is_empty() => format!("/shared/httpd/{p}"),
+        _ => "/shared/httpd".to_string(),
+    };
+    cmd.args(["compose", "exec", "--user", "devilbox", "-w", &workdir, "php", "bash", "-l"]);
+    cmd.cwd(&root);
+    cmd.env("TERM", "xterm-256color");
+    cmd.env("COLORTERM", "truecolor");
+    cmd.env("LANG", "C.UTF-8");
+    let child = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
+    drop(pair.slave);
+    let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
+    let writer = pair.master.take_writer().map_err(|e| e.to_string())?;
+    let id = terms.next_id.fetch_add(1, Ordering::SeqCst) + 1;
+    terms.sessions.lock().unwrap().insert(id, Session { master: pair.master, writer, child });
+
+    std::thread::spawn(move || {
+        let mut chunk = [0u8; 8192];
+        let mut pending: Vec<u8> = Vec::new();
+        loop {
+            match reader.read(&mut chunk) {
+                Ok(0) | Err(_) => break,
+                Ok(n) => {
+                    pending.extend_from_slice(&chunk[..n]);
+                    let text = decode(&mut pending);
+                    if !text.is_empty() {
+                        let _ = app.emit("term-data", TermData { id, data: text });
+                    }
+                }
+            }
+        }
+        let _ = app.emit("term-exit", TermExit { id });
+    });
+    Ok(id)
+}
+
+#[tauri::command]
+pub fn terminal_write(terms: State<TermState>, id: u32, data: String) -> Result<(), String> {
+    let mut map = terms.sessions.lock().unwrap();
+    let s = map.get_mut(&id).ok_or("terminal closed")?;
+    s.writer.write_all(data.as_bytes()).map_err(|e| e.to_string())?;
+    s.writer.flush().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn terminal_resize(terms: State<TermState>, id: u32, cols: u16, rows: u16) -> Result<(), String> {
+    let map = terms.sessions.lock().unwrap();
+    let s = map.get(&id).ok_or("terminal closed")?;
+    s.master.resize(PtySize { rows: rows.max(5), cols: cols.max(20), pixel_width: 0, pixel_height: 0 }).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn terminal_close(terms: State<TermState>, id: u32) -> Result<(), String> {
+    if let Some(mut s) = terms.sessions.lock().unwrap().remove(&id) {
+        let _ = s.child.kill();
+    }
+    Ok(())
+}
+
+pub fn close_all(app: &AppHandle) {
+    use tauri::Manager;
+    if let Some(terms) = app.try_state::<TermState>() {
+        for (_, mut s) in terms.sessions.lock().unwrap().drain() {
+            let _ = s.child.kill();
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::decode;
+
+    #[test]
+    fn decode_keeps_partial_utf8() {
+        let mut buf = "héllo".as_bytes()[..2].to_vec(); // 'h' + first byte of 'é'
+        assert_eq!(decode(&mut buf), "h");
+        assert_eq!(buf.len(), 1);
+        buf.extend_from_slice(&"héllo".as_bytes()[2..]);
+        assert_eq!(decode(&mut buf), "éllo");
+        assert!(buf.is_empty());
+    }
+}
