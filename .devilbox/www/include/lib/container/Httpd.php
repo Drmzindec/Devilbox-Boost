@@ -94,6 +94,64 @@ class Httpd extends BaseClass implements BaseInterface
 	}
 
 	/**
+	 * Get the configured vhost SSL mode (plain, ssl, both, redir).
+	 *
+	 * @return string
+	 */
+	public function getVhostSslType()
+	{
+		$type = loadClass('Helper')->getEnv('HTTPD_VHOST_SSL_TYPE');
+		return $type ? strtolower(trim($type)) : 'plain';
+	}
+
+	/**
+	 * Scheme project links should use: https whenever TLS is served.
+	 *
+	 * @return string 'https' or 'http'
+	 */
+	public function getVhostScheme()
+	{
+		return in_array($this->getVhostSslType(), array('ssl', 'both', 'redir'), true) ? 'https' : 'http';
+	}
+
+	/**
+	 * Get HTTPS port (with leading colon), empty for 443.
+	 *
+	 * @return string
+	 */
+	public function getSslPort()
+	{
+		$port = loadClass('Helper')->getEnv('HOST_PORT_HTTPD_SSL');
+
+		if ( empty($port) || $port == 443 ) {
+			return '';
+		}
+
+		return ":$port";
+	}
+
+	/**
+	 * Port suffix matching getVhostScheme().
+	 *
+	 * @return string
+	 */
+	public function getVhostPort()
+	{
+		return $this->getVhostScheme() === 'https' ? $this->getSslPort() : $this->getPort();
+	}
+
+	/**
+	 * Full URL of a project vhost, e.g. https://my_project.loc
+	 *
+	 * @param string $vhost Project name
+	 * @return string
+	 */
+	public function getVhostUrl($vhost)
+	{
+		return $this->getVhostScheme().'://'.$vhost.'.'.$this->getTldSuffix().$this->getVhostPort();
+	}
+
+	/**
 	 * Get HTTP port.
 	 *
 	 * @return string

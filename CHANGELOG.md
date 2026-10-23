@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Dashboard vhost links follow your TLS setting** — `vhosts.php` now links projects as `https://<project>.<tld>` when `HTTPD_VHOST_SSL_TYPE` is `ssl`, `both` or `redir` (honouring `HOST_PORT_HTTPD_SSL`), and keeps `http://` for `plain`. New `Httpd::getVhostScheme()/getVhostPort()/getVhostUrl()` helpers
 - `sockets` PHP extension in the 8.3 / 8.4 / 8.5 work images (needed by `pestphp/pest-plugin-browser` and other socket-based packages). Rebuild with `./docker-images/build-php.sh <version>`
 
 ### Changed

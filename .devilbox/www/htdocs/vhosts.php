@@ -122,7 +122,7 @@
 						<h4>No projects here.</h4>
 						<p>Simply create a directory in <strong><?php echo loadClass('Helper')->getEnv('HOST_PATH_HTTPD_DATADIR');?></strong> on your host computer (or in <strong>/shared/httpd</strong> inside the php container).</p>
 						<p><strong>Example:</strong><br/><?php echo loadClass('Helper')->getEnv('HOST_PATH_HTTPD_DATADIR');?>/my_project</p>
-						<p>It will then be available via <strong>http://my_project.<?php echo loadClass('Httpd')->getTldSuffix();?></strong></p>
+						<p>It will then be available via <strong><?php echo loadClass('Httpd')->getVhostUrl('my_project');?></strong></p>
 					<?php endif;?>
 				</div>
 			</div>
@@ -237,6 +237,12 @@
 				proto = url[0];
 				port = tmp.length == 2 ? ':' + tmp[1] : '';
 
+				// Link target: https when the vhosts serve TLS (HTTPD_VHOST_SSL_TYPE=ssl|both|redir).
+				// The reachability probe below still uses the page's own scheme so it is not
+				// affected by browsers that have not trusted the Devilbox CA yet.
+				var linkProto = '<?php echo loadClass('Httpd')->getVhostScheme();?>:';
+				var linkPort  = '<?php echo loadClass('Httpd')->getVhostPort();?>';
+
 				// Timeout after XXX seconds and mark it invalid DNS
 				xhttp.timeout = <?php echo loadClass('Helper')->getEnv('DNS_CHECK_TIMEOUT');?>000;
 
@@ -252,7 +258,7 @@
 							el_valid.innerHTML = 'OK';
 						}
 						//el_href.innerHTML = '(<a target="_blank" href="'+proto+'//localhost/devilbox-project/'+name+'">ext</a>) <a target="_blank" href="'+proto+'//'+name+port+'">'+name+port+'</a>' + el_href.innerHTML;
-						el_href.innerHTML = '<a target="_blank" href="'+proto+'//'+name+port+'">'+name+port+'</a>';
+						el_href.innerHTML = '<a target="_blank" href="'+linkProto+'//'+name+linkPort+'">'+linkProto+'//'+name+linkPort+'</a>';
 					} else {
 						//console.log(vhost);
 					}
