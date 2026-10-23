@@ -6,6 +6,8 @@
 
 **Modern PHP 8.3/8.4/8.5 development stack powered by Docker**
 
+Created by [moducraft.io](https://moducraft.io) · open source, MIT licensed
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4%20%7C%208.5-777BB4?logo=php&logoColor=white)](https://www.php.net/)
 [![Docker](https://img.shields.io/badge/Docker-required-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
@@ -113,8 +115,12 @@ docker compose exec php laravel new my-blog
 - **OpCache GUI 3.6.1** - Performance monitoring
 - **phpPgAdmin 7.13.0** - PostgreSQL admin
 
+### 🧰 `dbox` command line
+- **`dbox new <type> <name>`** - Laravel (plus Livewire / React / Vue starter kits), Statamic, Symfony, WordPress, Bedrock, Drupal, Craft, CakePHP, CodeIgniter, TYPO3, Yii, Nette, Slim, Laminas or static, with database and config ready; `--preset` adds Filament, dev tooling, WooCommerce and your own presets
+- **`dbox update`, `dbox doctor`, `dbox snapshot`, `dbox workers`, `dbox media`, `dbox logs`, `dbox import`, `dbox shell`** - the same operations the companion app uses (`tools/`)
+
 ### 🖥️ Companion App (Optional)
-- **Native menu bar app** (Tauri 2, macOS) - stack status, start/stop/restart, project launcher, database list
+- **Native menu bar app** (Tauri 2, macOS) - stack status, alerts, project launcher (`Cmd+Shift+D`), per-project database/snapshots/workers/logs/terminal, Doctor, updates on demand or on a schedule, new-project wizard, drag-and-drop file uploads
 - **Admin tools in their own windows** - phpMyAdmin, Adminer, Mailpit and friends without browser tabs
 - **One-click database open** in Sequel Ace or TablePlus - see [`companion/README.md`](companion/README.md)
 
@@ -263,7 +269,16 @@ Password: root
 
 ---
 
-## 🚀 What's New in v1.0.6
+## 🚀 What's New in v1.0.7
+
+- ✅ **Companion app** - native Tauri menu bar app: stack status, project launcher, databases, admin tools in their own windows (`companion/`)
+- ✅ **New icon and banner** - a modern mark replaces the original Devilbox logo across the app, intranet, docs and README
+- ✅ **PHP 8.4.27 security release** - work images rebuilt on the latest upstream bases; `build-php.sh` now always pulls the newest base
+- ✅ **Dashboard links follow TLS** - `vhosts.php` links `https://<project>.<tld>` when TLS vhosts are enabled
+- ✅ **Opcache JIT off by default** - avoids PHP-FPM segfaults on Laravel 13 apps
+- ✅ **`sockets` extension** in all work images
+
+### From v1.0.6
 
 - ✅ **Official MariaDB/MySQL images** - MariaDB 11.8 LTS default, `check-config.sh` keeps `MYSQL_SERVER`/`MYSQL_IMAGE` in sync
 - ✅ **MongoDB 9.0 & Redis 8.x defaults** - PostgreSQL 18, Memcached 1.6

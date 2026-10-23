@@ -9,7 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Planned
+- Companion app: notifications on container death / PHP-FPM crashes, global hotkey launcher, dump import
+- Additional framework support (Symfony, CakePHP improvements)
+- Docker Hub images (optional)
+
+---
+
+## [1.0.7] - 2026-10-23
+
+### Security
+- **PHP work images rebuilt on the current `php:8.3-fpm`, `php:8.4-fpm` and `php:8.5-fpm` bases** (PHP 8.4.27 security release of October 2026 plus refreshed Debian layers). `./docker-images/build-php.sh` now passes `--pull` so every rebuild starts from the newest upstream image. Run `./docker-images/build-php.sh 8.4` (and 8.3 / 8.5 if you use them) then `docker compose up -d --force-recreate php`
+
 ### Added
+- **`dbox` command line** (`bin/dbox`) and the `tools/` engine it shares with the companion app: `dbox new <type> <name> [--preset …]` (Laravel incl. Livewire/React/Vue starter kits, Statamic, Symfony, WordPress, Bedrock, Drupal 11, Craft 5, CakePHP 5, CodeIgniter 4, TYPO3, Yii 2, Nette, Slim, Laminas, static), `dbox update [--check] [--scope wordpress|php|all]`, `dbox doctor`, `dbox snapshot <project> create|list|restore|prune`, `dbox workers <project> start|stop queue|schedule|horizon|reverb`, `dbox media <project> <prod-url>`, `dbox logs`, `dbox import`, `dbox shell`. Presets live in `tools/presets/*.sh` (Filament, Pest/Pint/Larastan/Boost, WordPress dev tools, WooCommerce) and `~/.config/devilbox-boost/presets/`
+- **Companion project detail panel** — per project: Database (open in a detected SQL client, Adminer, phpMyAdmin, import a dump, take/restore/prune snapshots), Workers & dev server (queue/schedule/horizon/reverb inside the container, `npm run dev` on the host with live output), Media fallback (serve missing uploads from production, multisite wildcard host), Logs (web server and PHP errors for the host, application log, live), Terminal (a real bash inside the PHP container, in the project folder, via xterm.js)
+- **Companion Doctor view** — stack checks (Docker, `.loc` resolver, CA trust, intranet, check-config, recent PHP-FPM segfaults, reclaimable image space) and per-site checks (reachability with the matching error line, missing or empty databases, active plugins missing or incomplete on disk, missing active theme, fatal errors in debug.log, the `email` gitignore trap, missing uploads, pending migrations)
+- **Shared Composer and npm caches** — `cache/composer` and `cache/npm` are bind-mounted into the PHP container (`COMPOSER_CACHE_DIR`, `npm_config_cache`), so every project reuses downloads. `procps` added to the work images for process management
+- **In-app help** — a `?` button next to every page title explains that page, and a Help page collects them together with the `dbox` commands and where files live
+- **Detected editor, terminal and git apps** — Settings offers the editors (PhpStorm, WebStorm, VS Code, Cursor, Zed, Sublime Text, Nova, …), terminals (Terminal, iTerm, Warp, Ghostty, …) and git clients (Fork, Tower, GitHub Desktop, Sourcetree, …) that are actually installed, with a custom app name as fallback; the project overview shows a read-only git summary (branch, changed files, ahead/behind, last commit) with "Open in …" for the detected git client
+- **Smarter file drops** — before copying, the Files view shows a plan: a folder dropped onto a same-named folder merges instead of nesting, an archive whose only top-level folder matches the destination is unpacked straight into it, replaced files are listed
+- **Menu bar submenus** — Tools (every web tool, in its own window) and Projects (open a site) straight from the tray icon
+- **Intranet navigation mirrors the app** — Overview, Projects, Databases (DB pages plus Adminer, phpMyAdmin, phpPgAdmin), Tools (Emails, Mailpit, phpCacheAdmin, OPcache GUI, Meilisearch, RabbitMQ, RustFS, Command & Control), Info, Logs, Config; icons and logo carry a version query so browsers pick up the new branding
+- **SQL client detection** — the companion only offers Sequel Ace, TablePlus, DBeaver, Beekeeper Studio, DbGate or Querious when they are actually installed
+- **Companion site operations** — an *Updates* view (check and update one site, "Update all WordPress", "Update all Laravel / Statamic", or everything, with a daily schedule that runs while the app is open and notifies on completion; WordPress runs plugin/theme/core updates plus the database upgrade through wp-cli, Composer projects run `composer update`, migrations and a frontend build), a *New project* view (Laravel, Statamic, Symfony, WordPress or static HTML created inside the PHP container with database, `.env`/`wp-config.php`, key, migrations, assets and `htdocs` symlink ready), and a *Files* view (browse project folders, drag and drop files or folders to copy them in, with optional extraction of `.zip`/`.tar.gz` archives, handy for `wp-content/uploads`)
+- **Companion alerts, launcher and dump import** — desktop notifications when a container stops on its own or PHP-FPM workers crash (SIGSEGV lines in the php log), a global `Cmd+Shift+D` shortcut that opens the project launcher (type to filter, Enter opens the first match), and "Import DB…" on every project and on the Databases page: pick a `.sql` / `.sql.gz` / `.zip` dump and import it, with WordPress projects going through `tools/import-wp-dumps.sh`
+- **`tools/import-wp-dumps.sh` and `tools/import-wp-multisite.sh`** — import production WordPress dumps into the stack: match dumps to projects (by name or a `map.txt`), detect table prefix and production siteurl, create or fix `wp-config.php`, pin `WP_HOME`/`WP_SITEURL` to `https://<project>.<tld>`, repair the `DEFAULT x AS` export quirk, and for multisite networks rewrite every blog domain to `<slug>.<project>.<tld>` with the right `MULTISITE` constants
+- **Docker Hub workflow** (`.github/workflows/php-images.yml`) — builds the 8.3/8.4/8.5 work images on every `v*` tag and pushes multi-arch images as `<user>/devilbox-php:<version>` when `DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` secrets exist; builds only otherwise
+- **Vhost auto-detection** now also maps `webroot/` (CakePHP), `www/` (Nette and friends) and a built `dist/index.html` (static SPAs) as the document root
 - **New Devilbox Boost icon and banner** (`branding/`): a rounded "container with a bolt" mark on a violet-to-orange gradient replaces the original triangular Devilbox logo. Used by the companion app, the intranet favicon/navbar/login banner, the docs and the README. Source SVGs live in `branding/`; render with `resvg`
 - **Companion app (`companion/`)** — a native Tauri 2 menu bar app for macOS: stack status with start/stop/restart, a project launcher for `data/www` (open site, editor, terminal, Finder), database list with one-click open in Sequel Ace / TablePlus (`mysql://` URL), Adminer or phpMyAdmin, and the bundled web tools (phpMyAdmin, Adminer, phpPgAdmin, phpCacheAdmin, OPcache GUI, Mailpit, RabbitMQ, Meilisearch, RustFS) each in their own window. The intranet pages are embedded in the main window. See `companion/README.md`
 - **Dashboard vhost links follow your TLS setting** — `vhosts.php` now links projects as `https://<project>.<tld>` when `HTTPD_VHOST_SSL_TYPE` is `ssl`, `both` or `redir` (honouring `HOST_PORT_HTTPD_SSL`), and keeps `http://` for `plain`. New `Httpd::getVhostScheme()/getVhostPort()/getVhostUrl()` helpers
@@ -20,12 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - MCP `devilbox_xdebug` / PHP-FPM reload used a `kill` binary that does not exist in the PHP image; it now runs `sh -c 'kill -USR2 1'`
-
-### Planned
-- Additional framework support (Symfony, CakePHP improvements)
-- Performance optimizations
-- Video tutorials  
-- Docker Hub images (optional)
 
 ---
 

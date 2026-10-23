@@ -423,6 +423,20 @@ docker compose exec -T php mysql -h 127.0.0.1 -u root -proot --skip-ssl \
     < backup_YYYYMMDD.sql
 ```
 
+### Upgrading to v1.0.7
+
+No `.env` changes are required. Rebuild the PHP work image(s) you use so you get the
+PHP 8.4.27 security release and the `sockets` extension, then recreate the PHP container:
+
+```bash
+./docker-images/build-php.sh 8.4      # repeat for 8.3 / 8.5 if you use them
+docker compose up -d --force-recreate php
+```
+
+Opcache JIT is now disabled in `cfg/php-ini-*/custom.ini`. If you had tuned JIT yourself,
+re-apply your setting there. The companion app under `companion/` is optional and built
+separately (see `companion/README.md`).
+
 ### Removed in v1.0.6
 
 The end-of-life options `MYSQL_SERVER=mariadb-10.6`, `MYSQL_SERVER=mysql-8.0` and the
