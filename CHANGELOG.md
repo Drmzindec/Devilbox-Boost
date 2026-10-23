@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `sockets` PHP extension in the 8.3 / 8.4 / 8.5 work images (needed by `pestphp/pest-plugin-browser` and other socket-based packages). Rebuild with `./docker-images/build-php.sh <version>`
+
+### Changed
+- **Opcache JIT is now off by default** in `cfg/php-ini-*/custom.ini`. With PHP 8.4.26 the tracing JIT (`1255`) segfaulted PHP-FPM workers on Laravel 13 apps and every request returned 502. Opcache itself stays enabled; re-enable JIT in `custom.ini` if you want to experiment
+
+### Fixed
+- MCP `devilbox_xdebug` / PHP-FPM reload used a `kill` binary that does not exist in the PHP image; it now runs `sh -c 'kill -USR2 1'`
+
 ### Planned
 - Additional framework support (Symfony, CakePHP improvements)
 - Performance optimizations

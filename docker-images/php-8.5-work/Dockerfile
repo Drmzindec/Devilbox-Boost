@@ -66,7 +66,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-a
     bcmath \
     gd \
     intl \
-    soap
+    soap \
+    sockets
 
 # Install XDebug
 RUN pecl install xdebug \

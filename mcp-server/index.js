@@ -1006,7 +1006,7 @@ const toolHandlers = {
  */
 async function reloadPhpFpm() {
   try {
-    await composeExec('php', ['kill', '-USR2', '1'], { timeout: 15000 });
+    await composeExec('php', ['sh', '-c', 'kill -USR2 1'], { timeout: 15000 });
     return 'PHP-FPM reloaded (kill -USR2 1). If the change does not apply, restart the php container: devilbox_restart ["php"].';
   } catch (error) {
     return `Could not reload PHP-FPM (${error.message}). Restart the php container to apply: devilbox_restart ["php"].`;
