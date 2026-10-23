@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# dbox: the Devilbox Boost command line. Same engine as the companion app (tools/).
+#
+#   dbox status                         containers and health
+#   dbox doctor [project ...]           stack + site health check
+#   dbox new <type> <name> [opts]       create a project (dbox new --list, --list-presets)
+#   dbox import <dump> <project>        import a WordPress dump (prefix/URL detection, wp-config)
+#   dbox import-multisite ...           see tools/import-wp-multisite.sh --help
+#   dbox update [--check] [--scope wordpress|php|all] [project ...]
+#   dbox snapshot <project> <create|list|restore|delete|prune> [arg]
+#   dbox workers <project> <status|start|stop|restart|logs> [worker]
+#   dbox media <project> <prod-url|--off|--status> [--subdir-multisite]
+#   dbox logs <project> [lines] [access|error|app|all]
+#   dbox open <project>                 open https://<project>.<tld>
+#   dbox shell [project]                bash inside the PHP container (in the project folder)
+#   dbox up | down | restart            docker compose up -d / stop / restart
+#
+# Set DEVILBOX_ROOT if you run it from outside the checkout.
+set -e
+HERE="$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")" && pwd)"
+ROOT="${DEVILBOX_ROOT:-$(cd "$HERE/.." && pwd)}"
+T="$ROOT/tools"
+[ -f "$T/lib.sh" ] || { echo "dbox: tools/ not found under $ROOT (set DEVILBOX_ROOT)" >&2; exit 1; }
+export DEVILBOX_ROOT="$ROOT"
+
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+  status)   (cd "$ROOT" && docker compose ps --format 'table {{.Service}}\t{{.State}}\t{{.Status}}\t{{.Ports}}');;
+  doctor)   exec bash "$T/doctor.sh" "$@";;
+  new)      exec bash "$T/new-project.sh" "$@";;
+  import)   [ $# -ge 2 ] || { echo "usage: dbox import <dump> <project>" >&2; exit 1; }; exec bash "$T/import-wp-dumps.sh" --file "$1" "$2";;
+  import-multisite) exec bash "$T/import-wp-multisite.sh" "$@";;
+  update)   exec bash "$T/update-sites.sh" "$@";;
+  snapshot) exec bash "$T/snapshot.sh" "$@";;
+  workers)  exec bash "$T/workers.sh" "$@";;
+  media)    exec bash "$T/media-fallback.sh" "$@";;
+  logs)     exec bash "$T/logs.sh" "$@";;
+  open)     . "$T/lib.sh"; open "$(project_url "${1:?project}")" 2>/dev/null || xdg-open "$(project_url "$1")";;
+  shell)    cd "$ROOT" && exec docker compose exec --user devilbox -w "/shared/httpd/${1:-}" php bash -l;;
+  up)       cd "$ROOT" && exec docker compose up -d "$@";;
+  down)     cd "$ROOT" && exec docker compose stop "$@";;
+  restart)  cd "$ROOT" && exec docker compose restart "$@";;
+  help|-h|--help) sed -n 2,19p "$0" | sed 's/^# \{0,1\}//';;
+  *) echo "dbox: unknown command '$cmd' (dbox help)" >&2; exit 1;;
+esac

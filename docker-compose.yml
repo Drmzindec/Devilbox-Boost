@@ -147,6 +147,8 @@ services:
       ## Tools
       ##
       - COMPOSER_MEMORY_LIMIT=-1
+      - COMPOSER_CACHE_DIR=/home/devilbox/.cache/composer
+      - npm_config_cache=/home/devilbox/.npm
 
       ##
       ## UserID and GroupID
@@ -213,6 +215,9 @@ services:
 
       # Mount custom mass virtual hosting
       - ${HOST_PATH_HTTPD_DATADIR}:/shared/httpd:rw${MOUNT_OPTIONS}
+      # Shared Composer and npm caches so every project reuses downloads
+      - ${DEVILBOX_PATH}/cache/composer:/home/devilbox/.cache/composer:rw${MOUNT_OPTIONS}
+      - ${DEVILBOX_PATH}/cache/npm:/home/devilbox/.npm:rw${MOUNT_OPTIONS}
 
       # Mount logs
       - ${DEVILBOX_PATH}/log/php-fpm-${PHP_SERVER}:/var/log/php:rw${MOUNT_OPTIONS}

@@ -47,6 +47,8 @@ RUN apt-get update && apt-get install -y \
     socat \
     # Process management
     supervisor \
+    # Process tools (ps, pgrep) for worker management
+    procps \
     # Bash tools
     bash-completion \
     && rm -rf /var/lib/apt/lists/*

@@ -13,17 +13,18 @@ A background service runs inside the PHP container that:
 
 ## Supported Frameworks
 
-| Framework | Detection Method | DocumentRoot |
-|-----------|-----------------|--------------|
-| **Laravel** | `artisan` file exists | `/public` |
-| **Symfony** | `symfony.lock` or `bin/console` exists | `/public` |
-| **CakePHP** | `bin/cake` exists | `/public` |
-| **Yii** | `yii` file exists | `/public` |
-| **Drupal 8+** | `core/lib/Drupal.php` or `sites/default` exists | `/web` (if exists, else `/`) |
-| **Magento 2** | `bin/magento` or `app/Mage.php` exists | `/pub` (if exists, else `/`) |
-| **WordPress** | `wp-config.php` exists | `/` (project root) |
-| **CodeIgniter** | `system/core/CodeIgniter.php` exists | `/` (project root) |
-| **Generic PHP** | No framework detected | `/` (project root) |
+Detection is by document-root directory, checked in this order. The first match wins and
+`htdocs` is symlinked to it.
+
+| Directory found | DocumentRoot | Typical frameworks |
+|-----------------|--------------|--------------------|
+| `public/` | `/public` | Laravel, Statamic, Symfony, Slim, Laminas, TYPO3 |
+| `web/` | `/web` | Drupal 8+, Craft CMS, Yii 2 |
+| `pub/` | `/pub` | Magento 2 |
+| `webroot/` | `/webroot` | CakePHP |
+| `www/` (and no root `index.php`) | `/www` | Nette and friends |
+| `dist/index.html` (and no root `index.php`) | `/dist` | Built single-page apps |
+| none of the above | `/` (project root) | WordPress, CodeIgniter, generic PHP, static sites |
 
 ## What Gets Detected
 

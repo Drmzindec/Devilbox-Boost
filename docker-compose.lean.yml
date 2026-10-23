@@ -26,6 +26,8 @@ services:
       - DEBUG_ENTRYPOINT=${DEBUG_ENTRYPOINT:-2}
       - DOCKER_LOGS
       - COMPOSER_MEMORY_LIMIT=-1
+      - COMPOSER_CACHE_DIR=/home/devilbox/.cache/composer
+      - npm_config_cache=/home/devilbox/.npm
       - NEW_UID
       - NEW_GID
       - TIMEZONE
@@ -53,6 +55,9 @@ services:
     volumes:
       - ${DEVILBOX_PATH}/.devilbox/www:/var/www/default:ro${MOUNT_OPTIONS}
       - ${HOST_PATH_HTTPD_DATADIR}:/shared/httpd:rw${MOUNT_OPTIONS}
+      # Shared Composer and npm caches so every project reuses downloads
+      - ${DEVILBOX_PATH}/cache/composer:/home/devilbox/.cache/composer:rw${MOUNT_OPTIONS}
+      - ${DEVILBOX_PATH}/cache/npm:/home/devilbox/.npm:rw${MOUNT_OPTIONS}
       - ${DEVILBOX_PATH}/log/php-fpm-${PHP_SERVER}:/var/log/php:rw${MOUNT_OPTIONS}
       - devilbox-mail:/var/mail:rw${MOUNT_OPTIONS}
       - ${HOST_PATH_BACKUPDIR:-./backups}:/shared/backups:rw${MOUNT_OPTIONS}

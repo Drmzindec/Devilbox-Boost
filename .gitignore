@@ -211,3 +211,8 @@ log/php-fpm-8.4/php-errors.log
 /companion/dist/
 /companion/src-tauri/target/
 /companion/src-tauri/gen/
+/backups/snapshots/
+
+# Shared Composer/npm caches (bind-mounted into the PHP container)
+/cache/*/*
+!/cache/*/.keepme

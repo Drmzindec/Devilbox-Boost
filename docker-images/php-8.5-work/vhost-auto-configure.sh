@@ -8,6 +8,9 @@
 #   - Has public/  → htdocs -> public  (Laravel, Symfony, CakePHP)
 #   - Has web/     → htdocs -> web     (Drupal 8+)
 #   - Has pub/     → htdocs -> pub     (Magento 2)
+#   - Has webroot/ → htdocs -> webroot (CakePHP)
+#   - Has www/     → htdocs -> www     (Nette and friends, when no root index.php)
+#   - Has dist/index.html → htdocs -> dist (built SPAs, when no root index.php)
 #   - Otherwise    → htdocs -> .       (WordPress, generic)
 
 HTTPD_DIR="/shared/httpd"
@@ -35,6 +38,12 @@ scan_projects() {
             desired="web"
         elif [ -d "$project_path/pub" ]; then
             desired="pub"
+        elif [ -d "$project_path/webroot" ]; then
+            desired="webroot"
+        elif [ -d "$project_path/www" ] && [ ! -f "$project_path/index.php" ]; then
+            desired="www"
+        elif [ -d "$project_path/dist" ] && [ -f "$project_path/dist/index.html" ] && [ ! -f "$project_path/index.php" ]; then
+            desired="dist"
         fi
 
         if [ -L "$project_path/htdocs" ]; then

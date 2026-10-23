@@ -1,0 +1,66 @@
+name: PHP work images
+
+# Builds the custom PHP work images and, when Docker Hub credentials are
+# configured as repository secrets, pushes them as
+#   <DOCKERHUB_USERNAME>/devilbox-php:<version>   (e.g. drmzindec/devilbox-php:8.4)
+#   <DOCKERHUB_USERNAME>/devilbox-php:<version>-<tag>
+# Without the secrets the workflow only builds, so forks stay green.
+#
+# Required secrets for publishing: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      push:
+        description: "Push to Docker Hub (needs secrets)"
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.3", "8.4", "8.5"]
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: env.DOCKERHUB_USERNAME != '' && (github.event_name == 'push' || inputs.push)
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Image tags
+        id: meta
+        run: |
+          ref="${GITHUB_REF_NAME}"
+          tags="devilbox-php-${{ matrix.php }}:work"
+          if [ -n "$DOCKERHUB_USERNAME" ]; then
+            tags="$tags,${DOCKERHUB_USERNAME}/devilbox-php:${{ matrix.php }}"
+            case "$ref" in v*) tags="$tags,${DOCKERHUB_USERNAME}/devilbox-php:${{ matrix.php }}-${ref}";; esac
+          fi
+          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+
+      - name: Build (and push)
+        uses: docker/build-push-action@v6
+        with:
+          context: docker-images/php-${{ matrix.php }}-work
+          pull: true
+          platforms: ${{ env.DOCKERHUB_USERNAME != '' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          push: ${{ env.DOCKERHUB_USERNAME != '' && (github.event_name == 'push' || inputs.push) }}
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            NEW_UID=1000
+            NEW_GID=1000
+          cache-from: type=gha,scope=php-${{ matrix.php }}
+          cache-to: type=gha,mode=max,scope=php-${{ matrix.php }}

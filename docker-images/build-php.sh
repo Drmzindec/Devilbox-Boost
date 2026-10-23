@@ -32,7 +32,7 @@ echo "  GID: ${HOST_GID}"
 echo ""
 
 # Build the image
-docker build \
+docker build --pull \
     --build-arg NEW_UID="${HOST_UID}" \
     --build-arg NEW_GID="${HOST_GID}" \
     -t "devilbox-php-${VERSION}:work" \
