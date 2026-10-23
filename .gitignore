@@ -205,3 +205,9 @@ log/php-fpm-8.4/php-errors.log
 
 # local .env backups made by upgrade steps
 /.env.bak*
+
+# Tauri companion app
+/companion/node_modules/
+/companion/dist/
+/companion/src-tauri/target/
+/companion/src-tauri/gen/

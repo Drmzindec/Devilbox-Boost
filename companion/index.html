@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Devilbox Boost</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+  <body>
+    <div id="app">
+      <nav class="sidebar">
+        <div class="brand">
+          <span class="brand-dot" id="brand-dot"></span>
+          <div>
+            <div class="brand-name">Devilbox Boost</div>
+            <div class="brand-sub" id="brand-sub">checking…</div>
+          </div>
+        </div>
+        <button class="nav-item active" data-view="overview">Overview</button>
+        <button class="nav-item" data-view="projects">Projects</button>
+        <button class="nav-item" data-view="databases">Databases</button>
+        <button class="nav-item" data-view="tools">Tools</button>
+        <div class="nav-group">Intranet</div>
+        <button class="nav-item nav-frame" data-frame="/index.php">Dashboard</button>
+        <button class="nav-item nav-frame" data-frame="/vhosts.php">Virtual hosts</button>
+        <button class="nav-item nav-frame" data-frame="/info_php.php">PHP info</button>
+        <button class="nav-item nav-frame" data-frame="/log_php.php">PHP error log</button>
+        <button class="nav-item nav-frame" data-frame="/mail.php">Mail</button>
+        <button class="nav-item nav-frame" data-frame="/cnc.php">Command &amp; control</button>
+        <div class="spacer"></div>
+        <button class="nav-item" data-view="settings">Settings</button>
+      </nav>
+      <main class="content">
+        <section id="view-overview" class="view active"></section>
+        <section id="view-projects" class="view"></section>
+        <section id="view-databases" class="view"></section>
+        <section id="view-tools" class="view"></section>
+        <section id="view-settings" class="view"></section>
+        <section id="view-frame" class="view frame-view">
+          <iframe id="intranet-frame" title="Devilbox intranet"></iframe>
+        </section>
+      </main>
+    </div>
+    <div id="toast" class="toast" hidden></div>
+  </body>
+</html>

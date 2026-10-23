@@ -111,6 +111,11 @@ docker compose exec php laravel new my-blog
 - **OpCache GUI 3.6.1** - Performance monitoring
 - **phpPgAdmin 7.13.0** - PostgreSQL admin
 
+### 🖥️ Companion App (Optional)
+- **Native menu bar app** (Tauri 2, macOS) - stack status, start/stop/restart, project launcher, database list
+- **Admin tools in their own windows** - phpMyAdmin, Adminer, Mailpit and friends without browser tabs
+- **One-click database open** in Sequel Ace or TablePlus - see [`companion/README.md`](companion/README.md)
+
 ### 🤖 AI Integration (Optional)
 - **MCP Server** - Claude Code integration
 - **10+ tools** - Service management, database ops, health checks
