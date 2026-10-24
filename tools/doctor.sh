@@ -83,7 +83,7 @@ if [ "$DO_SITES" = 1 ]; then
       wordpress)
         [ -f "$d/wp-config.php" ] || emit WARN "$p" "no wp-config.php"
         # plugins active in the database but missing or incomplete on disk
-        active=$(wpc "$p" option get active_plugins --format=json 2>/dev/null | grep -oE '"[^"]+\.php"' | tr -d '"')
+        active=$(wpc "$p" option get active_plugins --format=json 2>/dev/null | grep -oE '"[^"]+\.php"' | tr -d '"' | sed 's|\\/|/|g')
         for pl in $active; do
           dir=${pl%%/*}
           if [ "$dir" = "$pl" ]; then [ -f "$d/wp-content/plugins/$pl" ] || emit FAIL "$p" "active plugin file missing: $pl"
