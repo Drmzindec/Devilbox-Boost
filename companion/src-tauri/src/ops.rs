@@ -655,6 +655,198 @@ fn git(dir: &Path, args: &[&str]) -> Option<String> {
     }
 }
 
+/// Run git capturing combined output; Err on non-zero exit. Never prompts.
+fn git_out(dir: &Path, args: &[&str]) -> Result<String, String> {
+    let out = Command::new("git")
+        .args(args)
+        .current_dir(dir)
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .output()
+        .map_err(|e| e.to_string())?;
+    let text = format!("{}{}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+    if out.status.success() {
+        Ok(text)
+    } else {
+        Err(text)
+    }
+}
+
+#[derive(Serialize, Clone, Default)]
+pub struct GitFile {
+    pub status: String,
+    pub path: String,
+}
+
+#[derive(Serialize, Clone, Default)]
+pub struct GitPanel {
+    pub is_repo: bool,
+    pub branch: String,
+    pub branches: Vec<String>,
+    pub ahead: u32,
+    pub behind: u32,
+    pub has_upstream: bool,
+    pub merging: bool,
+    pub remote: String,
+    pub last_commit: String,
+    pub files: Vec<GitFile>,
+}
+
+fn git_panel_sync(dir: &Path) -> GitPanel {
+    let mut p = GitPanel::default();
+    if git(dir, &["rev-parse", "--is-inside-work-tree"]).as_deref() != Some("true") {
+        return p;
+    }
+    p.is_repo = true;
+    p.branch = git(dir, &["rev-parse", "--abbrev-ref", "HEAD"]).unwrap_or_default();
+    p.branches = git(dir, &["branch", "--format=%(refname:short)"])
+        .map(|t| t.lines().map(|l| l.trim().to_string()).filter(|l| !l.is_empty()).collect())
+        .unwrap_or_default();
+    p.merging = dir.join(".git/MERGE_HEAD").exists();
+    p.has_upstream = git(dir, &["rev-parse", "--abbrev-ref", "@{upstream}"]).is_some();
+    if let Some(ab) = git(dir, &["rev-list", "--left-right", "--count", "HEAD...@{upstream}"]) {
+        let mut it = ab.split_whitespace();
+        p.ahead = it.next().and_then(|v| v.parse().ok()).unwrap_or(0);
+        p.behind = it.next().and_then(|v| v.parse().ok()).unwrap_or(0);
+    }
+    p.remote = git(dir, &["remote", "get-url", "origin"]).unwrap_or_default();
+    p.last_commit = git(dir, &["log", "-1", "--format=%h %s (%cr)"]).unwrap_or_default();
+    if let Some(porcelain) = git(dir, &["status", "--porcelain"]) {
+        p.files = porcelain
+            .lines()
+            .filter(|l| l.len() > 3)
+            .map(|l| GitFile { status: l[..2].trim().to_string(), path: l[3..].trim().to_string() })
+            .collect();
+    }
+    p
+}
+
+#[tauri::command]
+pub async fn git_panel(state: State<'_, AppState>, project: String) -> Result<GitPanel, String> {
+    let root = root_or_err(&state)?;
+    valid_project(&root, &project)?;
+    let dir = root.join("data/www").join(&project);
+    tauri::async_runtime::spawn_blocking(move || Ok(git_panel_sync(&dir))).await.map_err(|e| e.to_string())?
+}
+
+fn valid_ref(name: &str) -> Result<(), String> {
+    if name.is_empty() || name.starts_with('-') || !name.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '/' | '.')) {
+        return Err(format!("invalid branch name {name}"));
+    }
+    Ok(())
+}
+
+/// The basic daily git operations. Conflict resolution stays in a real git
+/// client: a pull or merge that conflicts reports git's own words and the UI
+/// offers "Abort merge". There is deliberately no force-push here.
+#[tauri::command]
+pub async fn git_do(state: State<'_, AppState>, project: String, action: String, arg: Option<String>) -> Result<String, String> {
+    let root = root_or_err(&state)?;
+    valid_project(&root, &project)?;
+    let dir = root.join("data/www").join(&project);
+    tauri::async_runtime::spawn_blocking(move || {
+        let arg = arg.unwrap_or_default();
+        match action.as_str() {
+            "pull" => git_out(&dir, &["pull", "--no-rebase"]),
+            "push" => match git_out(&dir, &["push"]) {
+                Err(e) if e.contains("no upstream") || e.contains("--set-upstream") => git_out(&dir, &["push", "-u", "origin", "HEAD"]),
+                r => r,
+            },
+            "fetch" => git_out(&dir, &["fetch", "--all", "--prune"]),
+            "checkout" => {
+                valid_ref(&arg)?;
+                git_out(&dir, &["checkout", &arg])
+            }
+            "checkout-new" => {
+                valid_ref(&arg)?;
+                git_out(&dir, &["checkout", "-b", &arg])
+            }
+            "merge" => {
+                valid_ref(&arg)?;
+                git_out(&dir, &["merge", "--no-edit", &arg])
+            }
+            "merge-abort" => git_out(&dir, &["merge", "--abort"]),
+            other => Err(format!("unknown git action {other}")),
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Clone a repository into data/www/<name>. SSH URLs use the host's keys and
+/// agent, exactly like the pull/push commands.
+#[tauri::command]
+pub async fn git_clone(app: AppHandle, state: State<'_, AppState>, url: String, name: String) -> Result<String, String> {
+    let root = root_or_err(&state)?;
+    let url = url.trim().to_string();
+    if url.starts_with('-') || !(url.starts_with("git@") || url.starts_with("ssh://") || url.starts_with("https://") || url.starts_with("http://")) {
+        return Err("Enter a git URL (git@host:org/repo.git, ssh:// or https://)".into());
+    }
+    if name.is_empty() || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+        return Err("Project name must be letters, digits, dashes or underscores".into());
+    }
+    let dest = root.join("data/www").join(&name);
+    if dest.exists() {
+        return Err(format!("data/www/{name} already exists"));
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut cmd = Command::new("git");
+        cmd.args(["clone", "--progress", &url]).arg(&dest).current_dir(&root).env("GIT_TERMINAL_PROMPT", "0");
+        run_streaming(&app, &format!("clone-{name}"), cmd)?;
+        Ok(format!("Cloned into data/www/{name}"))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub async fn git_commit(state: State<'_, AppState>, project: String, message: String) -> Result<String, String> {
+    let root = root_or_err(&state)?;
+    valid_project(&root, &project)?;
+    if message.trim().is_empty() {
+        return Err("Commit message must not be empty".into());
+    }
+    let dir = root.join("data/www").join(&project);
+    tauri::async_runtime::spawn_blocking(move || {
+        git_out(&dir, &["add", "-A"])?;
+        git_out(&dir, &["commit", "-m", message.trim()])
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub async fn git_diff(state: State<'_, AppState>, project: String, path: Option<String>) -> Result<String, String> {
+    let root = root_or_err(&state)?;
+    valid_project(&root, &project)?;
+    let dir = root.join("data/www").join(&project);
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut text = match path.as_deref() {
+            Some(p) => {
+                let tracked = git_out(&dir, &["diff", "HEAD", "--", p]).unwrap_or_default();
+                if tracked.trim().is_empty() {
+                    // untracked file: show it as an all-new diff
+                    Command::new("git")
+                        .args(["diff", "--no-index", "--", "/dev/null", p])
+                        .current_dir(&dir)
+                        .output()
+                        .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
+                        .unwrap_or_default()
+                } else {
+                    tracked
+                }
+            }
+            None => git_out(&dir, &["diff", "HEAD"]).unwrap_or_default(),
+        };
+        if text.len() > 60_000 {
+            text.truncate(60_000);
+            text.push_str("\n… (diff truncated)");
+        }
+        Ok(if text.trim().is_empty() { "(no changes)".to_string() } else { text })
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 pub async fn git_status(state: State<'_, AppState>, project: String) -> Result<GitStatus, String> {
     let root = root_or_err(&state)?;

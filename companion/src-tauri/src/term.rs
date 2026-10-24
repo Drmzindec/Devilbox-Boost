@@ -16,7 +16,9 @@ struct Session {
     master: Box<dyn MasterPty + Send>,
     writer: Box<dyn Write + Send>,
     child: Box<dyn Child + Send + Sync>,
-    root: PathBuf,
+    /// Devilbox root for docker-exec sessions (their in-container shell needs
+    /// an explicit hang-up on close); None for plain host sessions (ssh).
+    docker_root: Option<PathBuf>,
 }
 
 /// Killing the host-side `docker compose exec` client does NOT kill the shell
@@ -74,24 +76,15 @@ fn decode(buf: &mut Vec<u8>) -> String {
     }
 }
 
-#[tauri::command]
-pub fn terminal_open(app: AppHandle, terms: State<TermState>, state: State<AppState>, project: Option<String>, cols: u16, rows: u16) -> Result<u32, String> {
-    let root = root_or_err(&state)?;
+/// Spawn `cmd` on a fresh PTY, bridge its output to term-data/term-exit
+/// events and register the session. Shared by the container terminal and ssh.
+pub(crate) fn spawn_pty(app: AppHandle, terms: &TermState, build: impl FnOnce(u32) -> CommandBuilder, cols: u16, rows: u16, docker_root: Option<PathBuf>) -> Result<u32, String> {
     let pty = native_pty_system();
     let pair = pty
         .openpty(PtySize { rows: rows.max(5), cols: cols.max(20), pixel_width: 0, pixel_height: 0 })
         .map_err(|e| e.to_string())?;
-    let mut cmd = CommandBuilder::new(docker_path());
-    let workdir = match project.as_deref() {
-        Some(p) if !p.is_empty() => format!("/shared/httpd/{p}"),
-        _ => "/shared/httpd".to_string(),
-    };
     let id = terms.next_id.fetch_add(1, Ordering::SeqCst) + 1;
-    // Record the shell's in-container PID so terminal_close can hang it up
-    // (`exec` keeps the PID, so the file holds bash's own PID).
-    cmd.args(["compose", "exec", "--user", "devilbox", "-w", &workdir, "php", "sh", "-c",
-        &format!("echo $$ > /tmp/.dbx-term-{id}; exec bash -l")]);
-    cmd.cwd(&root);
+    let mut cmd = build(id);
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
     cmd.env("LANG", "C.UTF-8");
@@ -99,7 +92,7 @@ pub fn terminal_open(app: AppHandle, terms: State<TermState>, state: State<AppSt
     drop(pair.slave);
     let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
     let writer = pair.master.take_writer().map_err(|e| e.to_string())?;
-    terms.sessions.lock().unwrap().insert(id, Session { master: pair.master, writer, child, root: root.clone() });
+    terms.sessions.lock().unwrap().insert(id, Session { master: pair.master, writer, child, docker_root });
 
     std::thread::spawn(move || {
         let mut chunk = [0u8; 8192];
@@ -122,6 +115,25 @@ pub fn terminal_open(app: AppHandle, terms: State<TermState>, state: State<AppSt
 }
 
 #[tauri::command]
+pub fn terminal_open(app: AppHandle, terms: State<TermState>, state: State<AppState>, project: Option<String>, cols: u16, rows: u16) -> Result<u32, String> {
+    let root = root_or_err(&state)?;
+    let workdir = match project.as_deref() {
+        Some(p) if !p.is_empty() => format!("/shared/httpd/{p}"),
+        _ => "/shared/httpd".to_string(),
+    };
+    let root2 = root.clone();
+    spawn_pty(app, &terms, move |id| {
+        let mut cmd = CommandBuilder::new(docker_path());
+        // Record the shell's in-container PID so terminal_close can hang it up
+        // (`exec` keeps the PID, so the file holds bash's own PID).
+        cmd.args(["compose", "exec", "--user", "devilbox", "-w", &workdir, "php", "sh", "-c",
+            &format!("echo $$ > /tmp/.dbx-term-{id}; exec bash -l")]);
+        cmd.cwd(&root2);
+        cmd
+    }, cols, rows, Some(root))
+}
+
+#[tauri::command]
 pub fn terminal_write(terms: State<TermState>, id: u32, data: String) -> Result<(), String> {
     let mut map = terms.sessions.lock().unwrap();
     let s = map.get_mut(&id).ok_or("terminal closed")?;
@@ -139,7 +151,9 @@ pub fn terminal_resize(terms: State<TermState>, id: u32, cols: u16, rows: u16) -
 #[tauri::command]
 pub fn terminal_close(terms: State<TermState>, id: u32) -> Result<(), String> {
     if let Some(mut s) = terms.sessions.lock().unwrap().remove(&id) {
-        kill_in_container(&s.root, id);
+        if let Some(root) = &s.docker_root {
+            kill_in_container(root, id);
+        }
         let _ = s.child.kill();
     }
     Ok(())
@@ -149,7 +163,9 @@ pub fn close_all(app: &AppHandle) {
     use tauri::Manager;
     if let Some(terms) = app.try_state::<TermState>() {
         for (id, mut s) in terms.sessions.lock().unwrap().drain() {
-            kill_in_container(&s.root, id);
+            if let Some(root) = &s.docker_root {
+                kill_in_container(root, id);
+            }
             let _ = s.child.kill();
         }
     }

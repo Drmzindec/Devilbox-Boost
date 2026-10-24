@@ -94,8 +94,9 @@ function jobPane(job: string, title = "Output") {
 const HELP: Record<string, { title: string; body: string }> = {
   overview: { title: "Overview", body: `<p>The state of the Docker stack. Each card is one container: its image, uptime and published ports. <b>Start / Stop / Restart</b> act on the whole stack; <b>Recreate</b> runs <code>docker compose up -d --force-recreate</code>, which you need after changing <code>.env</code> or the compose file. <b>Logs</b> shows the last 200 lines of that container.</p><p>The <b>Xdebug</b> toggle writes or removes a drop-in ini in <code>cfg/php-ini-&lt;version&gt;/</code> (the same file the MCP server manages) and reloads PHP-FPM — mode debug,develop on port 9003.</p><p>The menu bar icon mirrors this: ● all running, ◐ degraded, ○ stopped. It also carries Tools and Projects submenus so you rarely need this window.</p>` },
   projects: { title: "Projects", body: `<p>Every folder in <code>data/www</code> is a site at <code>https://&lt;folder&gt;.${"${tld}"}</code>. The type is detected from the files (artisan, wp-content, composer.json …) and the database from <code>wp-config.php</code> or <code>.env</code>.</p><p>Click a project name for its detail panel: database and snapshots, workers and dev server, media fallback, logs and a terminal. <b>Editor</b>, <b>Terminal</b> and <b>Finder</b> use the apps chosen in Settings.</p><p><kbd>${"${shortcut}"}</kbd> opens this list from anywhere: type to filter, <kbd>Enter</kbd> opens the first match.</p>` },
-  project: { title: "Project detail", body: `<p><b>Database</b>: open the project's database in your SQL client, Adminer or phpMyAdmin, import a dump (WordPress dumps get prefix and URL detection and a wp-config.php), and take or restore <b>snapshots</b>, which are compressed dumps in <code>backups/snapshots/&lt;db&gt;/</code>. A restore takes a safety snapshot first.</p><p><b>Workers &amp; dev server</b>: start <code>queue:work</code>, <code>schedule:work</code>, Horizon or Reverb inside the PHP container, and <code>npm run dev</code> on this Mac. The dev server is plain http, so browse the http URL while it runs.</p><p><b>Media fallback</b>: uploads are rarely in git. With this on, missing <code>/wp-content/uploads/…</code> files redirect to production so images keep working.</p><p><b>Scripts</b>: every script from composer.json and package.json as a button, run inside the PHP container with streamed output.</p><p><b>Logs</b>: web server and PHP errors for this host plus the application log — new lines stream in live. <b>Terminal</b>: bash in the PHP container, already in the project folder, with composer, artisan, wp and npm available.</p>` },
-  databases: { title: "Databases", body: `<p>All MariaDB databases on <code>127.0.0.1:${"${port}"}</code> (user root). The Project column links back to the site using each database. Buttons open the database in your installed SQL client (only shown when one is detected in /Applications), in Adminer or in phpMyAdmin, each in its own window. <b>Import dump…</b> loads a <code>.sql</code>, <code>.sql.gz</code> or <code>.zip</code> into any database.</p>` },
+  project: { title: "Project detail", body: `<p><b>Database</b>: open the project's database in your SQL client, Adminer or phpMyAdmin, import a dump (WordPress dumps get prefix and URL detection and a wp-config.php), and take or restore <b>snapshots</b>, which are compressed dumps in <code>backups/snapshots/&lt;db&gt;/</code>. A restore takes a safety snapshot first.</p><p><b>Workers &amp; dev server</b>: start <code>queue:work</code>, <code>schedule:work</code>, Horizon or Reverb inside the PHP container, and <code>npm run dev</code> on this Mac. The dev server is plain http, so browse the http URL while it runs.</p><p><b>Media fallback</b>: uploads are rarely in git. With this on, missing <code>/wp-content/uploads/…</code> files redirect to production so images keep working.</p><p><b>Git</b>: the daily rhythm without leaving the app — changed files with diffs, commit (stages everything), pull, push, switch or create branches, merge from another branch. A conflicted merge stops cleanly: resolve it in your editor or git client, or abort. There is no force-push. Clone new projects from the Projects page.</p><p><b>Scripts</b>: every script from composer.json and package.json as a button, run inside the PHP container with streamed output.</p><p><b>Logs</b>: web server and PHP errors for this host plus the application log — new lines stream in live. <b>Terminal</b>: bash in the PHP container, already in the project folder, with composer, artisan, wp and npm available.</p>` },
+  databases: { title: "Databases", body: `<p>All MariaDB databases on <code>127.0.0.1:${"${port}"}</code> (user root). The Project column links back to the site using each database. Buttons open the database in your installed SQL client (only shown when one is detected in /Applications), in Adminer or in phpMyAdmin, each in its own window. <b>Import dump…</b> loads a <code>.sql</code>, <code>.sql.gz</code> or <code>.zip</code> into any database.</p><p><b>Create database…</b> makes an empty utf8mb4 database. <b>Drop</b> deletes one for good — you must retype its name to confirm, and a snapshot first is wise.</p>` },
+  ssh: { title: "SSH", body: `<p>Saved connections plus every Host block from <code>~/.ssh/config</code>. <b>Connect</b> opens the session in a terminal inside this window; the second button hands it to your terminal app instead. Auth is keys/agent only — the app stores no passwords; if a server asks for one, you type it in the terminal as usual.</p><p>Saved connections live in <code>ssh.json</code> next to the app settings; a config entry can be copied into the saved list to add a port, key or start folder.</p>` },
   tools: { title: "Tools", body: `<p>The bundled web tools, each opening in its own window inside the app rather than a browser tab. Services that are not running show as such. The same list sits under the menu bar icon → Tools.</p>` },
   doctor: { title: "Doctor", body: `<p>Runs <code>dbox doctor</code>. <b>Stack</b>: Docker, container health, the <code>.${"${tld}"}</code> DNS resolver, the Devilbox CA in your keychain, the intranet, <code>check-config.sh</code>, recent PHP-FPM crashes and reclaimable image space. <b>Sites</b>: each vhost is probed and a 5xx comes with the matching error-log line; the configured database must exist and have tables; WordPress plugins that are active in the database but missing or incomplete on disk are listed (the usual cause is a gitignored premium plugin), as are fatal errors in debug.log and missing uploads; Laravel projects report missing vendor/, missing builds and pending migrations.</p><p>Findings the app knows how to repair carry a <b>Fix</b> button: composer install, npm install + build, migrations, creating a missing database, deactivating plugins that are not in the repo, trusting the CA, writing the DNS resolver (asks for your password) and pruning images. After a fix the check runs again.</p>` },
   updates: { title: "Updates", body: `<p><b>Check</b> lists what is available without changing anything. <b>Update</b> applies it: for WordPress, plugins, themes, core, the database upgrade, translations and a cache flush via wp-cli; for Composer projects, <code>composer update</code>, migrations (<code>artisan migrate</code>, <code>please updates:run</code>, <code>drush updatedb</code>, <code>craft migrate/all</code>) and <code>npm install</code> + <code>npm run build</code> when there is a package.json.</p><p>The bulk buttons walk every site of that kind. The <b>schedule</b> runs the chosen scope once a day at the set time while the app is open and notifies you with the result. Take a snapshot first if a site matters.</p>` },
@@ -119,7 +120,7 @@ function wireHelp(root: HTMLElement) {
 }
 function renderHelp() {
   const v = $("#view-help");
-  const order = ["overview", "projects", "project", "databases", "tools", "intranet", "doctor", "updates", "create", "files", "settings"];
+  const order = ["overview", "projects", "project", "databases", "tools", "ssh", "intranet", "doctor", "updates", "create", "files", "settings"];
   v.innerHTML = `<h1>Help</h1><p class="sub">What each part of Devilbox Boost does. Every page also has a <span class="help-btn" style="pointer-events:none">?</span> button next to its title.</p>
     ${order.map((k) => `<div class="card" style="margin-bottom:12px"><h3>${esc(HELP[k].title)}</h3>${fillHelp(HELP[k].body)}</div>`).join("")}
     <div class="card" style="margin-bottom:12px"><h3>Command line</h3><p>Everything here is also <code>bin/dbox</code> in the Devilbox folder: <code>dbox status</code>, <code>dbox doctor</code>, <code>dbox new</code>, <code>dbox update</code>, <code>dbox snapshot</code>, <code>dbox workers</code>, <code>dbox media</code>, <code>dbox logs</code>, <code>dbox import</code>, <code>dbox shell</code>. Run <code>dbox help</code> for the full list.</p></div>
@@ -174,6 +175,7 @@ function activate(viewId: string, navButton?: HTMLElement | null) {
   document.querySelectorAll<HTMLElement>(".view").forEach((v) => v.classList.toggle("active", v.id === viewId));
   document.querySelectorAll<HTMLElement>(".nav-item").forEach((b) => b.classList.toggle("active", b === navButton));
   if (viewId !== "view-project") { closeTerminal(); stopLogFollow(); }
+  if (viewId !== "view-ssh") closeSshTerminal();
 }
 
 function showView(name: string) {
@@ -189,6 +191,7 @@ function showView(name: string) {
   if (name === "doctor") renderDoctor();
   if (name === "help") renderHelp();
   if (name === "intranet") renderIntranet();
+  if (name === "ssh") renderSsh();
 }
 
 function showFrame(path: string, title: string) {
@@ -378,7 +381,9 @@ function renderProjects() {
       <button class="btn" id="projects-reload">Reload</button>
       <button class="btn" id="projects-folder">Open data/www</button>
       <button class="btn" id="projects-new">New project</button>
+      <button class="btn" id="projects-clone">Clone from git…</button>
     </div>
+    <div id="clone-panel"></div>
     <table><thead><tr><th>Project</th><th>Type</th><th>Database</th><th></th></tr></thead><tbody>
     ${rows.map((p) => `<tr>
       <td><a class="link" data-project="${esc(p.name)}">${esc(p.name)}</a><div class="kind">${esc(p.url)}</div></td>
@@ -401,6 +406,36 @@ function renderProjects() {
   $("#projects-reload").addEventListener("click", loadProjects);
   $("#projects-folder").addEventListener("click", () => call("open_with", { appName: "Finder", target: `${env!.root}/data/www` }));
   $("#projects-new").addEventListener("click", () => showView("create"));
+  $("#projects-clone").addEventListener("click", () => {
+    const panel = $("#clone-panel");
+    panel.innerHTML = `<div class="card" style="margin-bottom:12px"><h3>Clone a repository into data/www</h3>
+      <div class="row">
+        <div class="field"><label>Git URL (ssh or https)</label><input class="text" id="clone-url" placeholder="git@github.com:you/site.git" style="min-width:380px"></div>
+        <div class="field"><label>Folder / project name</label><input class="text" id="clone-name" placeholder="site" style="min-width:180px"></div>
+      </div>
+      <div class="actions" style="margin-top:8px"><button class="btn primary" id="clone-go">Clone</button><button class="btn" id="clone-cancel">Cancel</button></div>
+      <p class="muted" style="margin-top:8px">SSH URLs use your keys and agent. After cloning, the vhost appears automatically — run <b>Doctor</b> on the project and its Fix buttons handle composer install, the build and migrations.</p>
+      <div id="clone-output"></div></div>`;
+    const url = $<HTMLInputElement>("#clone-url", panel), nameIn = $<HTMLInputElement>("#clone-name", panel);
+    url.addEventListener("input", () => {
+      if (nameIn.dataset.touched) return;
+      const base = url.value.split("/").pop()?.replace(/\.git$/, "").trim() ?? "";
+      nameIn.value = base.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+    });
+    nameIn.addEventListener("input", () => (nameIn.dataset.touched = "1"));
+    $("#clone-cancel", panel).addEventListener("click", () => (panel.innerHTML = ""));
+    $("#clone-go", panel).addEventListener("click", async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement;
+      const name = nameIn.value.trim();
+      const job = `clone-${name}`; jobBuffers.set(job, []);
+      $("#clone-output", panel).innerHTML = jobPane(job, `Cloning ${name}`);
+      btn.disabled = true; btn.textContent = "Cloning…";
+      const r = await call<string>("git_clone", { url: url.value.trim(), name });
+      btn.disabled = false; btn.textContent = "Clone";
+      if (r !== undefined) { toast(r); await loadProjects(); openProject(name, "git"); }
+    });
+    url.focus();
+  });
   wireCommonActions(v);
 }
 
@@ -414,8 +449,8 @@ async function openProject(name: string, tab?: string) {
   if (tab) detailTab = tab;
   activate("view-project", document.querySelector<HTMLElement>('.nav-item[data-view="projects"]'));
   const v = $("#view-project");
-  const tabs = ["overview", "database", "workers", "scripts", "media", "logs", "terminal"];
-  const labels: Record<string, string> = { overview: "Overview", database: "Database", workers: "Workers & dev server", scripts: "Scripts", media: "Media fallback", logs: "Logs", terminal: "Terminal" };
+  const tabs = ["overview", "git", "database", "workers", "scripts", "media", "logs", "terminal"];
+  const labels: Record<string, string> = { overview: "Overview", git: "Git", database: "Database", workers: "Workers & dev server", scripts: "Scripts", media: "Media fallback", logs: "Logs", terminal: "Terminal" };
   v.innerHTML = `<button class="back" id="detail-back">← Projects</button>
     <h1 style="margin-top:8px">${esc(p.name)} <span class="badge muted">${esc(p.kind)}</span> ${helpButton("project")}</h1>
     <p class="sub"><a class="link" data-open="${esc(p.url)}">${esc(p.url)}</a> · ${esc(p.path)}${p.db ? ` · db <code>${esc(p.db)}</code>` : ""}</p>
@@ -456,6 +491,7 @@ async function openProject(name: string, tab?: string) {
   const body = $("#detail-body");
   switch (detailTab) {
     case "overview": await renderDetailOverview(body, p); break;
+    case "git": await renderDetailGit(body, p); break;
     case "database": await renderDetailDatabase(body, p); break;
     case "workers": await renderDetailWorkers(body, p); break;
     case "scripts": await renderDetailScripts(body, p); break;
@@ -463,6 +499,80 @@ async function openProject(name: string, tab?: string) {
     case "logs": await renderDetailLogs(body, p); break;
     case "terminal": await renderDetailTerminal(body, p); break;
   }
+}
+
+// ----- git panel -----------------------------------------------------------------------------------
+interface GitFile { status: string; path: string }
+interface GitPanel { is_repo: boolean; branch: string; branches: string[]; ahead: number; behind: number; has_upstream: boolean; merging: boolean; remote: string; last_commit: string; files: GitFile[] }
+
+async function renderDetailGit(body: HTMLElement, p: Project) {
+  const g = await call<GitPanel>("git_panel", { project: p.name });
+  if (!g) return;
+  if (!g.is_repo) { body.innerHTML = `<div class="card empty">Not a git repository. Clone one from the Projects page, or <code>git init</code> in a terminal.</div>`; return; }
+  const statusWord: Record<string, string> = { "??": "new", M: "modified", A: "added", D: "deleted", R: "renamed", MM: "modified", AM: "added" };
+  const others = g.branches.filter((b) => b !== g.branch);
+  body.innerHTML = `
+    ${g.merging ? `<div class="card" style="margin-bottom:12px"><h3>Merge in progress</h3><p class="muted">Resolve the conflicts in your editor or git client, commit there — or abort.</p><div class="actions"><button class="btn" id="git-abort">Abort merge</button>${gitApps.map((a) => `<button class="btn small" data-with="${esc(a)}" data-path="${esc(p.path)}">Open in ${esc(a)}</button>`).join("")}</div></div>` : ""}
+    <div class="row" style="margin-bottom:12px">
+      <select class="text" id="git-branch">${g.branches.map((b) => `<option ${b === g.branch ? "selected" : ""}>${esc(b)}</option>`).join("")}</select>
+      <input class="text" id="git-newbranch" placeholder="new branch…" style="min-width:150px"><button class="btn small" id="git-create">Create</button>
+      <span class="badge ${g.behind ? "warn" : "ok"}">${g.has_upstream ? `${g.ahead} ahead · ${g.behind} behind` : "no upstream"}</span>
+      <button class="btn" id="git-pull">Pull</button>
+      <button class="btn ${g.ahead ? "primary" : ""}" id="git-push">Push</button>
+      ${others.length ? `<select class="text" id="git-mergefrom"><option value="">Merge from…</option>${others.map((b) => `<option>${esc(b)}</option>`).join("")}</select>` : ""}
+    </div>
+    <p class="sub">${esc(g.last_commit)}${g.remote ? ` · ${esc(g.remote)}` : ""}</p>
+    <div class="two">
+      <div class="card"><h3>Changes <span class="badge ${g.files.length ? "warn" : "ok"}">${g.files.length ? `${g.files.length} file(s)` : "clean"}</span></h3>
+        ${g.files.length ? `<table><tbody>${g.files.map((f) => `<tr><td><span class="kind">${esc(statusWord[f.status] ?? f.status)}</span></td><td><a class="link" data-diff="${esc(f.path)}">${esc(f.path)}</a></td></tr>`).join("")}</tbody></table>` : `<p class="muted">Working tree is clean.</p>`}
+      </div>
+      <div class="card"><h3>Commit</h3>
+        <textarea class="text" id="git-msg" placeholder="Commit message" style="width:100%;min-height:64px" ${g.files.length ? "" : "disabled"}></textarea>
+        <div class="actions" style="margin-top:8px"><button class="btn primary" id="git-commit" ${g.files.length ? "" : "disabled"}>Commit all changes</button></div>
+        <p class="muted" style="margin-top:8px">Stages everything (<code>git add -A</code>) and commits. No force-push exists in this app — history stays safe.</p>
+      </div>
+    </div>
+    <pre class="log" id="git-diff" hidden style="max-height:420px"></pre>
+    <pre class="log" id="git-out" hidden></pre>`;
+  wireCommonActions(body);
+  const rerender = () => renderDetailGit(body, p);
+  const show = (text: string) => { const pre = $("#git-out", body); pre.hidden = false; pre.textContent = text.trim() || "(done)"; };
+  const act = async (action: string, arg?: string, okMsg?: string) => {
+    body.querySelectorAll<HTMLButtonElement>("button").forEach((b) => (b.disabled = true));
+    const r = await call<string>("git_do", { project: p.name, action, arg: arg ?? null });
+    if (r !== undefined) { toast(okMsg ?? `${action} done`); show(r); setTimeout(rerender, 600); }
+    else rerender();
+  };
+  $("#git-pull", body).addEventListener("click", () => act("pull", undefined, "Pulled"));
+  $("#git-push", body).addEventListener("click", () => act("push", undefined, "Pushed"));
+  $("#git-abort", body)?.addEventListener("click", () => act("merge-abort", undefined, "Merge aborted"));
+  $<HTMLSelectElement>("#git-branch", body).addEventListener("change", (ev) => {
+    const b = (ev.target as HTMLSelectElement).value;
+    if (b !== g.branch) act("checkout", b, `Switched to ${b}`);
+  });
+  $("#git-create", body).addEventListener("click", () => {
+    const name = $<HTMLInputElement>("#git-newbranch", body).value.trim();
+    if (!name) return toast("Enter a branch name", true);
+    act("checkout-new", name, `Created ${name}`);
+  });
+  $<HTMLSelectElement>("#git-mergefrom", body)?.addEventListener("change", (ev) => {
+    const from = (ev.target as HTMLSelectElement).value;
+    if (!from) return;
+    if (!window.confirm(`Merge ${from} into ${g.branch}?`)) { (ev.target as HTMLSelectElement).value = ""; return; }
+    act("merge", from, `Merged ${from} into ${g.branch}`);
+  });
+  $("#git-commit", body).addEventListener("click", async () => {
+    const msg = $<HTMLTextAreaElement>("#git-msg", body).value;
+    if (!msg.trim()) return toast("Write a commit message", true);
+    const r = await call<string>("git_commit", { project: p.name, message: msg });
+    if (r !== undefined) { toast("Committed"); show(r); setTimeout(rerender, 600); }
+  });
+  body.querySelectorAll<HTMLElement>("[data-diff]").forEach((a) => a.addEventListener("click", async () => {
+    const pre = $("#git-diff", body);
+    const text = await call<string>("git_diff", { project: p.name, path: a.dataset.diff });
+    pre.hidden = false; pre.textContent = text ?? "";
+    pre.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }));
 }
 
 // ----- script runner -----------------------------------------------------------------------------
@@ -498,7 +608,7 @@ async function renderDetailOverview(body: HTMLElement, p: Project) {
     ? `<div class="card"><h3>Git <span class="badge ${g.dirty + g.untracked ? "warn" : "ok"}">${g.dirty + g.untracked ? `${g.dirty} changed, ${g.untracked} untracked` : "clean"}</span></h3>
         <p>Branch <code>${esc(g.branch)}</code>${g.ahead || g.behind ? ` · ${g.ahead} ahead, ${g.behind} behind` : ""}</p>
         <p>${esc(g.last_commit)}</p>${g.remote ? `<p class="muted">${esc(g.remote)}</p>` : ""}
-        <div class="actions">${gitApps.map((a) => `<button class="btn small" data-with="${esc(a)}" data-path="${esc(p.path)}">Open in ${esc(a)}</button>`).join("")}<button class="btn small" data-with="editor" data-path="${esc(p.path)}">Editor</button></div></div>`
+        <div class="actions"><button class="btn small primary" id="ov-git">Git panel</button>${gitApps.map((a) => `<button class="btn small" data-with="${esc(a)}" data-path="${esc(p.path)}">Open in ${esc(a)}</button>`).join("")}</div></div>`
     : `<div class="card"><h3>Git</h3><p class="muted">Not a git repository.</p></div>`;
   body.innerHTML = `<div class="two">
     <div class="card"><h3>Local</h3>
@@ -513,6 +623,7 @@ async function renderDetailOverview(body: HTMLElement, p: Project) {
     ${gitCard}
   </div>`;
   wireCommonActions(body);
+  $("#ov-git", body)?.addEventListener("click", () => openProject(p.name, "git"));
   $("#ov-check", body)?.addEventListener("click", async () => {
     const i = await call<UpdateInfo>("check_updates", { project: p.name });
     if (i) { updateInfo.set(p.name, i); renderDetailOverview(body, p); }
@@ -697,6 +808,109 @@ async function renderDetailTerminal(body: HTMLElement, p: Project) {
   $("#term-restart", body).addEventListener("click", () => renderDetailTerminal(body, p));
 }
 
+// ----- ssh -----------------------------------------------------------------------------------------------
+interface SshConn { name: string; host: string; user: string; port: number; key: string; remote_dir: string; source: string }
+
+let sshTerm: Terminal | null = null;
+let sshTermId: number | null = null;
+let sshUnlisten: (() => void)[] = [];
+let sshObserver: ResizeObserver | null = null;
+let sshEditing: SshConn | null = null;
+
+async function closeSshTerminal() {
+  sshUnlisten.forEach((u) => u()); sshUnlisten = [];
+  sshObserver?.disconnect(); sshObserver = null;
+  if (sshTermId !== null) { const id = sshTermId; sshTermId = null; await call("terminal_close", { id }); }
+  sshTerm?.dispose(); sshTerm = null;
+}
+
+async function connectSsh(conn: SshConn) {
+  await closeSshTerminal();
+  const holder = $("#ssh-term-card");
+  holder.innerHTML = `<h2 style="margin-top:18px">${esc(conn.name)} <span class="kind">${esc(conn.user ? conn.user + "@" : "")}${esc(conn.host)}${conn.port && conn.port !== 22 ? ":" + conn.port : ""}</span></h2>
+    <div class="term" id="ssh-term"></div>
+    <div class="row" style="margin-top:8px"><button class="btn small" id="ssh-reconnect">Reconnect</button><button class="btn small" id="ssh-disconnect">Disconnect</button></div>`;
+  sshTerm = new Terminal({ cursorBlink: true, fontSize: 13, fontFamily: "SF Mono, Menlo, Monaco, monospace", theme: { background: "#0f1218", foreground: "#d7dce5", cursor: "#ff6a2b" } });
+  const fit = new FitAddon();
+  sshTerm.loadAddon(fit);
+  sshTerm.open($("#ssh-term", holder));
+  fit.fit();
+  const id = await call<number>("ssh_open", { conn, cols: sshTerm.cols, rows: sshTerm.rows });
+  if (id === undefined) { holder.innerHTML = ""; return; }
+  sshTermId = id;
+  sshUnlisten.push(await listen<{ id: number; data: string }>("term-data", (e) => { if (e.payload.id === id) sshTerm?.write(e.payload.data); }));
+  sshUnlisten.push(await listen<{ id: number }>("term-exit", (e) => { if (e.payload.id === id) sshTerm?.write("\r\n\x1b[2m[connection closed]\x1b[0m\r\n"); }));
+  sshTerm.onData((data) => { if (sshTermId !== null) invoke("terminal_write", { id: sshTermId, data }).catch(() => {}); });
+  sshTerm.onResize(({ cols, rows }) => { if (sshTermId !== null) invoke("terminal_resize", { id: sshTermId, cols, rows }).catch(() => {}); });
+  sshObserver = new ResizeObserver(() => fit.fit());
+  sshObserver.observe($("#ssh-term", holder));
+  sshTerm.focus();
+  $("#ssh-reconnect", holder).addEventListener("click", () => connectSsh(conn));
+  $("#ssh-disconnect", holder).addEventListener("click", async () => { await closeSshTerminal(); holder.innerHTML = ""; });
+}
+
+async function renderSsh() {
+  const v = $("#view-ssh");
+  const conns = (await call<SshConn[]>("ssh_list")) ?? [];
+  const e = sshEditing;
+  v.innerHTML = `<h1>SSH ${helpButton("ssh")}</h1>
+    <p class="sub">Saved connections plus the Host entries from <code>~/.ssh/config</code>. Connect opens a terminal right here; keys and the ssh agent handle auth — no passwords are stored.</p>
+    <div class="row" style="margin-bottom:12px"><button class="btn primary" id="ssh-add">Add connection</button></div>
+    <div id="ssh-form">${e ? `<div class="card" style="margin-bottom:14px"><h3>${esc(e.name) || "New connection"}</h3>
+      <div class="row">
+        <div class="field"><label>Name</label><input class="text" id="sf-name" value="${esc(e.name)}" placeholder="prod-web"></div>
+        <div class="field"><label>User</label><input class="text" id="sf-user" value="${esc(e.user)}" placeholder="deploy"></div>
+        <div class="field"><label>Host</label><input class="text" id="sf-host" value="${esc(e.host)}" placeholder="server.example.com" style="min-width:240px"></div>
+        <div class="field"><label>Port</label><input class="text" id="sf-port" value="${e.port || 22}" style="min-width:80px;max-width:90px"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Identity file (optional)</label><input class="text" id="sf-key" value="${esc(e.key)}" placeholder="~/.ssh/id_ed25519" style="min-width:300px"></div>
+        <div class="field"><label>Remote folder (optional)</label><input class="text" id="sf-dir" value="${esc(e.remote_dir)}" placeholder="/var/www/site" style="min-width:260px"></div>
+      </div>
+      <div class="actions" style="margin-top:10px"><button class="btn primary" id="sf-save">Save</button><button class="btn" id="sf-cancel">Cancel</button></div></div>` : ""}</div>
+    <table><thead><tr><th>Connection</th><th>Target</th><th>Source</th><th></th></tr></thead><tbody>
+    ${conns.map((c, i) => `<tr>
+      <td><a class="link" data-connect="${i}">${esc(c.name)}</a>${c.remote_dir ? `<div class="kind">${esc(c.remote_dir)}</div>` : ""}</td>
+      <td>${esc(c.user ? c.user + "@" : "")}${esc(c.host)}${c.port && c.port !== 22 ? ":" + c.port : ""}${c.key ? ` <span class="kind" title="${esc(c.key)}">key</span>` : ""}</td>
+      <td><span class="kind">${c.source === "config" ? "~/.ssh/config" : "saved"}</span></td>
+      <td class="actions">
+        <button class="btn small primary" data-connect="${i}">Connect</button>
+        <button class="btn small" data-external="${i}">${esc(settings.terminal || "Terminal")}</button>
+        <button class="btn small" data-edit="${i}">${c.source === "config" ? "Save a copy" : "Edit"}</button>
+        ${c.source === "saved" ? `<button class="btn small" data-del="${esc(c.name)}">Delete</button>` : ""}
+      </td></tr>`).join("")}
+    </tbody></table>
+    ${conns.length ? "" : `<div class="card empty">No connections yet. Add one, or define Host blocks in ~/.ssh/config and they appear here.</div>`}
+    <div id="ssh-term-card"></div>`;
+  wireHelp(v);
+  $("#ssh-add").addEventListener("click", () => { sshEditing = { name: "", host: "", user: "", port: 22, key: "", remote_dir: "", source: "" }; renderSsh(); });
+  v.querySelectorAll<HTMLElement>("[data-connect]").forEach((b) => b.addEventListener("click", () => connectSsh(conns[Number(b.dataset.connect)])));
+  v.querySelectorAll<HTMLButtonElement>("[data-external]").forEach((b) => b.addEventListener("click", () => call("ssh_open_external", { conn: conns[Number(b.dataset.external)] })));
+  v.querySelectorAll<HTMLButtonElement>("[data-edit]").forEach((b) => b.addEventListener("click", () => { sshEditing = { ...conns[Number(b.dataset.edit)], source: "" }; renderSsh(); }));
+  v.querySelectorAll<HTMLButtonElement>("[data-del]").forEach((b) => b.addEventListener("click", async () => {
+    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Really delete?"; return; }
+    const r = await call<SshConn[]>("ssh_delete", { name: b.dataset.del });
+    if (r) { toast("Connection deleted"); renderSsh(); }
+  }));
+  if (e) {
+    $("#sf-cancel").addEventListener("click", () => { sshEditing = null; renderSsh(); });
+    $("#sf-save").addEventListener("click", async () => {
+      const conn: SshConn = {
+        name: $<HTMLInputElement>("#sf-name").value.trim(),
+        user: $<HTMLInputElement>("#sf-user").value.trim(),
+        host: $<HTMLInputElement>("#sf-host").value.trim(),
+        port: Number($<HTMLInputElement>("#sf-port").value) || 22,
+        key: $<HTMLInputElement>("#sf-key").value.trim(),
+        remote_dir: $<HTMLInputElement>("#sf-dir").value.trim(),
+        source: "",
+      };
+      const r = await call<SshConn[]>("ssh_save", { conn });
+      if (r) { sshEditing = null; toast(`Saved ${conn.name}`); renderSsh(); }
+    });
+    $<HTMLInputElement>("#sf-name").focus();
+  }
+}
+
 // ----- dump import --------------------------------------------------------------------------------------
 async function startImport(panel: HTMLElement, project: string | null, db: string) {
   const file = await call<string | null>("pick_dump");
@@ -737,15 +951,48 @@ async function loadDatabases() {
   const owners = new Map(projectList.map((p) => [p.db, p.name]));
   v.innerHTML = `<h1>Databases ${helpButton("databases")}</h1>
     <p class="sub">MariaDB on 127.0.0.1:${esc(env.mysql_host_port)} as root.${hasDbClient() ? ` Click a name to open it in ${esc(settings.db_client)}.` : " No desktop SQL client detected; Adminer and phpMyAdmin are built in."}</p>
-    <div class="row" style="margin-bottom:12px">${dbButtons("", false)}<button class="btn" data-import-db="">Import dump…</button><button class="btn" id="db-reload">Reload</button></div>
+    <div class="row" style="margin-bottom:12px">${dbButtons("", false)}<button class="btn" data-import-db="">Import dump…</button><button class="btn" id="db-create">Create database…</button><button class="btn" id="db-reload">Reload</button></div>
+    <div id="db-create-form"></div>
     <div id="import-panel"></div>
     <table><thead><tr><th>Database</th><th>Project</th><th></th></tr></thead><tbody>
     ${dbs.map((d) => `<tr>
       <td>${hasDbClient() ? `<a class="link" data-db="${esc(d)}">${esc(d)}</a>` : esc(d)}</td>
       <td>${owners.get(d) ? `<a class="link" data-project="${esc(owners.get(d)!)}">${esc(owners.get(d)!)}</a>` : ""}</td>
-      <td class="actions">${dbButtons(d)}</td></tr>`).join("")}
-    </tbody></table>`;
+      <td class="actions">${dbButtons(d)}<button class="btn small" data-drop="${esc(d)}">Drop</button></td></tr>`).join("")}
+    </tbody></table>
+    <div id="db-drop-confirm"></div>`;
   $("#db-reload").addEventListener("click", loadDatabases);
+  $("#db-create").addEventListener("click", () => {
+    const f = $("#db-create-form");
+    f.innerHTML = `<div class="row" style="margin-bottom:12px"><input class="text" id="db-new-name" placeholder="database name (utf8mb4)"><button class="btn primary" id="db-new-ok">Create</button><button class="btn" id="db-new-cancel">Cancel</button></div>`;
+    $("#db-new-cancel").addEventListener("click", () => (f.innerHTML = ""));
+    const create = async () => {
+      const name = $<HTMLInputElement>("#db-new-name").value.trim();
+      if (!name) return;
+      const r = await call<string>("db_create", { db: name });
+      if (r !== undefined) { toast(r); loadDatabases(); }
+    };
+    $("#db-new-ok").addEventListener("click", create);
+    $<HTMLInputElement>("#db-new-name").addEventListener("keydown", (ev) => { if (ev.key === "Enter") create(); });
+    $("#db-new-name").focus();
+  });
+  v.querySelectorAll<HTMLButtonElement>("[data-drop]").forEach((b) => b.addEventListener("click", () => {
+    const db = b.dataset.drop!;
+    const holder = $("#db-drop-confirm");
+    holder.innerHTML = `<div class="card" style="margin-top:12px"><h3>Drop <code>${esc(db)}</code>?</h3>
+      <p class="muted">This deletes the database and all its data. It cannot be undone — take a snapshot first if the project matters. Type the database name to confirm.</p>
+      <div class="row"><input class="text" id="drop-typed" placeholder="${esc(db)}"><button class="btn" id="drop-go" disabled>Drop database</button><button class="btn" id="drop-cancel">Cancel</button></div></div>`;
+    holder.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const typed = $<HTMLInputElement>("#drop-typed", holder), go = $<HTMLButtonElement>("#drop-go", holder);
+    typed.addEventListener("input", () => (go.disabled = typed.value.trim() !== db));
+    $("#drop-cancel", holder).addEventListener("click", () => (holder.innerHTML = ""));
+    go.addEventListener("click", async () => {
+      go.disabled = true; go.textContent = "Dropping…";
+      const r = await call<string>("db_drop", { db });
+      if (r !== undefined) { toast(r); loadDatabases(); } else { holder.innerHTML = ""; }
+    });
+    typed.focus();
+  }));
   wireCommonActions(v);
 }
 

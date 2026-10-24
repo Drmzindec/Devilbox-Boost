@@ -23,6 +23,7 @@ mod files;
 mod ops;
 mod platform;
 mod sites;
+mod ssh;
 mod term;
 
 pub const QUICK_OPEN_SHORTCUT: &str = "CommandOrControl+Shift+D";
@@ -697,6 +698,50 @@ async fn databases(state: State<'_, AppState>) -> Result<Vec<String>, String> {
     .map_err(|e| e.to_string())?
 }
 
+fn valid_db_name(db: &str) -> Result<(), String> {
+    if db.is_empty() || !db.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
+        return Err("Database name may only contain letters, digits, _ and -".into());
+    }
+    Ok(())
+}
+
+/// Run one SQL statement as root in the mysql container (mariadb client with
+/// a mysql fallback), with the password shell-quoted.
+pub(crate) fn mysql_exec(root: &Path, sql: &str) -> Result<String, String> {
+    let env = environment_for(root);
+    let pw = format!("-p{}", shell_quote(&env.mysql_root_password));
+    let q = shell_quote(sql);
+    compose(root, &["exec", "-T", "mysql", "sh", "-c", &format!(
+        "mariadb -uroot {pw} -e {q} 2>/dev/null || mysql -uroot {pw} -e {q}"
+    )])
+}
+
+#[tauri::command]
+async fn db_create(state: State<'_, AppState>, db: String) -> Result<String, String> {
+    let root = root_or_err(&state)?;
+    valid_db_name(&db)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        mysql_exec(&root, &format!("CREATE DATABASE IF NOT EXISTS `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"))
+            .map(|_| format!("Database {db} created"))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn db_drop(state: State<'_, AppState>, db: String) -> Result<String, String> {
+    let root = root_or_err(&state)?;
+    valid_db_name(&db)?;
+    if ["information_schema", "performance_schema", "mysql", "sys"].contains(&db.as_str()) {
+        return Err(format!("{db} is a system database"));
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        mysql_exec(&root, &format!("DROP DATABASE IF EXISTS `{db}`")).map(|_| format!("Database {db} dropped"))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// Import a dump. WordPress projects go through tools/import-wp-dumps.sh, which
 /// also detects the table prefix and writes wp-config.php; everything else is a
 /// plain SQL import into `db`.
@@ -1159,6 +1204,8 @@ pub fn run() {
             stack_logs,
             projects,
             databases,
+            db_create,
+            db_drop,
             import_dump,
             open_tool,
             open_url,
@@ -1197,6 +1244,16 @@ pub fn run() {
             ops::app_update_check,
             ops::autostart_get,
             ops::autostart_set,
+            ops::git_panel,
+            ops::git_do,
+            ops::git_commit,
+            ops::git_diff,
+            ops::git_clone,
+            ssh::ssh_list,
+            ssh::ssh_save,
+            ssh::ssh_delete,
+            ssh::ssh_open,
+            ssh::ssh_open_external,
             term::terminal_open,
             term::terminal_write,
             term::terminal_resize,
