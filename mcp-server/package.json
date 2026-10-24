@@ -1,6 +1,6 @@
 {
   "name": "@devilbox/mcp-server",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "MCP server for Devilbox Boost - lets Claude Code manage the stack (MCP TypeScript SDK v2)",
   "type": "module",
   "bin": {

@@ -10,9 +10,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Companion app: notifications on container death / PHP-FPM crashes, global hotkey launcher, dump import
 - Additional framework support (Symfony, CakePHP improvements)
 - Docker Hub images (optional)
+
+---
+
+## [1.0.8] - 2026-10-24
+
+### Added
+- **Companion: Doctor fix buttons** — findings the app can repair carry a one-click Fix (composer install, npm install + build, migrations, create a missing database, deactivate plugins missing from the repo, trust the CA, write the `/etc/resolver` file via an admin prompt, prune images); the check re-runs after each fix
+- **Companion: Git panel** per project — changed files with per-file diffs, commit-all with a message, pull, push (sets the upstream on first push), branch switch/create, merge from another branch and a history card (last 30 commits, click for the patch). A conflicted merge stops cleanly with git's own words and an Abort button; there is deliberately no force-push. **Clone from git** on the Projects page clones straight into `data/www` (SSH URLs use the host's keys/agent)
+- **Companion: repository browser** in the clone panel — GitLab (glab, per configured host), GitHub (gh) and Gitea (tea, per login) through their official CLIs so the app never touches a token; Bitbucket workspaces with an app password kept in the macOS Keychain. One-click install of the official CLIs and a login button that opens the interactive auth in your terminal
+- **Companion: SSH view** — saved connections (`ssh.json`) plus the Host blocks from `~/.ssh/config`, list or cards, opened one click in an embedded terminal or handed to your terminal app. Optional per-connection **password in the macOS Keychain** (delivered via SSH_ASKPASS, never a file or argv) and **Install key** (one-click ssh-copy-id so the server moves to key auth). Export/Import of the connection list (passwords never leave the Keychain); native picker for the identity file
+- **Companion: Xdebug toggle** on Overview — writes/removes the same `cfg/php-ini-<v>/zzz-mcp-xdebug.ini` drop-in the MCP server manages and reloads PHP-FPM
+- **Companion: Scripts tab** — every composer.json and package.json script as a button, run inside the PHP container with streamed output
+- **Companion: live logs** — the project Logs tab streams new lines (tail -F on app logs, `docker compose logs --follow` filtered per project) instead of polling
+- **Companion: Databases create/drop** — create a utf8mb4 database, drop one with a type-the-name confirmation
+- **Companion: launch at login** (tauri-plugin-autostart) and an **update check** comparing the newest GitHub release with the local checkout
+- **MCP server v2.2: `devilbox_ssh_list` and `devilbox_ssh_exec`** — Claude can list the SSH connections the companion app knows (saved + `~/.ssh/config`, no credentials returned) and run non-interactive commands over them (key/agent auth, or the Keychain password via SSH_ASKPASS). Keep `devilbox_ssh_exec` permission-prompted rather than allowlisted: every remote command should be approved
+
+### Changed
+- **`tools/doctor.sh` checks the sites in parallel** (six at a time, results in the original order) — a full `dbox doctor` over a dozen sites drops from minutes to about half a minute
+- Companion admin-tool links (Adminer, phpMyAdmin, phpCacheAdmin, OPcache GUI, phpPgAdmin) are discovered from the vendor folder instead of hardcoded versions
+- Companion tray menu only rebuilds when its contents change, and the PHP crash-log scan runs every other poll
+- Companion version now tracks the stack releases (1.0.8)
+
+### Fixed
+- doctor.sh: `grep -c … || echo 0` produced "0\n0" when a log had no matches, breaking the count comparison; wp-cli's JSON `\/` escaping made every plugin in a folder look missing from disk
+- Companion: reused tool windows (Adminer/phpMyAdmin) now navigate to the newly requested database instead of focusing the stale window; nvm Node versions sort numerically (v9 no longer beats v22); closed embedded terminals no longer leak `bash -l` processes in the PHP container; the MySQL root password is shell-quoted in import/list commands and percent-encoded in `mysql://` URLs; `.env` inline comments no longer leak into database names; a deliberate stack stop no longer races the poller into a false "container stopped" alert; the Files project selector matches exact paths
 
 ---
 

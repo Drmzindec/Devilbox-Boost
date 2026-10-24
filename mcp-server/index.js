@@ -22,6 +22,7 @@
 import { McpServer, fromJsonSchema } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { spawn } from 'child_process';
+import os from 'os';
 import { readFile, writeFile, access, readdir, unlink, open, stat } from 'fs/promises';
 import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
@@ -579,12 +580,199 @@ const tools = [
       properties: {},
     },
   },
+  {
+    name: 'devilbox_ssh_list',
+    description: 'List the SSH connections known to Devilbox Boost: the companion app\'s saved connections plus the Host blocks from ~/.ssh/config. Returns names, targets and auth hints - never credentials.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'devilbox_ssh_exec',
+    description: 'Run a command on a remote server over one of the listed SSH connections (devilbox_ssh_list). Non-interactive: key/agent auth, or the password the companion app saved in the macOS Keychain. Returns stdout, stderr and the exit code.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        connection: {
+          type: 'string',
+          description: 'Connection name as shown by devilbox_ssh_list',
+        },
+        command: {
+          type: 'string',
+          description: 'Command to run on the remote server (executed by the remote shell, in the connection\'s remote folder when one is set)',
+        },
+        timeout_seconds: {
+          type: 'number',
+          description: 'Give up after this many seconds (default 60, max 600)',
+          default: 60,
+        },
+      },
+      required: ['connection', 'command'],
+    },
+  },
 ];
+
+// ---------------------------------------------------------------------------
+// SSH connections (shared with the companion app)
+// ---------------------------------------------------------------------------
+
+const SSH_KC_SERVICE = 'devilbox-boost-ssh';
+
+/** The companion app's config dir on each platform (Tauri app_config_dir). */
+function companionConfigDirs() {
+  const home = os.homedir();
+  const id = 'io.github.drmzindec.devilbox-boost';
+  return [
+    join(home, 'Library', 'Application Support', id), // macOS
+    join(process.env.APPDATA || join(home, 'AppData', 'Roaming'), id), // Windows
+    join(process.env.XDG_CONFIG_HOME || join(home, '.config'), id), // Linux
+  ];
+}
+
+async function sshSavedConnections() {
+  for (const dir of companionConfigDirs()) {
+    try {
+      const text = await readFile(join(dir, 'ssh.json'), 'utf8');
+      const list = JSON.parse(text);
+      if (Array.isArray(list)) {
+        return list.map((c) => ({ ...c, source: 'saved' }));
+      }
+    } catch {
+      // next candidate
+    }
+  }
+  return [];
+}
+
+/** Host blocks from ~/.ssh/config (wildcard patterns skipped). */
+async function sshConfigHosts() {
+  let text;
+  try {
+    text = await readFile(join(os.homedir(), '.ssh', 'config'), 'utf8');
+  } catch {
+    return [];
+  }
+  const out = [];
+  let cur = null;
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    const m = line.match(/^(\S+)\s+(.*)$/);
+    if (!m) continue;
+    const key = m[1].toLowerCase();
+    const value = m[2].trim().replace(/^"|"$/g, '');
+    if (key === 'host') {
+      if (cur) out.push(cur);
+      const name = value.split(/\s+/)[0];
+      cur = name && !name.includes('*') && !name.includes('?')
+        ? { name, host: name, user: '', port: 22, key: '', remote_dir: '', source: 'config' }
+        : null;
+    } else if (cur) {
+      if (key === 'hostname') cur.host = value;
+      else if (key === 'user') cur.user = value;
+      else if (key === 'port') cur.port = Number.parseInt(value, 10) || 22;
+      else if (key === 'identityfile') cur.key = value;
+    }
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+async function sshConnections() {
+  const saved = await sshSavedConnections();
+  const names = new Set(saved.map((c) => c.name));
+  const config = (await sshConfigHosts()).filter((c) => !names.has(c.name));
+  return [...saved, ...config];
+}
+
+/** Keychain password saved by the companion app (macOS only). */
+async function sshKeychainPassword(name) {
+  if (process.platform !== 'darwin') return null;
+  try {
+    const { stdout } = await run('security',
+      ['find-generic-password', '-s', SSH_KC_SERVICE, '-a', name, '-w'],
+      { timeout: 10000 });
+    return stdout.replace(/\n$/, '');
+  } catch {
+    return null;
+  }
+}
+
+/** Askpass helper so a Keychain password reaches ssh via env, never argv. */
+async function sshAskpassScript() {
+  const file = join(os.tmpdir(), `dbx-mcp-askpass-${process.getuid ? process.getuid() : 'u'}.sh`);
+  await writeFile(file, '#!/bin/sh\nprintf \'%s\' "$DBX_SSH_PASS"\n', { mode: 0o700 });
+  return file;
+}
 
 /**
  * Tool implementations
  */
 const toolHandlers = {
+  async devilbox_ssh_list() {
+    const conns = await sshConnections();
+    if (conns.length === 0) {
+      return textResult('No SSH connections found (no companion ssh.json and no Host blocks in ~/.ssh/config).');
+    }
+    const lines = await Promise.all(conns.map(async (c) => {
+      const pw = c.source === 'saved' && (await sshKeychainPassword(c.name)) ? ' · password in Keychain' : '';
+      const target = `${c.user ? `${c.user}@` : ''}${c.host}${c.port && c.port !== 22 ? `:${c.port}` : ''}`;
+      const extras = [c.key ? `key ${c.key}` : '', c.remote_dir ? `dir ${c.remote_dir}` : ''].filter(Boolean).join(' · ');
+      return `${c.name} (${c.source}) → ${target}${extras ? ` · ${extras}` : ''}${pw}`;
+    }));
+    return textResult(lines.join('\n'));
+  },
+
+  async devilbox_ssh_exec({ connection, command, timeout_seconds = 60 }) {
+    const conns = await sshConnections();
+    const conn = conns.find((c) => c.name === connection);
+    if (!conn) {
+      throw new Error(`Unknown connection '${connection}'. Run devilbox_ssh_list for the available names.`);
+    }
+    if (!command || !command.trim()) {
+      throw new Error('command is required');
+    }
+    const timeout = Math.min(Math.max(Number(timeout_seconds) || 60, 5), 600) * 1000;
+    const password = await sshKeychainPassword(conn.name);
+    const args = ['-o', 'ConnectTimeout=10'];
+    let env = null;
+    if (password) {
+      // Password auth via askpass; auto-accept only NEW host keys.
+      args.push('-o', 'StrictHostKeyChecking=accept-new');
+      env = {
+        DBX_SSH_PASS: password,
+        SSH_ASKPASS: await sshAskpassScript(),
+        SSH_ASKPASS_REQUIRE: 'force',
+      };
+    } else {
+      args.push('-o', 'BatchMode=yes');
+    }
+    if (conn.port && conn.port !== 22) args.push('-p', String(conn.port));
+    if (conn.key) args.push('-i', conn.key);
+    args.push(conn.user ? `${conn.user}@${conn.host}` : conn.host);
+    const remote = conn.remote_dir
+      ? `cd '${conn.remote_dir.replace(/'/g, `'\\''`)}' && ${command}`
+      : command;
+    args.push(remote);
+    let code = 0;
+    let stdout = '';
+    let stderr = '';
+    try {
+      ({ stdout, stderr } = await run('ssh', args, { timeout, env }));
+    } catch (error) {
+      if (error.code === undefined) throw error; // spawn failure or timeout
+      code = error.code;
+      stdout = error.stdout ?? '';
+      stderr = error.stderr ?? '';
+    }
+    const parts = [];
+    if (stdout.trim()) parts.push(stdout.trimEnd());
+    if (stderr.trim()) parts.push(`[stderr]\n${stderr.trimEnd()}`);
+    parts.push(`[exit code ${code}]`);
+    return textResult(parts.join('\n\n'));
+  },
+
   async devilbox_status() {
     const { stdout } = await dockerCompose(['ps']);
     return textResult(stdout);

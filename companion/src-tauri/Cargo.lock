@@ -749,7 +749,7 @@ dependencies = [
 
 [[package]]
 name = "devilbox-boost-companion"
-version = "1.0.7"
+version = "1.0.8"
 dependencies = [
  "chrono",
  "libc",
