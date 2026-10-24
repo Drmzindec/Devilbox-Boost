@@ -1,3 +1,8 @@
+---
+name: build-php-image
+description: Build a custom Devilbox PHP work image (8.3 or 8.4) with modern development tools via docker-images/build-php.sh
+---
+
 # Build Custom PHP Image
 
 Build a custom PHP work image with modern development tools.

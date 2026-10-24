@@ -1,3 +1,8 @@
+---
+name: test-mcp-server
+description: Test the Devilbox MCP server functionality to ensure all tools work correctly
+---
+
 # Test MCP Server
 
 Test the Devilbox MCP server functionality to ensure all tools work correctly.

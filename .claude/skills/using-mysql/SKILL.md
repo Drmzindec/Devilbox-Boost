@@ -1,3 +1,8 @@
+---
+name: using-mysql
+description: Set up and use MySQL/MariaDB in Devilbox, including client selection, connections, and common tasks
+---
+
 # Using MySQL/MariaDB in Devilbox
 
 MySQL and MariaDB are the most widely-used relational databases for web applications. Devilbox supports both with seamless compatibility.

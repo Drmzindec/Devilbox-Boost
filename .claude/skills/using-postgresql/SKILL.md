@@ -1,3 +1,8 @@
+---
+name: using-postgresql
+description: Set up and use PostgreSQL in Devilbox, including connections, JSON support, and common tasks
+---
+
 # Using PostgreSQL in Devilbox
 
 PostgreSQL is an advanced open-source relational database with support for JSON, full-text search, geospatial data, and advanced indexing.

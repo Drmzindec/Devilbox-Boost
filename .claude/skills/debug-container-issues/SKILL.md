@@ -1,3 +1,8 @@
+---
+name: debug-container-issues
+description: Troubleshoot common Devilbox container problems - health checks, logs, restarts, and known failure patterns
+---
+
 # Debug Container Issues
 
 Troubleshoot common Devilbox container problems.

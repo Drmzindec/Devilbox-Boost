@@ -1,3 +1,8 @@
+---
+name: update-admin-tools
+description: Update Devilbox web-based admin tools (phpMyAdmin etc.) to latest PHP 8.4 compatible versions
+---
+
 # Update Admin Tools
 
 Update Devilbox web-based admin tools to latest PHP 8.4 compatible versions.

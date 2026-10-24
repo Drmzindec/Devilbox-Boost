@@ -1,3 +1,8 @@
+---
+name: create-new-project
+description: Create a new project (Laravel, WordPress, or plain PHP) in Devilbox with automatic vhost configuration
+---
+
 # Create New Project
 
 Create a new project in Devilbox with automatic vhost configuration.

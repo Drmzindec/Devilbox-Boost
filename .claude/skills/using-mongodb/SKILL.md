@@ -1,3 +1,8 @@
+---
+name: using-mongodb
+description: Set up and use MongoDB in Devilbox for NoSQL document storage, with connection and usage examples
+---
+
 # Using MongoDB in Devilbox
 
 MongoDB is a NoSQL document database perfect for flexible schemas, high-performance writes, and complex data structures.

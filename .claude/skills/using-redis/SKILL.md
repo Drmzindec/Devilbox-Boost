@@ -1,3 +1,8 @@
+---
+name: using-redis
+description: Set up and use Redis in Devilbox for caching, sessions, and queues, with PHP and framework examples
+---
+
 # Using Redis in Devilbox
 
 Redis is a powerful in-memory data store used for caching, sessions, queues, and real-time applications.

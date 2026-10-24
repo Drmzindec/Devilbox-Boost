@@ -1,3 +1,8 @@
+---
+name: using-memcached
+description: Set up and use Memcached in Devilbox for simple key-value caching, with PHP and framework examples
+---
+
 # Using Memcached in Devilbox
 
 Memcached is a high-performance distributed memory caching system, perfect for simple key-value caching.
