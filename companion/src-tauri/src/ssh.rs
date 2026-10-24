@@ -276,6 +276,54 @@ pub async fn ssh_install_key(app: AppHandle, conn: SshConn) -> Result<String, St
     .map_err(|e| e.to_string())?
 }
 
+/// Export the saved connections (never passwords) to a JSON file the other
+/// machines can import.
+#[tauri::command]
+pub async fn ssh_export(app: AppHandle) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+    let saved = load_saved(&app);
+    if saved.is_empty() {
+        return Err("No saved connections to export (entries from ~/.ssh/config travel with that file).".into());
+    }
+    let picked = app.dialog().file().set_file_name("devilbox-ssh.json").set_title("Export SSH connections (passwords are not exported)").blocking_save_file();
+    match picked {
+        Some(p) => {
+            let path = p.into_path().map_err(|e| e.to_string())?;
+            let json = serde_json::to_string_pretty(&saved).map_err(|e| e.to_string())?;
+            fs::write(&path, json).map_err(|e| e.to_string())?;
+            Ok(Some(path.to_string_lossy().to_string()))
+        }
+        None => Ok(None),
+    }
+}
+
+#[tauri::command]
+pub async fn ssh_import(app: AppHandle) -> Result<Option<Vec<SshConn>>, String> {
+    use tauri_plugin_dialog::DialogExt;
+    let picked = app.dialog().file().add_filter("JSON", &["json"]).set_title("Import SSH connections").blocking_pick_file();
+    let Some(p) = picked else { return Ok(None) };
+    let path = p.into_path().map_err(|e| e.to_string())?;
+    let text = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let imported: Vec<SshConn> = serde_json::from_str(&text).map_err(|e| format!("not a connections export: {e}"))?;
+    let mut list = load_saved(&app);
+    for mut c in imported {
+        c.name = c.name.trim().to_string();
+        c.source = String::new();
+        c.password_saved = false;
+        if c.name.is_empty() || c.host.trim().is_empty() {
+            continue;
+        }
+        if c.port == 0 {
+            c.port = 22;
+        }
+        list.retain(|x| x.name != c.name);
+        list.push(c);
+    }
+    list.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    save_all(&app, &list)?;
+    Ok(Some(ssh_list(app)))
+}
+
 #[tauri::command]
 pub async fn ssh_pick_key(app: AppHandle) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;

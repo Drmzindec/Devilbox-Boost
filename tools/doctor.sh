@@ -18,8 +18,11 @@ while [ $# -gt 0 ]; do
 done
 [ ${#ONLY[@]} -gt 0 ] && DO_STACK=0
 
+# Decide the output format once: site checks run in subshells whose stdout is
+# a temp file, so a per-call [ -t 1 ] would lose the TTY colouring.
+IS_TTY=0; [ -t 1 ] && IS_TTY=1
 emit() { # level scope message
-  if [ -t 1 ]; then case "$1" in OK) ok "[$2] $3";; WARN) warn "[$2] $3";; FAIL) fail "[$2] $3";; esac
+  if [ "$IS_TTY" = 1 ]; then case "$1" in OK) ok "[$2] $3";; WARN) warn "[$2] $3";; FAIL) fail "[$2] $3";; esac
   else printf '%s|%s|%s\n' "$1" "$2" "$3"; fi
 }
 
@@ -61,8 +64,9 @@ fi
 if [ "$DO_SITES" = 1 ]; then
   targets=()
   if [ ${#ONLY[@]} -gt 0 ]; then targets=("${ONLY[@]}"); else while IFS= read -r p; do targets+=("$p"); done < <(list_projects); fi
-  for p in "${targets[@]}"; do
-    d="$WWW/$p"; [ -d "$d" ] || { emit FAIL "$p" "not found"; continue; }
+  check_site() {
+    local p="$1" d k url code err db n active pl dir theme fat recent pend
+    d="$WWW/$p"; [ -d "$d" ] || { emit FAIL "$p" "not found"; return; }
     k=$(project_kind "$d"); url=$(project_url "$p")
     [ -e "$d/htdocs" ] || emit WARN "$p" "no htdocs symlink yet (vhost-auto-configure creates it within 30s)"
     code=$(probe "$url/")
@@ -110,5 +114,20 @@ if [ "$DO_SITES" = 1 ]; then
         [ -f "$d/artisan" ] && { pend=$(php_exec "/shared/httpd/$p" php artisan migrate:status --pending 2>/dev/null | grep -c "Pending" || true); [ "${pend:-0}" -gt 0 ] && emit WARN "$p" "$pend pending migration(s)"; }
         ;;
     esac
+  }
+  # Check sites in parallel (the probes dominate the runtime), then print the
+  # results in the original order so the output stays stable.
+  TMP=$(mktemp -d); i=0; MAX=6
+  for p in "${targets[@]}"; do
+    check_site "$p" > "$TMP/$i.out" &
+    i=$((i + 1))
+    [ $((i % MAX)) -eq 0 ] && wait
   done
+  wait
+  i=0
+  for p in "${targets[@]}"; do
+    cat "$TMP/$i.out"
+    i=$((i + 1))
+  done
+  rm -rf "$TMP"
 fi

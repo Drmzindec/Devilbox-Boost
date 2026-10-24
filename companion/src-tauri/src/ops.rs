@@ -772,6 +772,57 @@ pub async fn git_do(state: State<'_, AppState>, project: String, action: String,
     .map_err(|e| e.to_string())?
 }
 
+#[derive(Serialize, Clone)]
+pub struct GitCommit {
+    pub hash: String,
+    pub subject: String,
+    pub author: String,
+    pub when: String,
+}
+
+#[tauri::command]
+pub async fn git_log(state: State<'_, AppState>, project: String, limit: Option<u32>) -> Result<Vec<GitCommit>, String> {
+    let root = root_or_err(&state)?;
+    valid_project(&root, &project)?;
+    let dir = root.join("data/www").join(&project);
+    let n = limit.unwrap_or(30).min(200).to_string();
+    tauri::async_runtime::spawn_blocking(move || {
+        let out = git_out(&dir, &["log", "-n", &n, "--format=%h%x1f%s%x1f%an%x1f%cr"]).unwrap_or_default();
+        Ok(out
+            .lines()
+            .filter_map(|l| {
+                let f: Vec<&str> = l.split('\u{1f}').collect();
+                match f.as_slice() {
+                    [h, s, a, w] => Some(GitCommit { hash: h.to_string(), subject: s.to_string(), author: a.to_string(), when: w.to_string() }),
+                    _ => None,
+                }
+            })
+            .collect())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub async fn git_show(state: State<'_, AppState>, project: String, hash: String) -> Result<String, String> {
+    let root = root_or_err(&state)?;
+    valid_project(&root, &project)?;
+    if hash.len() < 4 || hash.len() > 40 || !hash.chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err("invalid commit hash".into());
+    }
+    let dir = root.join("data/www").join(&project);
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut text = git_out(&dir, &["show", "--stat", "--patch", &hash])?;
+        if text.len() > 60_000 {
+            text.truncate(60_000);
+            text.push_str("\n… (truncated)");
+        }
+        Ok(text)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// Clone a repository into data/www/<name>. SSH URLs use the host's keys and
 /// agent, exactly like the pull/push commands.
 #[tauri::command]

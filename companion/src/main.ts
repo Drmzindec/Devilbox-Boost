@@ -180,6 +180,7 @@ function activate(viewId: string, navButton?: HTMLElement | null) {
 
 function showView(name: string) {
   activate(`view-${name}`, document.querySelector<HTMLElement>(`.nav-item[data-view="${name}"]`));
+  if (name === "overview") xdebugStale = true;
   if (name === "projects") loadProjects();
   if (name === "databases") loadDatabases();
   if (name === "tools") renderTools();
@@ -312,6 +313,10 @@ function renderOverview() {
 // ----- xdebug -----------------------------------------------------------------------------------
 interface XdebugStatus { enabled: boolean; detail: string }
 let xdebugCache: XdebugStatus | null = null;
+/// Set when the user navigates to Overview, so the badge re-checks the real
+/// state (the MCP server can toggle Xdebug too) without querying on every
+/// 15-second status repaint.
+let xdebugStale = true;
 
 function renderXdebugBox() {
   const box = document.querySelector<HTMLElement>("#xdebug-box");
@@ -326,12 +331,13 @@ function renderXdebugBox() {
       const btn = ev.currentTarget as HTMLButtonElement;
       btn.disabled = true; btn.textContent = "Reloading PHP-FPM…";
       const r = await call<XdebugStatus>("xdebug_set", { on: !x.enabled });
-      if (r) { xdebugCache = r; toast(`Xdebug ${r.enabled ? "enabled (port 9003)" : "disabled"}`); }
+      if (r) { xdebugCache = r; xdebugStale = false; toast(`Xdebug ${r.enabled ? "enabled (port 9003)" : "disabled"}`); }
       paint();
     });
   };
-  if (xdebugCache) return paint();
-  call<XdebugStatus>("xdebug_status").then((x) => { if (x) { xdebugCache = x; paint(); } });
+  if (xdebugCache) paint();
+  if (xdebugCache && !xdebugStale) return;
+  call<XdebugStatus>("xdebug_status").then((x) => { if (x) { xdebugCache = x; xdebugStale = false; paint(); } });
 }
 
 // ----- shared action wiring ---------------------------------------------------------------------
@@ -534,7 +540,8 @@ async function renderDetailGit(body: HTMLElement, p: Project) {
       </div>
     </div>
     <pre class="log" id="git-diff" hidden style="max-height:420px"></pre>
-    <pre class="log" id="git-out" hidden></pre>`;
+    <pre class="log" id="git-out" hidden></pre>
+    <div class="card" style="margin-top:12px"><h3>History</h3><div id="git-history" class="muted">Loading…</div></div>`;
   wireCommonActions(body);
   const rerender = () => renderDetailGit(body, p);
   const show = (text: string) => { const pre = $("#git-out", body); pre.hidden = false; pre.textContent = text.trim() || "(done)"; };
@@ -575,6 +582,22 @@ async function renderDetailGit(body: HTMLElement, p: Project) {
     pre.hidden = false; pre.textContent = text ?? "";
     pre.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }));
+  call<{ hash: string; subject: string; author: string; when: string }[]>("git_log", { project: p.name, limit: 30 }).then((commits) => {
+    const holder = body.querySelector<HTMLElement>("#git-history");
+    if (!holder) return;
+    if (!commits?.length) { holder.textContent = "No commits yet."; return; }
+    holder.classList.remove("muted");
+    holder.innerHTML = `<table><tbody>${commits.map((c) => `<tr>
+      <td><a class="link" data-show="${esc(c.hash)}"><code>${esc(c.hash)}</code></a></td>
+      <td>${esc(c.subject)}</td><td class="num"><span class="kind">${esc(c.author)} · ${esc(c.when)}</span></td></tr>`).join("")}</tbody></table>`;
+    holder.querySelectorAll<HTMLElement>("[data-show]").forEach((a) => a.addEventListener("click", async () => {
+      const pre = $("#git-diff", body);
+      pre.hidden = false; pre.textContent = "Loading…";
+      const text = await call<string>("git_show", { project: p.name, hash: a.dataset.show });
+      pre.textContent = text ?? "";
+      pre.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }));
+  });
 }
 
 // ----- script runner -----------------------------------------------------------------------------
@@ -882,6 +905,8 @@ async function renderSsh() {
     <p class="sub">Saved connections plus the Host entries from <code>~/.ssh/config</code>. Connect opens a terminal right here. Auth uses your keys/agent; a saved password lives in the macOS Keychain, never in a file.</p>
     <div class="row" style="margin-bottom:12px">
       <button class="btn primary" id="ssh-add">${e ? "Close form" : "Add connection"}</button>
+      <button class="btn small" id="ssh-export" title="Save the connection list as JSON for another machine (passwords stay in this Mac's Keychain)">Export</button>
+      <button class="btn small" id="ssh-import" title="Merge a devilbox-ssh.json export into this list">Import</button>
       <span class="spacer"></span>
       <button class="btn small ${sshViewMode === "list" ? "primary" : ""}" data-mode="list">List</button>
       <button class="btn small ${sshViewMode === "cards" ? "primary" : ""}" data-mode="cards">Cards</button>
@@ -907,6 +932,14 @@ async function renderSsh() {
     <div id="ssh-term-card"></div>`;
   wireHelp(v);
   $("#ssh-add").addEventListener("click", () => { sshEditing = e ? null : { name: "", host: "", user: "", port: 22, key: "", remote_dir: "", source: "", password_saved: false }; renderSsh(); });
+  $("#ssh-export").addEventListener("click", async () => {
+    const r = await call<string | null>("ssh_export");
+    if (r) toast(`Exported to ${r}`);
+  });
+  $("#ssh-import").addEventListener("click", async () => {
+    const r = await call<SshConn[] | null>("ssh_import");
+    if (r) { toast("Connections imported"); renderSsh(); }
+  });
   v.querySelectorAll<HTMLButtonElement>("[data-mode]").forEach((b) => b.addEventListener("click", () => {
     sshViewMode = b.dataset.mode as "list" | "cards";
     try { localStorage.setItem("ssh-view", sshViewMode); } catch { /* private mode */ }

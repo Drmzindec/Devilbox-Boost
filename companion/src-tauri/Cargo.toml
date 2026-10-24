@@ -1,6 +1,6 @@
 [package]
 name = "devilbox-boost-companion"
-version = "0.1.0"
+version = "1.0.7"
 description = "Menu bar companion for the Devilbox Boost PHP stack"
 authors = ["moducraft.io", "Devilbox Boost contributors"]
 edition = "2021"
