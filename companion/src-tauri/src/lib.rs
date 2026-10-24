@@ -370,7 +370,17 @@ fn grab(text: &str, key: &str) -> Option<String> {
     for line in text.lines() {
         let t = line.trim();
         if t.starts_with(&format!("{key}=")) {
-            return Some(t[key.len() + 1..].trim().trim_matches('"').trim_matches('\'').to_string());
+            let v = t[key.len() + 1..].trim();
+            // A quoted value ends at its closing quote; an unquoted one at an
+            // inline comment (DB_DATABASE=shop # main db).
+            if let Some(rest) = v.strip_prefix('"') {
+                return rest.split('"').next().map(|s| s.to_string());
+            }
+            if let Some(rest) = v.strip_prefix('\'') {
+                return rest.split('\'').next().map(|s| s.to_string());
+            }
+            let v = v.find(" #").map(|i| v[..i].trim_end()).unwrap_or(v);
+            return Some(v.to_string());
         }
         if t.contains(&format!("'{key}'")) && t.contains("define") {
             let after = t.split(&format!("'{key}'")).nth(1)?;
@@ -455,6 +465,16 @@ fn shell_quote(s: &str) -> String {
     format!("'{}'", s.replace('\'', "'\\''"))
 }
 
+/// Percent-encode a URL userinfo component (the password in mysql://root:…@).
+fn url_encode(s: &str) -> String {
+    s.bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => (b as char).to_string(),
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
+}
+
 /// Generic SQL import: stream a .sql / .sql.gz / .zip dump into a database,
 /// dropping CREATE DATABASE/USE statements for the production DB name and
 /// repairing the `DEFAULT x AS` binary-default quirk some hosts export.
@@ -467,7 +487,7 @@ fn import_generic(root: &Path, env: &Environment, db: &str, file: &Path, fresh: 
     } else {
         format!("cat {}", shell_quote(&name))
     };
-    let pw = format!("-p{}", env.mysql_root_password);
+    let pw = format!("-p{}", shell_quote(&env.mysql_root_password));
     let mut log = String::new();
     if fresh {
         compose(root, &["exec", "-T", "mysql", "sh", "-c", &format!(
@@ -562,6 +582,9 @@ async fn stack_status(state: State<'_, AppState>) -> Result<Vec<ServiceStatus>, 
 #[tauri::command]
 async fn stack_action(app: AppHandle, state: State<'_, AppState>, action: String, service: Option<String>) -> Result<String, String> {
     let root = root_or_err(&state)?;
+    // Unprime BEFORE acting so a poll that lands mid-stop does not raise a
+    // "container stopped" alert for a deliberate stop.
+    state.watch.lock().unwrap().primed = false;
     let result = tauri::async_runtime::spawn_blocking(move || {
         let mut args: Vec<&str> = match action.as_str() {
             "start" => vec!["up", "-d"],
@@ -577,7 +600,6 @@ async fn stack_action(app: AppHandle, state: State<'_, AppState>, action: String
     })
     .await
     .map_err(|e| e.to_string())?;
-    // A deliberate stop must not raise a "container stopped" alert.
     app.state::<AppState>().watch.lock().unwrap().primed = false;
     refresh_tray(&app);
     result
@@ -612,7 +634,7 @@ async fn databases(state: State<'_, AppState>) -> Result<Vec<String>, String> {
     let root = root_or_err(&state)?;
     let env = environment_for(&root);
     tauri::async_runtime::spawn_blocking(move || {
-        let pw = format!("-p{}", env.mysql_root_password);
+        let pw = format!("-p{}", shell_quote(&env.mysql_root_password));
         let out = compose(&root, &["exec", "-T", "mysql", "sh", "-c",
             &format!("command -v mariadb >/dev/null 2>&1 && mariadb -uroot {pw} -N -e 'SHOW DATABASES' || mysql -uroot {pw} -N -e 'SHOW DATABASES'")])?;
         let system = ["information_schema", "performance_schema", "mysql", "sys"];
@@ -671,12 +693,15 @@ async fn import_dump(state: State<'_, AppState>, project: Option<String>, db: St
 #[tauri::command]
 fn open_tool(app: AppHandle, label: String, title: String, url: String) -> Result<(), String> {
     let safe_label: String = label.chars().map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '-' }).collect();
+    let parsed = url.parse().map_err(|e| format!("bad url: {e}"))?;
     if let Some(w) = app.get_webview_window(&safe_label) {
+        // The window may be showing an older URL under the same label
+        // (Adminer opened for another database): navigate before focusing.
+        let _ = w.navigate(parsed);
         let _ = w.show();
         let _ = w.set_focus();
         return Ok(());
     }
-    let parsed = url.parse().map_err(|e| format!("bad url: {e}"))?;
     WebviewWindowBuilder::new(&app, &safe_label, WebviewUrl::External(parsed))
         .title(title)
         .inner_size(1200.0, 820.0)
@@ -710,7 +735,7 @@ fn open_db_client(state: State<AppState>, db: String) -> Result<(), String> {
     }
     let url = format!(
         "mysql://root:{}@127.0.0.1:{}/{}?name={}&env=local",
-        env.mysql_root_password, env.mysql_host_port, db, db
+        url_encode(&env.mysql_root_password), env.mysql_host_port, db, db
     );
     platform::open_with(&s.db_client, &url).map_err(|e| format!("{} could not be opened (is it installed?): {e}", s.db_client))
 }
@@ -902,6 +927,7 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
                     std::thread::spawn(move || {
                         let state = app.state::<AppState>();
                         if let Ok(root) = root_or_err(&state) {
+                            state.watch.lock().unwrap().primed = false;
                             let action = if id == "restart" {
                                 "restart"
                             } else {
@@ -966,6 +992,8 @@ mod tests {
         let env = "APP_NAME=x\nDB_DATABASE=\"ipwas\"\n";
         assert_eq!(grab(env, "DB_DATABASE").as_deref(), Some("ipwas"));
         assert_eq!(grab(env, "DB_HOST"), None);
+        assert_eq!(grab("DB_DATABASE=shop # main db\n", "DB_DATABASE").as_deref(), Some("shop"));
+        assert_eq!(grab("DB_DATABASE='with # inside'\n", "DB_DATABASE").as_deref(), Some("with # inside"));
     }
 
     #[test]
