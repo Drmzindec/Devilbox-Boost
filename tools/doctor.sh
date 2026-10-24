@@ -93,7 +93,7 @@ if [ "$DO_SITES" = 1 ]; then
         theme=$(wpc "$p" option get stylesheet 2>/dev/null | tr -d '[:space:]')
         [ -n "$theme" ] && [ ! -d "$d/wp-content/themes/$theme" ] && emit FAIL "$p" "active theme folder missing: $theme"
         if [ -f "$d/wp-content/debug.log" ]; then
-          fat=$(grep -c "PHP Fatal error" "$d/wp-content/debug.log" 2>/dev/null || echo 0)
+          fat=$(grep -c "PHP Fatal error" "$d/wp-content/debug.log" 2>/dev/null || true)
           [ "$fat" -gt 0 ] && emit WARN "$p" "$fat fatal error line(s) in wp-content/debug.log: $(grep 'PHP Fatal error' "$d/wp-content/debug.log" | tail -1 | sed -E 's/^\[[^]]*\] //' | cut -c1-140)"
         fi
         if [ -f "$d/.gitignore" ] && grep -qxE "email|Email" "$d/.gitignore"; then emit WARN "$p" ".gitignore has a bare 'email' rule that hides plugin folders named Email on case-insensitive disks"; fi
@@ -104,7 +104,7 @@ if [ "$DO_SITES" = 1 ]; then
         [ -d "$d/vendor" ] || emit FAIL "$p" "vendor/ missing (composer install)"
         [ -f "$d/package.json" ] && [ ! -f "$d/public/build/manifest.json" ] && [ ! -f "$d/public/hot" ] && emit WARN "$p" "no Vite build (npm run build) and no dev server running"
         if [ -f "$d/storage/logs/laravel.log" ]; then
-          recent=$(grep -c "\.ERROR\|\.CRITICAL\|\.EMERGENCY" "$d/storage/logs/laravel.log" 2>/dev/null || echo 0)
+          recent=$(grep -c "\.ERROR\|\.CRITICAL\|\.EMERGENCY" "$d/storage/logs/laravel.log" 2>/dev/null || true)
           [ "$recent" -gt 0 ] && emit WARN "$p" "$recent error line(s) in storage/logs/laravel.log"
         fi
         [ -f "$d/artisan" ] && { pend=$(php_exec "/shared/httpd/$p" php artisan migrate:status --pending 2>/dev/null | grep -c "Pending" || true); [ "${pend:-0}" -gt 0 ] && emit WARN "$p" "$pend pending migration(s)"; }
