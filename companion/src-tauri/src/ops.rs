@@ -212,6 +212,12 @@ pub struct DevState {
     children: Mutex<HashMap<String, Child>>,
 }
 
+/// "v22.18.0" -> (22, 18, 0) for numeric version ordering.
+fn semver_key(name: &str) -> (u32, u32, u32) {
+    let mut it = name.trim_start_matches('v').split('.').map(|x| x.parse::<u32>().unwrap_or(0));
+    (it.next().unwrap_or(0), it.next().unwrap_or(0), it.next().unwrap_or(0))
+}
+
 /// Node on the host: the app does not inherit a shell PATH, so look in the
 /// usual places (nvm newest first, Homebrew, /usr/local).
 fn host_npm() -> Option<PathBuf> {
@@ -219,7 +225,8 @@ fn host_npm() -> Option<PathBuf> {
         let nvm = PathBuf::from(home).join(".nvm/versions/node");
         if let Ok(rd) = std::fs::read_dir(&nvm) {
             let mut versions: Vec<PathBuf> = rd.filter_map(|e| e.ok()).map(|e| e.path()).collect();
-            versions.sort();
+            // Numeric semver order: a plain sort puts v9 after v22.
+            versions.sort_by_key(|p| semver_key(&p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()));
             if let Some(v) = versions.last() {
                 let npm = v.join("bin/npm");
                 if npm.is_file() {
