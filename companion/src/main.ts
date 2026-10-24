@@ -96,7 +96,7 @@ const HELP: Record<string, { title: string; body: string }> = {
   projects: { title: "Projects", body: `<p>Every folder in <code>data/www</code> is a site at <code>https://&lt;folder&gt;.${"${tld}"}</code>. The type is detected from the files (artisan, wp-content, composer.json …) and the database from <code>wp-config.php</code> or <code>.env</code>.</p><p>Click a project name for its detail panel: database and snapshots, workers and dev server, media fallback, logs and a terminal. <b>Editor</b>, <b>Terminal</b> and <b>Finder</b> use the apps chosen in Settings.</p><p><kbd>${"${shortcut}"}</kbd> opens this list from anywhere: type to filter, <kbd>Enter</kbd> opens the first match.</p>` },
   project: { title: "Project detail", body: `<p><b>Database</b>: open the project's database in your SQL client, Adminer or phpMyAdmin, import a dump (WordPress dumps get prefix and URL detection and a wp-config.php), and take or restore <b>snapshots</b>, which are compressed dumps in <code>backups/snapshots/&lt;db&gt;/</code>. A restore takes a safety snapshot first.</p><p><b>Workers &amp; dev server</b>: start <code>queue:work</code>, <code>schedule:work</code>, Horizon or Reverb inside the PHP container, and <code>npm run dev</code> on this Mac. The dev server is plain http, so browse the http URL while it runs.</p><p><b>Media fallback</b>: uploads are rarely in git. With this on, missing <code>/wp-content/uploads/…</code> files redirect to production so images keep working.</p><p><b>Git</b>: the daily rhythm without leaving the app — changed files with diffs, commit (stages everything), pull, push, switch or create branches, merge from another branch. A conflicted merge stops cleanly: resolve it in your editor or git client, or abort. There is no force-push. Clone new projects from the Projects page.</p><p><b>Scripts</b>: every script from composer.json and package.json as a button, run inside the PHP container with streamed output.</p><p><b>Logs</b>: web server and PHP errors for this host plus the application log — new lines stream in live. <b>Terminal</b>: bash in the PHP container, already in the project folder, with composer, artisan, wp and npm available.</p>` },
   databases: { title: "Databases", body: `<p>All MariaDB databases on <code>127.0.0.1:${"${port}"}</code> (user root). The Project column links back to the site using each database. Buttons open the database in your installed SQL client (only shown when one is detected in /Applications), in Adminer or in phpMyAdmin, each in its own window. <b>Import dump…</b> loads a <code>.sql</code>, <code>.sql.gz</code> or <code>.zip</code> into any database.</p><p><b>Create database…</b> makes an empty utf8mb4 database. <b>Drop</b> deletes one for good — you must retype its name to confirm, and a snapshot first is wise.</p>` },
-  ssh: { title: "SSH", body: `<p>Saved connections plus every Host block from <code>~/.ssh/config</code>. <b>Connect</b> opens the session in a terminal inside this window; the second button hands it to your terminal app instead. Auth is keys/agent only — the app stores no passwords; if a server asks for one, you type it in the terminal as usual.</p><p>Saved connections live in <code>ssh.json</code> next to the app settings; a config entry can be copied into the saved list to add a port, key or start folder.</p>` },
+  ssh: { title: "SSH", body: `<p>Saved connections plus every Host block from <code>~/.ssh/config</code>, as a list or cards. <b>Connect</b> opens the session in a terminal inside this window; the second button hands it to your terminal app instead.</p><p>Auth prefers keys/agent. A connection can also save a <b>password</b> — it goes into the macOS Keychain (never a file) and the embedded terminal logs in with it automatically. Better still: <b>Install key</b> runs ssh-copy-id with that password once, after which the server takes your key and the password can be removed.</p><p>Saved connections live in <code>ssh.json</code> next to the app settings; a config entry can be copied into the saved list to add a port, key, start folder or password. The remote folder is a path on the server, so it stays a text field.</p>` },
   tools: { title: "Tools", body: `<p>The bundled web tools, each opening in its own window inside the app rather than a browser tab. Services that are not running show as such. The same list sits under the menu bar icon → Tools.</p>` },
   doctor: { title: "Doctor", body: `<p>Runs <code>dbox doctor</code>. <b>Stack</b>: Docker, container health, the <code>.${"${tld}"}</code> DNS resolver, the Devilbox CA in your keychain, the intranet, <code>check-config.sh</code>, recent PHP-FPM crashes and reclaimable image space. <b>Sites</b>: each vhost is probed and a 5xx comes with the matching error-log line; the configured database must exist and have tables; WordPress plugins that are active in the database but missing or incomplete on disk are listed (the usual cause is a gitignored premium plugin), as are fatal errors in debug.log and missing uploads; Laravel projects report missing vendor/, missing builds and pending migrations.</p><p>Findings the app knows how to repair carry a <b>Fix</b> button: composer install, npm install + build, migrations, creating a missing database, deactivating plugins that are not in the repo, trusting the CA, writing the DNS resolver (asks for your password) and pruning images. After a fix the check runs again.</p>` },
   updates: { title: "Updates", body: `<p><b>Check</b> lists what is available without changing anything. <b>Update</b> applies it: for WordPress, plugins, themes, core, the database upgrade, translations and a cache flush via wp-cli; for Composer projects, <code>composer update</code>, migrations (<code>artisan migrate</code>, <code>please updates:run</code>, <code>drush updatedb</code>, <code>craft migrate/all</code>) and <code>npm install</code> + <code>npm run build</code> when there is a package.json.</p><p>The bulk buttons walk every site of that kind. The <b>schedule</b> runs the chosen scope once a day at the set time while the app is open and notifies you with the result. Take a snapshot first if a site matters.</p>` },
@@ -517,6 +517,7 @@ async function renderDetailGit(body: HTMLElement, p: Project) {
       <select class="text" id="git-branch">${g.branches.map((b) => `<option ${b === g.branch ? "selected" : ""}>${esc(b)}</option>`).join("")}</select>
       <input class="text" id="git-newbranch" placeholder="new branch…" style="min-width:150px"><button class="btn small" id="git-create">Create</button>
       <span class="badge ${g.behind ? "warn" : "ok"}">${g.has_upstream ? `${g.ahead} ahead · ${g.behind} behind` : "no upstream"}</span>
+      <button class="btn small" id="git-fetch" title="git fetch --all --prune (refreshes ahead/behind)">Fetch</button>
       <button class="btn" id="git-pull">Pull</button>
       <button class="btn ${g.ahead ? "primary" : ""}" id="git-push">Push</button>
       ${others.length ? `<select class="text" id="git-mergefrom"><option value="">Merge from…</option>${others.map((b) => `<option>${esc(b)}</option>`).join("")}</select>` : ""}
@@ -543,6 +544,7 @@ async function renderDetailGit(body: HTMLElement, p: Project) {
     if (r !== undefined) { toast(okMsg ?? `${action} done`); show(r); setTimeout(rerender, 600); }
     else rerender();
   };
+  $("#git-fetch", body).addEventListener("click", () => act("fetch", undefined, "Fetched"));
   $("#git-pull", body).addEventListener("click", () => act("pull", undefined, "Pulled"));
   $("#git-push", body).addEventListener("click", () => act("push", undefined, "Pushed"));
   $("#git-abort", body)?.addEventListener("click", () => act("merge-abort", undefined, "Merge aborted"));
@@ -809,7 +811,7 @@ async function renderDetailTerminal(body: HTMLElement, p: Project) {
 }
 
 // ----- ssh -----------------------------------------------------------------------------------------------
-interface SshConn { name: string; host: string; user: string; port: number; key: string; remote_dir: string; source: string }
+interface SshConn { name: string; host: string; user: string; port: number; key: string; remote_dir: string; source: string; password_saved: boolean }
 
 let sshTerm: Terminal | null = null;
 let sshTermId: number | null = null;
@@ -849,13 +851,41 @@ async function connectSsh(conn: SshConn) {
   $("#ssh-disconnect", holder).addEventListener("click", async () => { await closeSshTerminal(); holder.innerHTML = ""; });
 }
 
+let sshViewMode: "list" | "cards" = (() => { try { return localStorage.getItem("ssh-view") === "cards" ? "cards" : "list"; } catch { return "list"; } })();
+
 async function renderSsh() {
   const v = $("#view-ssh");
   const conns = (await call<SshConn[]>("ssh_list")) ?? [];
   const e = sshEditing;
+  const target = (c: SshConn) => `${esc(c.user ? c.user + "@" : "")}${esc(c.host)}${c.port && c.port !== 22 ? ":" + c.port : ""}`;
+  const badges = (c: SshConn) => `${c.key ? ` <span class="kind" title="${esc(c.key)}">key</span>` : ""}${c.password_saved ? ` <span class="kind" title="Password in the macOS Keychain">password</span>` : ""}`;
+  const actions = (c: SshConn, i: number) => `
+        <button class="btn small primary" data-connect="${i}">Connect</button>
+        <button class="btn small" data-external="${i}">${esc(settings.terminal || "Terminal")}</button>
+        <button class="btn small" data-edit="${i}">${c.source === "config" ? "Save a copy" : "Edit"}</button>
+        ${c.password_saved ? `<button class="btn small" data-installkey="${i}" title="ssh-copy-id with the saved password, so this server takes your key from now on">Install key</button>` : ""}
+        ${c.source === "saved" ? `<button class="btn small" data-del="${esc(c.name)}">Delete</button>` : ""}`;
+  const listHtml = `<table><thead><tr><th>Connection</th><th>Target</th><th>Source</th><th></th></tr></thead><tbody>
+    ${conns.map((c, i) => `<tr>
+      <td><a class="link" data-connect="${i}">${esc(c.name)}</a>${c.remote_dir ? `<div class="kind">${esc(c.remote_dir)}</div>` : ""}</td>
+      <td>${target(c)}${badges(c)}</td>
+      <td><span class="kind">${c.source === "config" ? "~/.ssh/config" : "saved"}</span></td>
+      <td class="actions">${actions(c, i)}</td></tr>`).join("")}
+    </tbody></table>`;
+  const cardsHtml = `<div class="grid">${conns.map((c, i) => `<div class="card">
+      <h3><a class="link" data-connect="${i}">${esc(c.name)}</a> <span class="kind">${c.source === "config" ? "~/.ssh/config" : "saved"}</span></h3>
+      <p>${target(c)}${badges(c)}</p>
+      ${c.remote_dir ? `<p class="kind">${esc(c.remote_dir)}</p>` : ""}
+      <div class="actions" style="flex-wrap:wrap">${actions(c, i)}</div>
+    </div>`).join("")}</div>`;
   v.innerHTML = `<h1>SSH ${helpButton("ssh")}</h1>
-    <p class="sub">Saved connections plus the Host entries from <code>~/.ssh/config</code>. Connect opens a terminal right here; keys and the ssh agent handle auth — no passwords are stored.</p>
-    <div class="row" style="margin-bottom:12px"><button class="btn primary" id="ssh-add">Add connection</button></div>
+    <p class="sub">Saved connections plus the Host entries from <code>~/.ssh/config</code>. Connect opens a terminal right here. Auth uses your keys/agent; a saved password lives in the macOS Keychain, never in a file.</p>
+    <div class="row" style="margin-bottom:12px">
+      <button class="btn primary" id="ssh-add">${e ? "Close form" : "Add connection"}</button>
+      <span class="spacer"></span>
+      <button class="btn small ${sshViewMode === "list" ? "primary" : ""}" data-mode="list">List</button>
+      <button class="btn small ${sshViewMode === "cards" ? "primary" : ""}" data-mode="cards">Cards</button>
+    </div>
     <div id="ssh-form">${e ? `<div class="card" style="margin-bottom:14px"><h3>${esc(e.name) || "New connection"}</h3>
       <div class="row">
         <div class="field"><label>Name</label><input class="text" id="sf-name" value="${esc(e.name)}" placeholder="prod-web"></div>
@@ -864,36 +894,52 @@ async function renderSsh() {
         <div class="field"><label>Port</label><input class="text" id="sf-port" value="${e.port || 22}" style="min-width:80px;max-width:90px"></div>
       </div>
       <div class="row">
-        <div class="field"><label>Identity file (optional)</label><input class="text" id="sf-key" value="${esc(e.key)}" placeholder="~/.ssh/id_ed25519" style="min-width:300px"></div>
-        <div class="field"><label>Remote folder (optional)</label><input class="text" id="sf-dir" value="${esc(e.remote_dir)}" placeholder="/var/www/site" style="min-width:260px"></div>
+        <div class="field"><label>Identity file (optional)</label><div class="row"><input class="text" id="sf-key" value="${esc(e.key)}" placeholder="~/.ssh/id_ed25519" style="min-width:280px"><button class="btn small" id="sf-key-pick">Choose…</button></div></div>
+        <div class="field"><label>Remote folder on the server (optional)</label><input class="text" id="sf-dir" value="${esc(e.remote_dir)}" placeholder="/var/www/site" style="min-width:240px"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Password (optional — stored in the macOS Keychain)</label><input class="text" type="password" id="sf-pass" value="" placeholder="${e.password_saved ? "•••••• saved — type to replace" : "leave empty for key/agent auth"}" style="min-width:280px"></div>
+        ${e.password_saved ? `<button class="btn small" id="sf-pass-del" style="align-self:flex-end">Remove saved password</button>` : ""}
       </div>
       <div class="actions" style="margin-top:10px"><button class="btn primary" id="sf-save">Save</button><button class="btn" id="sf-cancel">Cancel</button></div></div>` : ""}</div>
-    <table><thead><tr><th>Connection</th><th>Target</th><th>Source</th><th></th></tr></thead><tbody>
-    ${conns.map((c, i) => `<tr>
-      <td><a class="link" data-connect="${i}">${esc(c.name)}</a>${c.remote_dir ? `<div class="kind">${esc(c.remote_dir)}</div>` : ""}</td>
-      <td>${esc(c.user ? c.user + "@" : "")}${esc(c.host)}${c.port && c.port !== 22 ? ":" + c.port : ""}${c.key ? ` <span class="kind" title="${esc(c.key)}">key</span>` : ""}</td>
-      <td><span class="kind">${c.source === "config" ? "~/.ssh/config" : "saved"}</span></td>
-      <td class="actions">
-        <button class="btn small primary" data-connect="${i}">Connect</button>
-        <button class="btn small" data-external="${i}">${esc(settings.terminal || "Terminal")}</button>
-        <button class="btn small" data-edit="${i}">${c.source === "config" ? "Save a copy" : "Edit"}</button>
-        ${c.source === "saved" ? `<button class="btn small" data-del="${esc(c.name)}">Delete</button>` : ""}
-      </td></tr>`).join("")}
-    </tbody></table>
-    ${conns.length ? "" : `<div class="card empty">No connections yet. Add one, or define Host blocks in ~/.ssh/config and they appear here.</div>`}
+    ${conns.length ? (sshViewMode === "cards" ? cardsHtml : listHtml) : `<div class="card empty">No connections yet. Add one, or define Host blocks in ~/.ssh/config and they appear here.</div>`}
+    <div id="ssh-job"></div>
     <div id="ssh-term-card"></div>`;
   wireHelp(v);
-  $("#ssh-add").addEventListener("click", () => { sshEditing = { name: "", host: "", user: "", port: 22, key: "", remote_dir: "", source: "" }; renderSsh(); });
+  $("#ssh-add").addEventListener("click", () => { sshEditing = e ? null : { name: "", host: "", user: "", port: 22, key: "", remote_dir: "", source: "", password_saved: false }; renderSsh(); });
+  v.querySelectorAll<HTMLButtonElement>("[data-mode]").forEach((b) => b.addEventListener("click", () => {
+    sshViewMode = b.dataset.mode as "list" | "cards";
+    try { localStorage.setItem("ssh-view", sshViewMode); } catch { /* private mode */ }
+    renderSsh();
+  }));
   v.querySelectorAll<HTMLElement>("[data-connect]").forEach((b) => b.addEventListener("click", () => connectSsh(conns[Number(b.dataset.connect)])));
   v.querySelectorAll<HTMLButtonElement>("[data-external]").forEach((b) => b.addEventListener("click", () => call("ssh_open_external", { conn: conns[Number(b.dataset.external)] })));
   v.querySelectorAll<HTMLButtonElement>("[data-edit]").forEach((b) => b.addEventListener("click", () => { sshEditing = { ...conns[Number(b.dataset.edit)], source: "" }; renderSsh(); }));
+  v.querySelectorAll<HTMLButtonElement>("[data-installkey]").forEach((b) => b.addEventListener("click", async () => {
+    const c = conns[Number(b.dataset.installkey)];
+    const job = `ssh-key-${c.name}`; jobBuffers.set(job, []);
+    $("#ssh-job").innerHTML = jobPane(job, `Installing your key on ${c.name}`);
+    b.disabled = true;
+    const r = await call<string>("ssh_install_key", { conn: c });
+    b.disabled = false;
+    if (r !== undefined) toast(`Key installed on ${c.name} — you can remove the saved password now`);
+  }));
   v.querySelectorAll<HTMLButtonElement>("[data-del]").forEach((b) => b.addEventListener("click", async () => {
     if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Really delete?"; return; }
+    await call("ssh_delete_password", { name: b.dataset.del });
     const r = await call<SshConn[]>("ssh_delete", { name: b.dataset.del });
     if (r) { toast("Connection deleted"); renderSsh(); }
   }));
   if (e) {
     $("#sf-cancel").addEventListener("click", () => { sshEditing = null; renderSsh(); });
+    $("#sf-key-pick").addEventListener("click", async () => {
+      const p = await call<string | null>("ssh_pick_key");
+      if (p) $<HTMLInputElement>("#sf-key").value = p;
+    });
+    $("#sf-pass-del")?.addEventListener("click", async () => {
+      const r = await call<SshConn[]>("ssh_delete_password", { name: e.name });
+      if (r) { toast("Password removed from the Keychain"); sshEditing = { ...e, password_saved: false }; renderSsh(); }
+    });
     $("#sf-save").addEventListener("click", async () => {
       const conn: SshConn = {
         name: $<HTMLInputElement>("#sf-name").value.trim(),
@@ -903,9 +949,19 @@ async function renderSsh() {
         key: $<HTMLInputElement>("#sf-key").value.trim(),
         remote_dir: $<HTMLInputElement>("#sf-dir").value.trim(),
         source: "",
+        password_saved: false,
       };
       const r = await call<SshConn[]>("ssh_save", { conn });
-      if (r) { sshEditing = null; toast(`Saved ${conn.name}`); renderSsh(); }
+      if (!r) return;
+      const pass = $<HTMLInputElement>("#sf-pass").value;
+      if (pass) {
+        const pr = await call<SshConn[]>("ssh_set_password", { name: conn.name, password: pass });
+        if (pr) toast(`Saved ${conn.name} with password in the Keychain`);
+      } else {
+        toast(`Saved ${conn.name}`);
+      }
+      sshEditing = null;
+      renderSsh();
     });
     $<HTMLInputElement>("#sf-name").focus();
   }

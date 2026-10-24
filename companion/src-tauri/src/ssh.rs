@@ -23,6 +23,75 @@ pub struct SshConn {
     pub remote_dir: String,
     /// "saved" (ssh.json) or "config" (~/.ssh/config); set by ssh_list.
     pub source: String,
+    /// Whether a password for this connection is in the macOS Keychain; set by
+    /// ssh_list, never stored in ssh.json.
+    pub password_saved: bool,
+}
+
+// ---------------------------------------------------------------------------
+// Keychain-backed passwords (service devilbox-boost-ssh, account = name)
+// ---------------------------------------------------------------------------
+
+const KC_SERVICE: &str = "devilbox-boost-ssh";
+
+fn kc_has(name: &str) -> bool {
+    std::process::Command::new("security")
+        .args(["find-generic-password", "-s", KC_SERVICE, "-a", name])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
+fn kc_get(name: &str) -> Option<String> {
+    let out = std::process::Command::new("security")
+        .args(["find-generic-password", "-s", KC_SERVICE, "-a", name, "-w"])
+        .output()
+        .ok()?;
+    if out.status.success() {
+        Some(String::from_utf8_lossy(&out.stdout).trim_end_matches('\n').to_string())
+    } else {
+        None
+    }
+}
+
+#[tauri::command]
+pub fn ssh_set_password(app: AppHandle, name: String, password: String) -> Result<Vec<SshConn>, String> {
+    if name.trim().is_empty() || password.is_empty() {
+        return Err("Connection name and password required".into());
+    }
+    let out = std::process::Command::new("security")
+        .args(["add-generic-password", "-U", "-s", KC_SERVICE, "-a", name.trim(), "-w", &password])
+        .output()
+        .map_err(|e| e.to_string())?;
+    if !out.status.success() {
+        return Err(format!("keychain: {}", String::from_utf8_lossy(&out.stderr).trim()));
+    }
+    Ok(ssh_list(app))
+}
+
+#[tauri::command]
+pub fn ssh_delete_password(app: AppHandle, name: String) -> Result<Vec<SshConn>, String> {
+    let _ = std::process::Command::new("security")
+        .args(["delete-generic-password", "-s", KC_SERVICE, "-a", name.trim()])
+        .output();
+    Ok(ssh_list(app))
+}
+
+/// A tiny helper ssh runs to obtain the password (SSH_ASKPASS_REQUIRE=force):
+/// it prints the env var the app sets only for that child process.
+fn askpass_path(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = app.path().app_config_dir().unwrap_or_else(|_| std::env::temp_dir());
+    let _ = fs::create_dir_all(&dir);
+    let file = dir.join("askpass.sh");
+    if !file.is_file() {
+        fs::write(&file, "#!/bin/sh\nprintf '%s' \"$DBX_SSH_PASS\"\n").map_err(|e| e.to_string())?;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&file, fs::Permissions::from_mode(0o700));
+    }
+    Ok(file)
 }
 
 fn store_path(app: &AppHandle) -> PathBuf {
@@ -95,6 +164,7 @@ pub fn ssh_list(app: AppHandle) -> Vec<SshConn> {
             if c.port == 0 {
                 c.port = 22;
             }
+            c.password_saved = kc_has(&c.name);
             c
         })
         .collect();
@@ -154,15 +224,70 @@ pub fn ssh_open(app: AppHandle, terms: State<TermState>, conn: SshConn, cols: u1
     if conn.host.trim().is_empty() {
         return Err("no host".into());
     }
-    let args = ssh_args(&conn);
+    let mut args = ssh_args(&conn);
+    // A saved password is handed to ssh through SSH_ASKPASS (force), never on
+    // the command line. The askpass script also answers host-key questions,
+    // so accept-new keeps first connections working (changed keys still fail).
+    let password = kc_get(&conn.name);
+    if password.is_some() {
+        args.insert(0, "-o".into());
+        args.insert(1, "StrictHostKeyChecking=accept-new".into());
+    }
+    let askpass = if password.is_some() { Some(askpass_path(&app)?) } else { None };
     spawn_pty(app, &terms, move |_| {
         let mut cmd = CommandBuilder::new("ssh");
         cmd.args(args);
+        if let (Some(pw), Some(script)) = (password.as_deref(), askpass.as_deref()) {
+            cmd.env("DBX_SSH_PASS", pw);
+            cmd.env("SSH_ASKPASS", script);
+            cmd.env("SSH_ASKPASS_REQUIRE", "force");
+        }
         if let Some(home) = std::env::var_os("HOME") {
             cmd.cwd(home);
         }
         cmd
     }, cols, rows, None)
+}
+
+/// One-click ssh-copy-id using the saved password, so the connection can move
+/// to key auth. Streams as job "ssh-key-<name>".
+#[tauri::command]
+pub async fn ssh_install_key(app: AppHandle, conn: SshConn) -> Result<String, String> {
+    let Some(pw) = kc_get(&conn.name) else {
+        return Err("Save a password for this connection first (or run ssh-copy-id in a terminal).".into());
+    };
+    let askpass = askpass_path(&app)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut cmd = std::process::Command::new("ssh-copy-id");
+        if conn.port != 0 && conn.port != 22 {
+            cmd.args(["-p", &conn.port.to_string()]);
+        }
+        if !conn.key.trim().is_empty() {
+            cmd.args(["-i", conn.key.trim()]);
+        }
+        cmd.args(["-o", "StrictHostKeyChecking=accept-new"]);
+        cmd.arg(if conn.user.trim().is_empty() { conn.host.trim().to_string() } else { format!("{}@{}", conn.user.trim(), conn.host.trim()) });
+        cmd.env("DBX_SSH_PASS", &pw)
+            .env("SSH_ASKPASS", &askpass)
+            .env("SSH_ASKPASS_REQUIRE", "force");
+        crate::sites::run_streaming(&app, &format!("ssh-key-{}", conn.name), cmd)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub async fn ssh_pick_key(app: AppHandle) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+    let start = std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".ssh"));
+    let mut dlg = app.dialog().file().set_title("Choose an SSH identity file (private key)");
+    if let Some(d) = start.filter(|d| d.is_dir()) {
+        dlg = dlg.set_directory(d);
+    }
+    match dlg.blocking_pick_file() {
+        Some(p) => Ok(Some(p.into_path().map_err(|e| e.to_string())?.to_string_lossy().to_string())),
+        None => Ok(None),
+    }
 }
 
 /// Open the connection in the user's terminal app instead, via a temporary
@@ -200,7 +325,7 @@ mod tests {
 
     #[test]
     fn builds_ssh_args() {
-        let c = SshConn { name: "prod".into(), host: "example.com".into(), user: "deploy".into(), port: 2222, key: "~/.ssh/id_ed25519".into(), remote_dir: "/var/www".into(), source: String::new() };
+        let c = SshConn { name: "prod".into(), host: "example.com".into(), user: "deploy".into(), port: 2222, key: "~/.ssh/id_ed25519".into(), remote_dir: "/var/www".into(), ..Default::default() };
         let a = ssh_args(&c);
         assert_eq!(a[0], "-p");
         assert_eq!(a[1], "2222");
