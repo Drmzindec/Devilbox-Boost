@@ -699,6 +699,56 @@ async fn databases(state: State<'_, AppState>) -> Result<Vec<String>, String> {
     .map_err(|e| e.to_string())?
 }
 
+/// HTTPD_SERVER values this checkout can run: the apache-* / nginx-* config
+/// dirs under cfg/ (a future litespeed-* dir would appear automatically).
+#[tauri::command]
+fn httpd_servers(state: State<AppState>) -> Result<Vec<String>, String> {
+    let root = root_or_err(&state)?;
+    let mut v: Vec<String> = fs::read_dir(root.join("cfg"))
+        .map_err(|e| e.to_string())?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir())
+        .map(|e| e.file_name().to_string_lossy().to_string())
+        .filter(|n| n.starts_with("apache-") || n.starts_with("nginx-") || n.starts_with("litespeed-"))
+        .collect();
+    v.sort();
+    Ok(v)
+}
+
+/// Switch the web server: set HTTPD_SERVER in .env and recreate httpd.
+#[tauri::command]
+async fn httpd_server_set(state: State<'_, AppState>, server: String) -> Result<String, String> {
+    let root = root_or_err(&state)?;
+    let valid = httpd_servers(state.clone())?;
+    if !valid.contains(&server) {
+        return Err(format!("unknown web server {server} (no cfg/{server}/ directory)"));
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let env_path = root.join(".env");
+        let text = fs::read_to_string(&env_path).map_err(|e| e.to_string())?;
+        let mut replaced = false;
+        let next: Vec<String> = text
+            .lines()
+            .map(|l| {
+                if !replaced && l.trim_start().starts_with("HTTPD_SERVER=") && !l.trim_start().starts_with('#') {
+                    replaced = true;
+                    format!("HTTPD_SERVER={server}")
+                } else {
+                    l.to_string()
+                }
+            })
+            .collect();
+        if !replaced {
+            return Err("no active HTTPD_SERVER line found in .env".into());
+        }
+        fs::write(&env_path, next.join("\n") + "\n").map_err(|e| e.to_string())?;
+        compose(&root, &["up", "-d", "--force-recreate", "httpd"])?;
+        Ok(format!("Switched to {server}; httpd recreated (vhosts regenerate within ~30s)"))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 fn valid_db_name(db: &str) -> Result<(), String> {
     if db.is_empty() || !db.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
         return Err("Database name may only contain letters, digits, _ and -".into());
@@ -1207,6 +1257,8 @@ pub fn run() {
             databases,
             db_create,
             db_drop,
+            httpd_servers,
+            httpd_server_set,
             import_dump,
             open_tool,
             open_url,

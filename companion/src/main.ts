@@ -288,6 +288,7 @@ function renderOverview() {
       <button class="btn" data-action="recreate" title="docker compose up -d --force-recreate (needed after .env changes)">Recreate</button>
       <span class="badge ${status.length && running === status.length ? "ok" : running ? "warn" : "bad"}">${running} / ${status.length} running</span>
       <span id="xdebug-box" class="row"></span>
+      <span id="httpd-box" class="row"></span>
     </div>
     <h2>Services</h2>
     ${status.length ? `<div class="grid">${cards}</div>` : `<div class="card empty">The stack is not running. Start it above.</div>`}
@@ -307,7 +308,34 @@ function renderOverview() {
   }));
   v.querySelectorAll<HTMLButtonElement>("[data-tool]").forEach((b) => b.addEventListener("click", () => call("open_tool", { label: `svc-${b.dataset.tool}`, title: b.dataset.tool, url: b.dataset.url })));
   renderXdebugBox();
+  renderHttpdBox();
   wireHelp(v);
+}
+
+// ----- web server switcher -------------------------------------------------------------------------
+function renderHttpdBox() {
+  const box = document.querySelector<HTMLElement>("#httpd-box");
+  if (!box || !env) return;
+  call<string[]>("httpd_servers").then((servers) => {
+    const b = document.querySelector<HTMLElement>("#httpd-box");
+    if (!b || !servers?.length) return;
+    b.innerHTML = `<label class="row" title="Switches HTTPD_SERVER in .env and recreates httpd. Per-project vhost tweaks live in .devilbox/<server>.yml and only apply to the matching server.">Web server:
+      <select class="text" id="httpd-sel">${servers.map((s) => `<option ${s === env!.httpd ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></label>`;
+    b.querySelector<HTMLSelectElement>("#httpd-sel")!.addEventListener("change", async (ev) => {
+      const sel = ev.target as HTMLSelectElement;
+      const server = sel.value;
+      if (server === env!.httpd) return;
+      sel.disabled = true;
+      toast(`Switching to ${server}…`);
+      const r = await call<string>("httpd_server_set", { server });
+      sel.disabled = false;
+      if (r === undefined) { sel.value = env!.httpd; return; }
+      toast(r);
+      try { env = await invoke<Environment>("get_environment"); } catch { /* keep old */ }
+      await refreshStatus();
+      renderOverview();
+    });
+  });
 }
 
 // ----- xdebug -----------------------------------------------------------------------------------

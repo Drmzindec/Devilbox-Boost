@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Companion: Scripts tab** — every composer.json and package.json script as a button, run inside the PHP container with streamed output
 - **Companion: live logs** — the project Logs tab streams new lines (tail -F on app logs, `docker compose logs --follow` filtered per project) instead of polling
 - **Companion: Databases create/drop** — create a utf8mb4 database, drop one with a type-the-name confirmation
+- **Companion: web server switcher** on Overview — flip `HTTPD_SERVER` between the available `cfg/` servers (apache-2.4, nginx-stable, nginx-mainline) and recreate httpd in one click
 - **Companion: launch at login** (tauri-plugin-autostart) and an **update check** comparing the newest GitHub release with the local checkout
 - **MCP server v2.2: `devilbox_ssh_list` and `devilbox_ssh_exec`** — Claude can list the SSH connections the companion app knows (saved + `~/.ssh/config`, no credentials returned) and run non-interactive commands over them (key/agent auth, or the Keychain password via SSH_ASKPASS). Keep `devilbox_ssh_exec` permission-prompted rather than allowlisted: every remote command should be approved
 
