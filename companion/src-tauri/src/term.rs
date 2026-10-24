@@ -6,6 +6,8 @@ use portable_pty::{native_pty_system, Child, CommandBuilder, MasterPty, PtySize}
 use serde::Serialize;
 use std::collections::HashMap;
 use std::io::{Read, Write};
+use std::path::PathBuf;
+use std::process::Command;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, State};
@@ -14,6 +16,19 @@ struct Session {
     master: Box<dyn MasterPty + Send>,
     writer: Box<dyn Write + Send>,
     child: Box<dyn Child + Send + Sync>,
+    root: PathBuf,
+}
+
+/// Killing the host-side `docker compose exec` client does NOT kill the shell
+/// it started inside the container (Docker leaves exec'd processes running),
+/// so every closed terminal would leak a `bash -l` in the php container. The
+/// shell's PID is written to /tmp/.dbx-term-<id> on start; hang it up here.
+fn kill_in_container(root: &PathBuf, id: u32) {
+    let _ = Command::new(docker_path())
+        .args(["compose", "exec", "-T", "php", "sh", "-c",
+            &format!("p=$(cat /tmp/.dbx-term-{id} 2>/dev/null); [ -n \"$p\" ] && kill -HUP \"$p\" 2>/dev/null; rm -f /tmp/.dbx-term-{id}")])
+        .current_dir(root)
+        .spawn();
 }
 
 #[derive(Default)]
@@ -71,7 +86,11 @@ pub fn terminal_open(app: AppHandle, terms: State<TermState>, state: State<AppSt
         Some(p) if !p.is_empty() => format!("/shared/httpd/{p}"),
         _ => "/shared/httpd".to_string(),
     };
-    cmd.args(["compose", "exec", "--user", "devilbox", "-w", &workdir, "php", "bash", "-l"]);
+    let id = terms.next_id.fetch_add(1, Ordering::SeqCst) + 1;
+    // Record the shell's in-container PID so terminal_close can hang it up
+    // (`exec` keeps the PID, so the file holds bash's own PID).
+    cmd.args(["compose", "exec", "--user", "devilbox", "-w", &workdir, "php", "sh", "-c",
+        &format!("echo $$ > /tmp/.dbx-term-{id}; exec bash -l")]);
     cmd.cwd(&root);
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
@@ -80,8 +99,7 @@ pub fn terminal_open(app: AppHandle, terms: State<TermState>, state: State<AppSt
     drop(pair.slave);
     let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
     let writer = pair.master.take_writer().map_err(|e| e.to_string())?;
-    let id = terms.next_id.fetch_add(1, Ordering::SeqCst) + 1;
-    terms.sessions.lock().unwrap().insert(id, Session { master: pair.master, writer, child });
+    terms.sessions.lock().unwrap().insert(id, Session { master: pair.master, writer, child, root: root.clone() });
 
     std::thread::spawn(move || {
         let mut chunk = [0u8; 8192];
@@ -121,6 +139,7 @@ pub fn terminal_resize(terms: State<TermState>, id: u32, cols: u16, rows: u16) -
 #[tauri::command]
 pub fn terminal_close(terms: State<TermState>, id: u32) -> Result<(), String> {
     if let Some(mut s) = terms.sessions.lock().unwrap().remove(&id) {
+        kill_in_container(&s.root, id);
         let _ = s.child.kill();
     }
     Ok(())
@@ -129,7 +148,8 @@ pub fn terminal_close(terms: State<TermState>, id: u32) -> Result<(), String> {
 pub fn close_all(app: &AppHandle) {
     use tauri::Manager;
     if let Some(terms) = app.try_state::<TermState>() {
-        for (_, mut s) in terms.sessions.lock().unwrap().drain() {
+        for (id, mut s) in terms.sessions.lock().unwrap().drain() {
+            kill_in_container(&s.root, id);
             let _ = s.child.kill();
         }
     }
