@@ -26,7 +26,9 @@ emit() { # level scope message
   else printf '%s|%s|%s\n' "$1" "$2" "$3"; fi
 }
 
-probe() { curl -sk -o /dev/null -m 25 -w '%{http_code}' "$1" 2>/dev/null || echo 000; }
+# curl prints 000 itself when the request fails, so no fallback echo (that
+# produced "000000" and the finding fell through to the wrong case).
+probe() { curl -sk -o /dev/null -m 25 -w '%{http_code}' "$1" 2>/dev/null || true; }
 
 if [ "$DO_STACK" = 1 ]; then
   if docker info >/dev/null 2>&1; then emit OK stack "Docker is running"; else emit FAIL stack "Docker is not running or not reachable"; fi

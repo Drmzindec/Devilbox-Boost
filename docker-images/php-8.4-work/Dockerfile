@@ -156,6 +156,13 @@ RUN set -x \
     && sed -i "s/user = www-data/user = devilbox/g" /usr/local/etc/php-fpm.d/www.conf \
     && sed -i "s/group = www-data/group = ${ACTUAL_GROUP}/g" /usr/local/etc/php-fpm.d/www.conf
 
+# Load the stack's custom PHP-FPM pool config: cfg/php-fpm-X.Y/ is mounted at
+# /etc/php-fpm-custom.d, but the stock php-fpm.conf only includes
+# /usr/local/etc/php-fpm.d/*.conf, so without this include the pool runs with
+# the defaults (pm.max_children = 5, no request_terminate_timeout).
+RUN mkdir -p /etc/php-fpm-custom.d \
+    && printf '\ninclude=/etc/php-fpm-custom.d/*.conf\n' >> /usr/local/etc/php-fpm.conf
+
 # Copy entrypoint script for port forwarding
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
