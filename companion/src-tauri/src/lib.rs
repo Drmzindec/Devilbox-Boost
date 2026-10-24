@@ -22,6 +22,7 @@ use tauri_plugin_opener::OpenerExt;
 mod files;
 mod ops;
 mod platform;
+mod providers;
 mod sites;
 mod ssh;
 mod term;
@@ -1262,6 +1263,13 @@ pub fn run() {
             ssh::ssh_pick_key,
             ssh::ssh_export,
             ssh::ssh_import,
+            providers::repo_sources,
+            providers::repo_list,
+            providers::bb_add,
+            providers::bb_remove,
+            providers::cli_status,
+            providers::cli_install,
+            providers::cli_login,
             term::terminal_open,
             term::terminal_write,
             term::terminal_resize,

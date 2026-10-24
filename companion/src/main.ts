@@ -421,6 +421,11 @@ function renderProjects() {
       </div>
       <div class="actions" style="margin-top:8px"><button class="btn primary" id="clone-go">Clone</button><button class="btn" id="clone-cancel">Cancel</button></div>
       <p class="muted" style="margin-top:8px">SSH URLs use your keys and agent. After cloning, the vhost appears automatically — run <b>Doctor</b> on the project and its Fix buttons handle composer install, the build and migrations.</p>
+      <div style="margin-top:14px"><h3>Or browse your repositories</h3>
+        <div class="row" id="repo-src-row"><span class="muted">Looking for providers…</span></div>
+        <div id="repo-list"></div>
+        <div id="bb-form"></div>
+      </div>
       <div id="clone-output"></div></div>`;
     const url = $<HTMLInputElement>("#clone-url", panel), nameIn = $<HTMLInputElement>("#clone-name", panel);
     url.addEventListener("input", () => {
@@ -441,8 +446,89 @@ function renderProjects() {
       if (r !== undefined) { toast(r); await loadProjects(); openProject(name, "git"); }
     });
     url.focus();
+    initRepoBrowser(panel, url, nameIn);
   });
   wireCommonActions(v);
+}
+
+// ----- repository browser (gh / glab / tea / bitbucket) --------------------------------------------
+interface RepoSource { id: string; provider: string; label: string }
+interface Repo { full_name: string; ssh_url: string; description: string }
+
+async function initRepoBrowser(panel: HTMLElement, urlInput: HTMLInputElement, nameInput: HTMLInputElement) {
+  const row = $("#repo-src-row", panel);
+  const sources = (await call<RepoSource[]>("repo_sources")) ?? [];
+  const clis = (await call<{ name: string; installed: boolean; authenticated: boolean }[]>("cli_status")) ?? [];
+  const bbBtn = `<button class="btn small" id="bb-add-btn" title="Bitbucket has no official CLI; a workspace is added with an app password kept in the macOS Keychain">Add Bitbucket workspace…</button>`;
+  const provider: Record<string, string> = { glab: "GitLab", gh: "GitHub", tea: "Gitea" };
+  // One click installs the official CLI; the login flow is interactive, so it
+  // opens in the user's terminal.
+  const cliBtns = clis
+    .filter((c) => !c.authenticated)
+    .map((c) => (c.installed
+      ? `<button class="btn small" data-cli-login="${esc(c.name)}">Log in to ${provider[c.name]} (${esc(c.name)})</button>`
+      : `<button class="btn small" data-cli-install="${esc(c.name)}">Install ${provider[c.name]} CLI (${esc(c.name)})</button>`))
+    .join(" ");
+  if (!sources.length) {
+    row.innerHTML = `<span class="muted">No providers connected yet:</span> ${cliBtns} ${bbBtn}`;
+  } else {
+    row.innerHTML = `<select class="text" id="repo-src" style="min-width:260px"><option value="">Choose a source…</option>${sources.map((s) => `<option value="${esc(s.id)}">${esc(s.label)}</option>`).join("")}</select>
+      <input class="search" id="repo-filter" placeholder="filter repositories" hidden> ${cliBtns} ${bbBtn}`;
+  }
+  row.querySelectorAll<HTMLButtonElement>("[data-cli-install]").forEach((b) => b.addEventListener("click", async () => {
+    b.disabled = true; b.textContent = "Downloading…";
+    const r = await call<string>("cli_install", { name: b.dataset.cliInstall });
+    if (r !== undefined) { toast(r); initRepoBrowser(panel, urlInput, nameInput); } else { b.disabled = false; b.textContent = `Install ${b.dataset.cliInstall}`; }
+  }));
+  row.querySelectorAll<HTMLButtonElement>("[data-cli-login]").forEach((b) => b.addEventListener("click", async () => {
+    const r = await call("cli_login", { name: b.dataset.cliLogin });
+    if (r !== undefined) toast("Finish the login in the terminal window, then reopen this panel");
+  }));
+  let repos: Repo[] = [];
+  const list = $("#repo-list", panel);
+  const paint = () => {
+    const f = ($<HTMLInputElement>("#repo-filter", panel)?.value ?? "").toLowerCase();
+    const rows = repos.filter((r) => !f || r.full_name.toLowerCase().includes(f) || r.description.toLowerCase().includes(f));
+    list.innerHTML = rows.length
+      ? `<table style="margin-top:8px"><tbody>${rows.slice(0, 50).map((r, i) => `<tr>
+          <td><a class="link" data-pick="${i}">${esc(r.full_name)}</a>${r.description ? `<div class="kind">${esc(r.description.slice(0, 110))}</div>` : ""}</td>
+          <td class="actions"><button class="btn small primary" data-pick="${i}">Use</button></td></tr>`).join("")}</tbody></table>${rows.length > 50 ? `<p class="muted">${rows.length - 50} more — narrow the filter.</p>` : ""}`
+      : `<p class="muted" style="margin-top:8px">No repositories match.</p>`;
+    list.querySelectorAll<HTMLElement>("[data-pick]").forEach((b) => b.addEventListener("click", () => {
+      const r = rows[Number(b.dataset.pick)];
+      if (!r.ssh_url) return toast("No SSH clone URL reported for this repository", true);
+      urlInput.value = r.ssh_url;
+      nameInput.value = r.full_name.split("/").pop()!.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+      urlInput.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      toast(`Ready to clone ${r.full_name}`);
+    }));
+  };
+  $<HTMLSelectElement>("#repo-src", panel)?.addEventListener("change", async (ev) => {
+    const id = (ev.target as HTMLSelectElement).value;
+    if (!id) { repos = []; paint(); return; }
+    list.innerHTML = `<p class="muted" style="margin-top:8px">Loading repositories…</p>`;
+    const r = await call<Repo[]>("repo_list", { source: id });
+    repos = r ?? [];
+    const filter = $<HTMLInputElement>("#repo-filter", panel);
+    if (filter) { filter.hidden = false; filter.oninput = paint; }
+    paint();
+  });
+  $("#bb-add-btn", panel)?.addEventListener("click", () => {
+    const f = $("#bb-form", panel);
+    f.innerHTML = `<div class="card" style="margin-top:10px"><h3>Add a Bitbucket workspace</h3>
+      <p class="muted">Create an app password at bitbucket.org → Personal settings → App passwords (scope: Repositories Read). It is stored in the macOS Keychain.</p>
+      <div class="row">
+        <div class="field"><label>Workspace</label><input class="text" id="bb-ws" placeholder="my-team"></div>
+        <div class="field"><label>Username</label><input class="text" id="bb-user" placeholder="johan"></div>
+        <div class="field"><label>App password</label><input class="text" type="password" id="bb-pass"></div>
+      </div>
+      <div class="actions" style="margin-top:8px"><button class="btn primary" id="bb-save">Add</button><button class="btn" id="bb-cancel">Cancel</button></div></div>`;
+    $("#bb-cancel", f).addEventListener("click", () => (f.innerHTML = ""));
+    $("#bb-save", f).addEventListener("click", async () => {
+      const r = await call("bb_add", { workspace: $<HTMLInputElement>("#bb-ws", f).value, username: $<HTMLInputElement>("#bb-user", f).value, appPassword: $<HTMLInputElement>("#bb-pass", f).value });
+      if (r !== undefined) { toast("Bitbucket workspace added"); f.innerHTML = ""; initRepoBrowser(panel, urlInput, nameInput); }
+    });
+  });
 }
 
 // ----- project detail --------------------------------------------------------------------------------
