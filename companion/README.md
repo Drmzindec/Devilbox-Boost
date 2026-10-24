@@ -37,11 +37,29 @@ What it does:
   reverb inside the container) and a host-side Vite dev server, the production media
   fallback toggle, live logs, and an embedded terminal (bash in the PHP container, in the
   project folder).
-- **Doctor**: stack and per-site health checks with the reason attached (missing plugin
-  folders, incomplete plugins, missing databases, fatal errors, pending migrations, DNS/CA).
+- **Doctor with fix buttons**: stack and per-site health checks with the reason attached
+  (missing plugin folders, incomplete plugins, missing databases, fatal errors, pending
+  migrations, DNS/CA) — and a Fix button on everything the app can repair: composer install,
+  npm install + build, migrations, creating a missing database, deactivating plugins that are
+  not in the repo, trusting the CA, writing the DNS resolver, pruning images.
 - **Import DB…** on any project or on the Databases page: pick a `.sql`, `.sql.gz` or `.zip`
   dump. WordPress projects go through `tools/import-wp-dumps.sh` (prefix and URL detection,
-  wp-config.php); everything else is a plain import into the database you name.
+  wp-config.php); everything else is a plain import into the database you name. Databases can
+  also be created (utf8mb4) and dropped (retype the name to confirm) from the Databases page.
+- **Git**: a per-project panel with changed files and diffs, commit, pull, push, branch
+  switch/create, merge and the recent history. Conflicts bail out cleanly to your real git
+  client; there is deliberately no force-push. Clone a repository from a URL on the Projects
+  page, or browse your repositories: GitLab (glab), GitHub (gh) and Gitea (tea) through their
+  official CLIs — the app never stores a token, and offers to install the CLIs for you —
+  plus Bitbucket workspaces via an app password in the macOS Keychain.
+- **SSH**: saved connections plus the Host blocks from `~/.ssh/config`, as a list or cards,
+  opened one click in an embedded terminal or your terminal app. Optional per-connection
+  password in the macOS Keychain (delivered via SSH_ASKPASS, never a file) and one-click
+  `ssh-copy-id` to move a server to key auth. Export/import the list between machines.
+- **Xdebug toggle** and a **web server switcher** (apache-2.4 / nginx-stable / nginx-mainline)
+  on the Overview page; a **Scripts** tab runs any composer.json or package.json script in
+  the container; project **logs stream live**; **launch at login** and an update check that
+  compares the newest release with your checkout live in Settings.
 
 Everything that touches sites runs through the scripts in `../tools/` (the same ones behind
 `bin/dbox`), so the app and the CLI behave identically. Docker access shells out to

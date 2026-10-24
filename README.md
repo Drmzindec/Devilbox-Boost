@@ -120,13 +120,17 @@ docker compose exec php laravel new my-blog
 - **`dbox update`, `dbox doctor`, `dbox snapshot`, `dbox workers`, `dbox media`, `dbox logs`, `dbox import`, `dbox shell`** - the same operations the companion app uses (`tools/`)
 
 ### 🖥️ Companion App (Optional)
-- **Native menu bar app** (Tauri 2, macOS) - stack status, alerts, project launcher (`Cmd+Shift+D`), per-project database/snapshots/workers/logs/terminal, Doctor, updates on demand or on a schedule, new-project wizard, drag-and-drop file uploads
+- **Native menu bar app** (Tauri 2, macOS) - stack status, alerts, project launcher (`Cmd+Shift+D`), per-project database/snapshots/workers/scripts/logs/terminal, updates on demand or on a schedule, new-project wizard, drag-and-drop file uploads
+- **Doctor with fix buttons** - health checks that repair what they find: composer install, builds, migrations, missing databases, CA trust, DNS resolver and more
+- **Git built in** - per-project commit/pull/push/branch/merge/history, clone from a URL, or browse your repositories on GitLab, GitHub and Gitea (official CLIs; the app never stores a token) or Bitbucket
+- **SSH connections** - your `~/.ssh/config` hosts plus saved connections, one click into an embedded terminal; optional passwords in the macOS Keychain and one-click `ssh-copy-id`
+- **Stack switches** - Xdebug toggle and web server switcher (Apache/Nginx) from the Overview page
 - **Admin tools in their own windows** - phpMyAdmin, Adminer, Mailpit and friends without browser tabs
 - **One-click database open** in Sequel Ace or TablePlus - see [`companion/README.md`](companion/README.md)
 
 ### 🤖 AI Integration (Optional)
 - **MCP Server** - Claude Code integration
-- **10+ tools** - Service management, database ops, health checks
+- **18 tools** - service management, database ops, health checks, Xdebug, SSH (`devilbox_ssh_list` / `devilbox_ssh_exec` — keep exec permission-prompted)
 - **Automated workflows** - AI-assisted development
 
 ### ⚡ Modern Services (Optional)
@@ -269,7 +273,16 @@ Password: root
 
 ---
 
-## 🚀 What's New in v1.0.7
+## 🚀 What's New in v1.0.8
+
+- ✅ **PHP-FPM pool fix** - the work images now actually load `cfg/php-fpm-X.Y/devilbox-fpm.conf` (installs were silently running `pm.max_children = 5`); **rebuild your PHP image**
+- ✅ **Doctor fix buttons & parallel doctor** - findings repair themselves in one click; a full `dbox doctor` over a dozen sites takes ~30s instead of minutes
+- ✅ **Companion: git & repositories** - per-project git panel (commit, pull, push, branches, merge, history), clone from URL, repo browser for GitLab/GitHub/Gitea/Bitbucket
+- ✅ **Companion: SSH** - saved connections + `~/.ssh/config`, embedded terminal, Keychain passwords, one-click `ssh-copy-id`
+- ✅ **Companion: more** - Xdebug toggle, web server switcher, script runner, live log streaming, database create/drop, launch at login, update check
+- ✅ **MCP server 2.2** - `devilbox_ssh_list` and `devilbox_ssh_exec`
+
+### From v1.0.7
 
 - ✅ **Companion app** - native Tauri menu bar app: stack status, project launcher, databases, admin tools in their own windows (`companion/`)
 - ✅ **New icon and banner** - a modern mark replaces the original Devilbox logo across the app, intranet, docs and README
