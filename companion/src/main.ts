@@ -14,6 +14,7 @@ interface Environment {
   root: string; tld: string; scheme: string; vhost_port: string; ui_url: string;
   php: string; httpd: string; mysql: string; pgsql: string; redis: string; mongo: string;
   mysql_root_password: string; mysql_host_port: string; shortcut: string;
+  tool_pma: string; tool_adminer: string; tool_pca: string; tool_opcache: string; tool_ppga: string;
 }
 interface PortMap { published: number; target: number; url: string }
 interface ServiceStatus { service: string; name: string; state: string; health: string; status: string; image: string; ports: PortMap[] }
@@ -91,12 +92,12 @@ function jobPane(job: string, title = "Output") {
 
 // ----- help -----------------------------------------------------------------------------------
 const HELP: Record<string, { title: string; body: string }> = {
-  overview: { title: "Overview", body: `<p>The state of the Docker stack. Each card is one container: its image, uptime and published ports. <b>Start / Stop / Restart</b> act on the whole stack; <b>Recreate</b> runs <code>docker compose up -d --force-recreate</code>, which you need after changing <code>.env</code> or the compose file. <b>Logs</b> shows the last 200 lines of that container.</p><p>The menu bar icon mirrors this: ● all running, ◐ degraded, ○ stopped. It also carries Tools and Projects submenus so you rarely need this window.</p>` },
+  overview: { title: "Overview", body: `<p>The state of the Docker stack. Each card is one container: its image, uptime and published ports. <b>Start / Stop / Restart</b> act on the whole stack; <b>Recreate</b> runs <code>docker compose up -d --force-recreate</code>, which you need after changing <code>.env</code> or the compose file. <b>Logs</b> shows the last 200 lines of that container.</p><p>The <b>Xdebug</b> toggle writes or removes a drop-in ini in <code>cfg/php-ini-&lt;version&gt;/</code> (the same file the MCP server manages) and reloads PHP-FPM — mode debug,develop on port 9003.</p><p>The menu bar icon mirrors this: ● all running, ◐ degraded, ○ stopped. It also carries Tools and Projects submenus so you rarely need this window.</p>` },
   projects: { title: "Projects", body: `<p>Every folder in <code>data/www</code> is a site at <code>https://&lt;folder&gt;.${"${tld}"}</code>. The type is detected from the files (artisan, wp-content, composer.json …) and the database from <code>wp-config.php</code> or <code>.env</code>.</p><p>Click a project name for its detail panel: database and snapshots, workers and dev server, media fallback, logs and a terminal. <b>Editor</b>, <b>Terminal</b> and <b>Finder</b> use the apps chosen in Settings.</p><p><kbd>${"${shortcut}"}</kbd> opens this list from anywhere: type to filter, <kbd>Enter</kbd> opens the first match.</p>` },
-  project: { title: "Project detail", body: `<p><b>Database</b>: open the project's database in your SQL client, Adminer or phpMyAdmin, import a dump (WordPress dumps get prefix and URL detection and a wp-config.php), and take or restore <b>snapshots</b>, which are compressed dumps in <code>backups/snapshots/&lt;db&gt;/</code>. A restore takes a safety snapshot first.</p><p><b>Workers &amp; dev server</b>: start <code>queue:work</code>, <code>schedule:work</code>, Horizon or Reverb inside the PHP container, and <code>npm run dev</code> on this Mac. The dev server is plain http, so browse the http URL while it runs.</p><p><b>Media fallback</b>: uploads are rarely in git. With this on, missing <code>/wp-content/uploads/…</code> files redirect to production so images keep working.</p><p><b>Logs</b>: web server and PHP errors for this host plus the application log, live. <b>Terminal</b>: bash in the PHP container, already in the project folder, with composer, artisan, wp and npm available.</p>` },
+  project: { title: "Project detail", body: `<p><b>Database</b>: open the project's database in your SQL client, Adminer or phpMyAdmin, import a dump (WordPress dumps get prefix and URL detection and a wp-config.php), and take or restore <b>snapshots</b>, which are compressed dumps in <code>backups/snapshots/&lt;db&gt;/</code>. A restore takes a safety snapshot first.</p><p><b>Workers &amp; dev server</b>: start <code>queue:work</code>, <code>schedule:work</code>, Horizon or Reverb inside the PHP container, and <code>npm run dev</code> on this Mac. The dev server is plain http, so browse the http URL while it runs.</p><p><b>Media fallback</b>: uploads are rarely in git. With this on, missing <code>/wp-content/uploads/…</code> files redirect to production so images keep working.</p><p><b>Scripts</b>: every script from composer.json and package.json as a button, run inside the PHP container with streamed output.</p><p><b>Logs</b>: web server and PHP errors for this host plus the application log — new lines stream in live. <b>Terminal</b>: bash in the PHP container, already in the project folder, with composer, artisan, wp and npm available.</p>` },
   databases: { title: "Databases", body: `<p>All MariaDB databases on <code>127.0.0.1:${"${port}"}</code> (user root). The Project column links back to the site using each database. Buttons open the database in your installed SQL client (only shown when one is detected in /Applications), in Adminer or in phpMyAdmin, each in its own window. <b>Import dump…</b> loads a <code>.sql</code>, <code>.sql.gz</code> or <code>.zip</code> into any database.</p>` },
   tools: { title: "Tools", body: `<p>The bundled web tools, each opening in its own window inside the app rather than a browser tab. Services that are not running show as such. The same list sits under the menu bar icon → Tools.</p>` },
-  doctor: { title: "Doctor", body: `<p>Runs <code>dbox doctor</code>. <b>Stack</b>: Docker, container health, the <code>.${"${tld}"}</code> DNS resolver, the Devilbox CA in your keychain, the intranet, <code>check-config.sh</code>, recent PHP-FPM crashes and reclaimable image space. <b>Sites</b>: each vhost is probed and a 5xx comes with the matching error-log line; the configured database must exist and have tables; WordPress plugins that are active in the database but missing or incomplete on disk are listed (the usual cause is a gitignored premium plugin), as are fatal errors in debug.log and missing uploads; Laravel projects report missing vendor/, missing builds and pending migrations.</p>` },
+  doctor: { title: "Doctor", body: `<p>Runs <code>dbox doctor</code>. <b>Stack</b>: Docker, container health, the <code>.${"${tld}"}</code> DNS resolver, the Devilbox CA in your keychain, the intranet, <code>check-config.sh</code>, recent PHP-FPM crashes and reclaimable image space. <b>Sites</b>: each vhost is probed and a 5xx comes with the matching error-log line; the configured database must exist and have tables; WordPress plugins that are active in the database but missing or incomplete on disk are listed (the usual cause is a gitignored premium plugin), as are fatal errors in debug.log and missing uploads; Laravel projects report missing vendor/, missing builds and pending migrations.</p><p>Findings the app knows how to repair carry a <b>Fix</b> button: composer install, npm install + build, migrations, creating a missing database, deactivating plugins that are not in the repo, trusting the CA, writing the DNS resolver (asks for your password) and pruning images. After a fix the check runs again.</p>` },
   updates: { title: "Updates", body: `<p><b>Check</b> lists what is available without changing anything. <b>Update</b> applies it: for WordPress, plugins, themes, core, the database upgrade, translations and a cache flush via wp-cli; for Composer projects, <code>composer update</code>, migrations (<code>artisan migrate</code>, <code>please updates:run</code>, <code>drush updatedb</code>, <code>craft migrate/all</code>) and <code>npm install</code> + <code>npm run build</code> when there is a package.json.</p><p>The bulk buttons walk every site of that kind. The <b>schedule</b> runs the chosen scope once a day at the set time while the app is open and notifies you with the result. Take a snapshot first if a site matters.</p>` },
   create: { title: "New project", body: `<p>Creates a project inside the PHP container, so it uses the stack's PHP, Composer, wp-cli and Node. The database is created, <code>.env</code> / <code>wp-config.php</code> written for the stack (127.0.0.1, root), keys generated, migrations run, frontend built and the <code>htdocs</code> symlink set, then the folder is renamed into place so the vhost appears ready.</p><p><b>Presets</b> are small bash files run afterwards: ship-with ones live in <code>tools/presets/</code>, yours in <code>~/.config/devilbox-boost/presets/</code>. The same thing from the terminal: <code>dbox new &lt;type&gt; &lt;name&gt; --preset &lt;name&gt;</code>.</p>` },
   files: { title: "Files", body: `<p>A file browser limited to <code>data/www</code>. Drop files or folders anywhere on the window while this view is open to copy them into the current folder. Before anything is copied you get a plan: a folder dropped onto a folder with the same name (for example <code>wp-content</code> onto <code>wp-content</code>) merges instead of nesting, an archive whose only top-level folder matches the destination is unpacked straight into it, and existing files are listed as replaced. Untick <b>Extract archives</b> to copy a zip as a file.</p>` },
@@ -172,7 +173,7 @@ let currentProject: string | null = null;
 function activate(viewId: string, navButton?: HTMLElement | null) {
   document.querySelectorAll<HTMLElement>(".view").forEach((v) => v.classList.toggle("active", v.id === viewId));
   document.querySelectorAll<HTMLElement>(".nav-item").forEach((b) => b.classList.toggle("active", b === navButton));
-  if (viewId !== "view-project") closeTerminal();
+  if (viewId !== "view-project") { closeTerminal(); stopLogFollow(); }
 }
 
 function showView(name: string) {
@@ -282,6 +283,7 @@ function renderOverview() {
       <button class="btn" data-action="restart">Restart stack</button>
       <button class="btn" data-action="recreate" title="docker compose up -d --force-recreate (needed after .env changes)">Recreate</button>
       <span class="badge ${status.length && running === status.length ? "ok" : running ? "warn" : "bad"}">${running} / ${status.length} running</span>
+      <span id="xdebug-box" class="row"></span>
     </div>
     <h2>Services</h2>
     ${status.length ? `<div class="grid">${cards}</div>` : `<div class="card empty">The stack is not running. Start it above.</div>`}
@@ -300,7 +302,33 @@ function renderOverview() {
     const pre = $("#logs"); pre.hidden = false; pre.textContent = text || "(no output)"; pre.scrollTop = pre.scrollHeight;
   }));
   v.querySelectorAll<HTMLButtonElement>("[data-tool]").forEach((b) => b.addEventListener("click", () => call("open_tool", { label: `svc-${b.dataset.tool}`, title: b.dataset.tool, url: b.dataset.url })));
+  renderXdebugBox();
   wireHelp(v);
+}
+
+// ----- xdebug -----------------------------------------------------------------------------------
+interface XdebugStatus { enabled: boolean; detail: string }
+let xdebugCache: XdebugStatus | null = null;
+
+function renderXdebugBox() {
+  const box = document.querySelector<HTMLElement>("#xdebug-box");
+  if (!box) return;
+  const paint = () => {
+    const b = document.querySelector<HTMLElement>("#xdebug-box");
+    if (!b || !xdebugCache) return;
+    const x = xdebugCache;
+    b.innerHTML = `<span class="badge ${x.enabled ? "ok" : "muted"}" title="${esc(x.detail)}">Xdebug ${x.enabled ? "on" : "off"}</span>
+      <button class="btn small" id="xdebug-toggle">${x.enabled ? "Disable" : "Enable"} Xdebug</button>`;
+    b.querySelector("#xdebug-toggle")!.addEventListener("click", async (ev) => {
+      const btn = ev.currentTarget as HTMLButtonElement;
+      btn.disabled = true; btn.textContent = "Reloading PHP-FPM…";
+      const r = await call<XdebugStatus>("xdebug_set", { on: !x.enabled });
+      if (r) { xdebugCache = r; toast(`Xdebug ${r.enabled ? "enabled (port 9003)" : "disabled"}`); }
+      paint();
+    });
+  };
+  if (xdebugCache) return paint();
+  call<XdebugStatus>("xdebug_status").then((x) => { if (x) { xdebugCache = x; paint(); } });
 }
 
 // ----- shared action wiring ---------------------------------------------------------------------
@@ -321,11 +349,11 @@ function wireCommonActions(root: HTMLElement) {
 }
 function openAdminer(db: string) {
   if (!env) return;
-  call("open_tool", { label: "adminer", title: `Adminer${db ? " · " + db : ""}`, url: `${env.ui_url}/vendor/adminer-6.1.2-devilbox.php?username=root${db ? `&db=${encodeURIComponent(db)}` : ""}` });
+  call("open_tool", { label: "adminer", title: `Adminer${db ? " · " + db : ""}`, url: `${env.ui_url}${env.tool_adminer}?username=root${db ? `&db=${encodeURIComponent(db)}` : ""}` });
 }
 function openPma(db: string) {
   if (!env) return;
-  call("open_tool", { label: "phpmyadmin", title: `phpMyAdmin${db ? " · " + db : ""}`, url: `${env.ui_url}/vendor/phpmyadmin-5.2.3/index.php${db ? `?route=/database/structure&db=${encodeURIComponent(db)}` : ""}` });
+  call("open_tool", { label: "phpmyadmin", title: `phpMyAdmin${db ? " · " + db : ""}`, url: `${env.ui_url}${env.tool_pma}${db ? `?route=/database/structure&db=${encodeURIComponent(db)}` : ""}` });
 }
 const dbButtons = (db: string, small = true) => `
   ${hasDbClient() ? `<button class="btn ${small ? "small" : ""}" data-db="${esc(db)}">${esc(settings.db_client)}</button>` : ""}
@@ -386,8 +414,8 @@ async function openProject(name: string, tab?: string) {
   if (tab) detailTab = tab;
   activate("view-project", document.querySelector<HTMLElement>('.nav-item[data-view="projects"]'));
   const v = $("#view-project");
-  const tabs = ["overview", "database", "workers", "media", "logs", "terminal"];
-  const labels: Record<string, string> = { overview: "Overview", database: "Database", workers: "Workers & dev server", media: "Media fallback", logs: "Logs", terminal: "Terminal" };
+  const tabs = ["overview", "database", "workers", "scripts", "media", "logs", "terminal"];
+  const labels: Record<string, string> = { overview: "Overview", database: "Database", workers: "Workers & dev server", scripts: "Scripts", media: "Media fallback", logs: "Logs", terminal: "Terminal" };
   v.innerHTML = `<button class="back" id="detail-back">← Projects</button>
     <h1 style="margin-top:8px">${esc(p.name)} <span class="badge muted">${esc(p.kind)}</span> ${helpButton("project")}</h1>
     <p class="sub"><a class="link" data-open="${esc(p.url)}">${esc(p.url)}</a> · ${esc(p.path)}${p.db ? ` · db <code>${esc(p.db)}</code>` : ""}</p>
@@ -406,11 +434,16 @@ async function openProject(name: string, tab?: string) {
   wireCommonActions(v);
   $("#detail-back").addEventListener("click", () => showView("projects"));
   $("#detail-files").addEventListener("click", () => { showView("files"); renderFiles(p.path); });
-  $("#detail-doctor").addEventListener("click", async () => {
+  const runDetailDoctor = async () => {
     $("#detail-output").innerHTML = jobPane("doctor", "Doctor");
     const findings = await call<Finding[]>("doctor", { project: p.name });
-    if (findings) $("#detail-output").innerHTML = renderFindings(findings);
-  });
+    if (findings) {
+      $("#detail-output").innerHTML = renderFindings(findings);
+      wireCommonActions($("#detail-output"));
+      wireFixes($("#detail-output"), runDetailDoctor);
+    }
+  };
+  $("#detail-doctor").addEventListener("click", runDetailDoctor);
   $("#detail-update")?.addEventListener("click", async () => {
     const job = `update-${p.name}`; jobBuffers.set(job, []);
     $("#detail-output").innerHTML = jobPane(job, `Updating ${p.name}`);
@@ -419,15 +452,43 @@ async function openProject(name: string, tab?: string) {
   });
   v.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => b.addEventListener("click", () => { detailTab = b.dataset.tab!; openProject(name); }));
   if (detailTab !== "terminal") closeTerminal();
+  if (detailTab !== "logs") stopLogFollow();
   const body = $("#detail-body");
   switch (detailTab) {
     case "overview": await renderDetailOverview(body, p); break;
     case "database": await renderDetailDatabase(body, p); break;
     case "workers": await renderDetailWorkers(body, p); break;
+    case "scripts": await renderDetailScripts(body, p); break;
     case "media": await renderDetailMedia(body, p); break;
     case "logs": await renderDetailLogs(body, p); break;
     case "terminal": await renderDetailTerminal(body, p); break;
   }
+}
+
+// ----- script runner -----------------------------------------------------------------------------
+async function renderDetailScripts(body: HTMLElement, p: Project) {
+  const s = (await call<{ composer: [string, string][]; npm: [string, string][] }>("project_scripts", { project: p.name })) ?? { composer: [], npm: [] };
+  const job = `script-${p.name}`;
+  const card = (title: string, kind: string, hint: string, items: [string, string][]) => `
+    <div class="card"><h3>${esc(title)}</h3>
+      ${items.length
+        ? `<div class="actions" style="flex-wrap:wrap">${items.map(([n, cmd]) => `<button class="btn small" data-script="${esc(n)}" data-kind="${kind}" title="${esc(cmd)}">${esc(n)}</button>`).join("")}</div>`
+        : `<p class="muted">No scripts defined.</p>`}
+      <p class="muted" style="margin-top:8px">${esc(hint)}</p>
+    </div>`;
+  body.innerHTML = `<div class="two">
+    ${card("Composer scripts", "composer", "Runs composer run-script <name> inside the PHP container.", s.composer)}
+    ${card("npm scripts", "npm", "Runs npm run <name> inside the PHP container. Long-running scripts like dev belong on the Workers tab.", s.npm)}
+  </div>
+  <div id="script-output">${jobPane(job, "Output")}</div>`;
+  body.querySelectorAll<HTMLButtonElement>("[data-script]").forEach((b) => b.addEventListener("click", async () => {
+    jobBuffers.set(job, []);
+    $("#script-output", body).innerHTML = jobPane(job, `${b.dataset.kind} ${b.dataset.script}`);
+    body.querySelectorAll<HTMLButtonElement>("[data-script]").forEach((x) => (x.disabled = true));
+    const r = await call<string>("run_script", { project: p.name, kind: b.dataset.kind, name: b.dataset.script });
+    body.querySelectorAll<HTMLButtonElement>("[data-script]").forEach((x) => (x.disabled = false));
+    if (r !== undefined) toast(`${b.dataset.script} finished`);
+  }));
 }
 
 async function renderDetailOverview(body: HTMLElement, p: Project) {
@@ -558,27 +619,46 @@ async function renderDetailMedia(body: HTMLElement, p: Project) {
   });
 }
 
-let logsTimer: number | undefined;
+let followProject: string | null = null;
+async function stopLogFollow() {
+  if (followProject) {
+    const p = followProject;
+    followProject = null;
+    await call("logs_follow_stop", { project: p });
+  }
+}
+
 async function renderDetailLogs(body: HTMLElement, p: Project) {
-  window.clearInterval(logsTimer);
+  await stopLogFollow();
+  const job = `logs-${p.name}`;
   body.innerHTML = `<div class="row" style="margin-bottom:10px">
       <select class="text" id="logs-which"><option value="all">Everything</option><option value="error">Web server + PHP errors</option><option value="app">Application log</option><option value="access">Recent requests</option></select>
-      <label class="row"><input type="checkbox" id="logs-live" checked> Live (refresh every 4s)</label>
+      <label class="row"><input type="checkbox" id="logs-live" checked> Live (new lines stream in)</label>
       <button class="btn" id="logs-refresh">Refresh</button>
-    </div><pre class="log" id="logs-pre" style="max-height:600px">Loading…</pre>`;
+    </div><pre class="log" data-job="${esc(job)}" id="logs-pre" style="max-height:600px">Loading…</pre>`;
   const load = async () => {
     const which = $<HTMLSelectElement>("#logs-which", body)?.value ?? "all";
     const text = await call<string>("project_logs", { project: p.name, lines: 150, which });
     const pre = $("#logs-pre", body); if (!pre) return;
-    const atBottom = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 20;
-    pre.textContent = text?.trim() || "(nothing logged yet)";
-    if (atBottom) pre.scrollTop = pre.scrollHeight;
+    jobBuffers.set(job, (text?.trim() || "(nothing logged yet)").split("\n"));
+    pre.textContent = jobBuffers.get(job)!.join("\n");
+    pre.scrollTop = pre.scrollHeight;
+  };
+  // Snapshot first, then follow: new lines arrive as job-output events and the
+  // global listener appends them to the pre above.
+  const sync = async () => {
+    await stopLogFollow();
+    await load();
+    if ($<HTMLInputElement>("#logs-live", body)?.checked && detailTab === "logs" && document.contains(body)) {
+      const which = $<HTMLSelectElement>("#logs-which", body)?.value ?? "all";
+      const ok = await call("logs_follow_start", { project: p.name, which });
+      if (ok !== undefined) followProject = p.name;
+    }
   };
   $("#logs-refresh", body).addEventListener("click", load);
-  $("#logs-which", body).addEventListener("change", load);
-  const arm = () => { window.clearInterval(logsTimer); if ($<HTMLInputElement>("#logs-live", body).checked) logsTimer = window.setInterval(() => { if (document.contains(body) && detailTab === "logs") load(); else window.clearInterval(logsTimer); }, 4000); };
-  $("#logs-live", body).addEventListener("change", arm);
-  await load(); arm();
+  $("#logs-which", body).addEventListener("change", sync);
+  $("#logs-live", body).addEventListener("change", sync);
+  await sync();
 }
 
 // ----- terminal ---------------------------------------------------------------------------------------
@@ -677,11 +757,11 @@ function renderTools() {
   const svcUrl = (names: string[], target: number) => { for (const n of names) { const p = status.find((s) => s.service === n)?.ports.find((x) => x.target === target); if (p) return `http://localhost:${p.published}`; } return null; };
   const tools = [
     { label: "intranet", title: "Devilbox intranet", url: ui, note: "The classic dashboard, in its own window" },
-    { label: "phpmyadmin", title: "phpMyAdmin", url: `${ui}/vendor/phpmyadmin-5.2.3/index.php`, note: "MariaDB / MySQL" },
-    { label: "adminer", title: "Adminer", url: `${ui}/vendor/adminer-6.1.2-devilbox.php?username=root`, note: "MariaDB, PostgreSQL, SQLite" },
-    { label: "phppgadmin", title: "phpPgAdmin", url: `${ui}/vendor/phppgadmin-7.13.0/`, note: "PostgreSQL" },
-    { label: "phpcacheadmin", title: "phpCacheAdmin", url: `${ui}/vendor/phpcacheadmin-2.7.2/index.php`, note: "Redis, Memcached, OPcache" },
-    { label: "opcache", title: "OPcache GUI", url: `${ui}/vendor/opcache-gui-3.6.1.php`, note: "PHP opcode cache" },
+    { label: "phpmyadmin", title: "phpMyAdmin", url: `${ui}${env.tool_pma}`, note: "MariaDB / MySQL" },
+    { label: "adminer", title: "Adminer", url: `${ui}${env.tool_adminer}?username=root`, note: "MariaDB, PostgreSQL, SQLite" },
+    { label: "phppgadmin", title: "phpPgAdmin", url: `${ui}${env.tool_ppga}`, note: "PostgreSQL" },
+    { label: "phpcacheadmin", title: "phpCacheAdmin", url: `${ui}${env.tool_pca}`, note: "Redis, Memcached, OPcache" },
+    { label: "opcache", title: "OPcache GUI", url: `${ui}${env.tool_opcache}`, note: "PHP opcode cache" },
     { label: "mailpit", title: "Mailpit", url: svcUrl(["mailpit"], 8025), note: "Caught outgoing mail" },
     { label: "rabbitmq", title: "RabbitMQ", url: svcUrl(["rabbitmq", "rabbit"], 15672), note: "Management console" },
     { label: "meilisearch", title: "Meilisearch", url: svcUrl(["meilisearch"], 7700), note: "Search engine" },
@@ -699,14 +779,53 @@ function renderTools() {
 }
 
 // ----- doctor ---------------------------------------------------------------------------------------------
+/// Map a doctor finding to a one-click fix the backend knows how to apply.
+function fixFor(f: Finding): { fix: string; label: string; arg?: string } | null {
+  if (f.level === "OK") return null;
+  const m = f.message;
+  if (m.includes("vendor/ missing")) return { fix: "composer-install", label: "composer install" };
+  if (m.includes("no Vite build")) return { fix: "npm-build", label: "npm install + build" };
+  if (m.includes("pending migration")) return { fix: "migrate", label: "Run migrations" };
+  if (m.includes("active plugin folder missing") || m.includes("is incomplete (main file")) return { fix: "wp-clean-plugins", label: "Deactivate missing plugins" };
+  const db = m.match(/^database (\S+) is missing/);
+  if (db) return { fix: "create-db", label: `Create ${db[1]}`, arg: db[1] };
+  if (m.includes("CA not found in the keychain")) return { fix: "trust-ca", label: "Trust the CA" };
+  if (m.includes("/etc/resolver/")) return { fix: "resolver-loc", label: "Write resolver (asks for your password)" };
+  if (m.includes("Reclaimable image space")) return { fix: "image-prune", label: "Prune images" };
+  return null;
+}
+
 function renderFindings(findings: Finding[]) {
   const counts: Record<string, number> = { OK: 0, WARN: 0, FAIL: 0 };
   findings.forEach((f) => (counts[f.level] = (counts[f.level] ?? 0) + 1));
   const cls = (l: string) => (l === "OK" ? "ok" : l === "WARN" ? "warn" : "bad");
   const order = ["FAIL", "WARN", "OK"];
   const sorted = [...findings].sort((a, b) => order.indexOf(a.level) - order.indexOf(b.level));
+  const row = (f: Finding, i: number) => {
+    const fix = fixFor(f);
+    const btn = fix ? `<button class="btn small" data-fix="${esc(fix.fix)}" data-fix-scope="${esc(f.scope)}" data-fix-arg="${esc(fix.arg ?? "")}" data-fix-i="${i}">${esc(fix.label)}</button>` : "";
+    return `<div class="finding"><span class="badge ${cls(f.level)}">${esc(f.level)}</span><span class="scope">${f.scope === "stack" ? "stack" : `<a class="link" data-project="${esc(f.scope)}">${esc(f.scope)}</a>`}</span><span>${esc(f.message)}</span>${btn}</div>`;
+  };
   return `<div class="row" style="margin:10px 0"><span class="badge bad">${counts.FAIL} failing</span><span class="badge warn">${counts.WARN} warnings</span><span class="badge ok">${counts.OK} ok</span></div>
-    <div class="card" style="padding:0">${sorted.map((f) => `<div class="finding"><span class="badge ${cls(f.level)}">${esc(f.level)}</span><span class="scope">${f.scope === "stack" ? "stack" : `<a class="link" data-project="${esc(f.scope)}">${esc(f.scope)}</a>`}</span><span>${esc(f.message)}</span></div>`).join("") || `<div class="empty">Nothing to report.</div>`}</div>`;
+    <div class="card" style="padding:0">${sorted.map(row).join("") || `<div class="empty">Nothing to report.</div>`}</div>
+    <div id="fix-output"></div>`;
+}
+
+/// Wire the Fix buttons rendered by renderFindings. `after` runs when a fix
+/// finished (normally a doctor re-run).
+function wireFixes(root: HTMLElement, after: () => void) {
+  root.querySelectorAll<HTMLButtonElement>("[data-fix]").forEach((b) => b.addEventListener("click", async () => {
+    const scope = b.dataset.fixScope!;
+    const project = scope === "stack" ? null : scope;
+    const job = `fix-${project ?? "stack"}`;
+    jobBuffers.set(job, []);
+    const out = root.querySelector<HTMLElement>("#fix-output");
+    if (out) out.innerHTML = jobPane(job, `Fixing: ${b.textContent}`);
+    root.querySelectorAll<HTMLButtonElement>("[data-fix]").forEach((x) => (x.disabled = true));
+    const r = await call<string>("apply_fix", { fix: b.dataset.fix, project, arg: b.dataset.fixArg || null });
+    root.querySelectorAll<HTMLButtonElement>("[data-fix]").forEach((x) => (x.disabled = false));
+    if (r !== undefined) { toast("Fix applied — re-checking…"); after(); }
+  }));
 }
 
 async function renderDoctor() {
@@ -722,7 +841,7 @@ async function renderDoctor() {
     v.querySelectorAll<HTMLButtonElement>("button").forEach((b) => (b.disabled = true));
     const findings = await call<Finding[]>("doctor", { project: stackOnly ? "--stack" : null });
     v.querySelectorAll<HTMLButtonElement>("button").forEach((b) => (b.disabled = false));
-    if (findings) { $("#doc-result").innerHTML = renderFindings(findings); wireCommonActions($("#doc-result")); }
+    if (findings) { $("#doc-result").innerHTML = renderFindings(findings); wireCommonActions($("#doc-result")); wireFixes($("#doc-result"), () => run(stackOnly)); }
   };
   $("#doc-run").addEventListener("click", () => run(false));
   $("#doc-stack").addEventListener("click", () => run(true));
@@ -983,16 +1102,39 @@ function renderSettings() {
         <div class="row"><select class="text" id="s-terminal-sel" style="min-width:260px">${terminals.map((n) => `<option ${settings.terminal === n ? "selected" : ""}>${esc(n)}</option>`).join("")}<option value="__custom" ${terminals.includes(settings.terminal) ? "" : "selected"}>Custom app name…</option></select>
         <input class="text" id="s-terminal" value="${esc(settings.terminal)}" placeholder="exact app name, e.g. Warp" style="min-width:260px" ${terminals.includes(settings.terminal) ? "hidden" : ""}></div></div>
       <div class="field"><label class="row"><input type="checkbox" id="s-notify" ${settings.notifications ? "checked" : ""}> Desktop notifications when a container stops on its own or PHP-FPM workers crash</label></div>
+      <div class="field"><label class="row"><input type="checkbox" id="s-autostart"> Launch Devilbox Boost at login</label></div>
       <div class="row"><button class="btn primary" id="s-save">Save</button><button class="btn" id="s-test-notify">Send test notification</button></div>
       <p class="sub" style="margin:12px 0 0">Global shortcut: <kbd>${esc(env?.shortcut ?? "Cmd+Shift+D")}</kbd> opens the project launcher from anywhere. The same operations are available in the terminal as <code>bin/dbox</code>.</p>
     </div>
-    ${env ? `<h2>Environment</h2><div class="card"><p>Intranet: ${esc(env.ui_url)}<br>TLD: .${esc(env.tld)} · PHP ${esc(env.php)} · ${esc(env.httpd)} · ${esc(env.mysql)} · PostgreSQL ${esc(env.pgsql)} · Redis ${esc(env.redis)} · Mongo ${esc(env.mongo)}</p></div>` : ""}`;
+    ${env ? `<h2>Environment</h2><div class="card"><p>Intranet: ${esc(env.ui_url)}<br>TLD: .${esc(env.tld)} · PHP ${esc(env.php)} · ${esc(env.httpd)} · ${esc(env.mysql)} · PostgreSQL ${esc(env.pgsql)} · Redis ${esc(env.redis)} · Mongo ${esc(env.mongo)}</p></div>` : ""}
+    <h2>Updates</h2><div class="card"><p id="upd-check-line" class="muted">Compares the newest GitHub release of the Devilbox Boost repo with this checkout.</p>
+      <div class="actions"><button class="btn" id="s-upd-check">Check for updates</button></div></div>`;
   $("#s-pick").addEventListener("click", async () => { const picked = await call<string | null>("pick_root"); if (picked) $<HTMLInputElement>("#s-root").value = picked; });
   for (const [sel, inp] of [["#s-editor-sel", "#s-editor"], ["#s-terminal-sel", "#s-terminal"]] as const) {
     $<HTMLSelectElement>(sel).addEventListener("change", (ev) => { const val = (ev.target as HTMLSelectElement).value; const input = $<HTMLInputElement>(inp); if (val === "__custom") { input.hidden = false; input.focus(); } else { input.hidden = true; input.value = val; } });
   }
   wireHelp(v);
   $("#s-test-notify").addEventListener("click", () => call("test_notification"));
+  const auto = $<HTMLInputElement>("#s-autostart");
+  call<boolean>("autostart_get").then((on) => { if (on !== undefined) auto.checked = on; });
+  auto.addEventListener("change", async () => {
+    const on = await call<boolean>("autostart_set", { on: auto.checked });
+    if (on === undefined) { auto.checked = !auto.checked; return; }
+    auto.checked = on;
+    toast(on ? "Devilbox Boost starts at login" : "Removed from login items");
+  });
+  $("#s-upd-check").addEventListener("click", async (ev) => {
+    const b = ev.currentTarget as HTMLButtonElement; b.disabled = true;
+    const line = $("#upd-check-line");
+    line.textContent = "Checking…";
+    const r = await call<{ app_version: string; local_tag: string; latest_tag: string; latest_url: string; newer: boolean }>("app_update_check");
+    b.disabled = false;
+    if (!r) { line.textContent = "Check failed (offline, or no releases)."; return; }
+    line.innerHTML = r.newer
+      ? `This checkout is at <code>${esc(r.local_tag || "no tag")}</code>, the newest release is <strong>${esc(r.latest_tag)}</strong>. Pull and rebuild the app (<code>npm run tauri build</code> in companion/). <a class="link" data-open="${esc(r.latest_url)}">Release notes</a>`
+      : `Up to date: checkout ${esc(r.local_tag || "(untagged)")} matches the newest release ${esc(r.latest_tag)} · app v${esc(r.app_version)}`;
+    wireCommonActions($("#upd-check-line")!.parentElement as HTMLElement);
+  });
   $("#s-save").addEventListener("click", async () => {
     const next: Settings = { ...settings,
       root: $<HTMLInputElement>("#s-root").value.trim(),

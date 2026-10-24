@@ -77,6 +77,10 @@ struct Watch {
     primed: bool,
     /// whether the last log check already saw crashes (edge-triggered alerts).
     php_crashing: bool,
+    /// poll counter: the PHP crash-log scan only runs every other poll.
+    tick: u64,
+    /// fingerprint of the last tray menu, so it is only rebuilt on change.
+    menu_sig: String,
 }
 
 pub struct AppState {
@@ -176,6 +180,10 @@ fn read_env(root: &Path) -> HashMap<String, String> {
     map
 }
 
+pub(crate) fn read_env_value(root: &Path, key: &str) -> Option<String> {
+    read_env(root).get(key).cloned()
+}
+
 #[derive(Serialize, Clone, Debug)]
 pub struct Environment {
     pub root: String,
@@ -192,6 +200,41 @@ pub struct Environment {
     pub mysql_root_password: String,
     pub mysql_host_port: String,
     pub shortcut: String,
+    /// Dashboard tool paths discovered in .devilbox/www/htdocs/vendor, so a
+    /// tool version bump does not break every link in the app.
+    pub tool_pma: String,
+    pub tool_adminer: String,
+    pub tool_pca: String,
+    pub tool_opcache: String,
+    pub tool_ppga: String,
+}
+
+/// Find the bundled admin tools in the vendor folder. Falls back to the
+/// versions bundled when this code was written.
+fn vendor_tools(root: &Path) -> (String, String, String, String, String) {
+    let mut pma = "/vendor/phpmyadmin-5.2.3/index.php".to_string();
+    let mut adminer = "/vendor/adminer-6.1.2-devilbox.php".to_string();
+    let mut pca = "/vendor/phpcacheadmin-2.7.2/index.php".to_string();
+    let mut opc = "/vendor/opcache-gui-3.6.1.php".to_string();
+    let mut ppga = "/vendor/phppgadmin-7.13.0/".to_string();
+    if let Ok(rd) = fs::read_dir(root.join(".devilbox/www/htdocs/vendor")) {
+        let mut names: Vec<String> = rd.filter_map(|e| e.ok()).map(|e| e.file_name().to_string_lossy().to_string()).collect();
+        names.sort(); // ascending: the highest version overwrites last
+        for n in names {
+            if n.starts_with("phpmyadmin-") {
+                pma = format!("/vendor/{n}/index.php");
+            } else if n.starts_with("adminer-") && n.ends_with("-devilbox.php") {
+                adminer = format!("/vendor/{n}");
+            } else if n.starts_with("phpcacheadmin-") {
+                pca = format!("/vendor/{n}/index.php");
+            } else if n.starts_with("opcache-gui-") && n.ends_with(".php") {
+                opc = format!("/vendor/{n}");
+            } else if n.starts_with("phppgadmin-") {
+                ppga = format!("/vendor/{n}/");
+            }
+        }
+    }
+    (pma, adminer, pca, opc, ppga)
 }
 
 pub(crate) fn environment_for(root: &Path) -> Environment {
@@ -206,10 +249,16 @@ pub(crate) fn environment_for(root: &Path) -> Environment {
     } else {
         ("http".to_string(), if http_port == "80" { String::new() } else { format!(":{http_port}") })
     };
+    let (tool_pma, tool_adminer, tool_pca, tool_opcache, tool_ppga) = vendor_tools(root);
     Environment {
         root: root.to_string_lossy().to_string(),
         tld: get("TLD_SUFFIX", "loc"),
         ui_url: format!("{scheme}://localhost{vhost_port}"),
+        tool_pma,
+        tool_adminer,
+        tool_pca,
+        tool_opcache,
+        tool_ppga,
         scheme,
         vhost_port,
         php: get("PHP_SERVER", ""),
@@ -461,7 +510,7 @@ pub(crate) fn projects_sync(root: &Path) -> Vec<Project> {
 // Dump import
 // ---------------------------------------------------------------------------
 
-fn shell_quote(s: &str) -> String {
+pub(crate) fn shell_quote(s: &str) -> String {
     format!("'{}'", s.replace('\'', "'\\''"))
 }
 
@@ -784,13 +833,15 @@ fn check_alerts(app: &AppHandle, root: &Path, status: &[ServiceStatus]) {
     }
     watch.previous = current;
     watch.primed = true;
+    watch.tick = watch.tick.wrapping_add(1);
 
-    // PHP-FPM crash detection: edge-triggered on the 20s log window.
-    if settings.notifications && status.iter().any(|s| s.service == "php" && s.state == "running") {
-        let crashes = php_crashes_since(root, 20);
+    // PHP-FPM crash detection: edge-triggered, every other poll (the log scan
+    // spawns a docker process, so don't pay for it every 15 seconds).
+    if settings.notifications && watch.tick % 2 == 0 && status.iter().any(|s| s.service == "php" && s.state == "running") {
+        let crashes = php_crashes_since(root, 35);
         if crashes > 0 && !watch.php_crashing {
             notify(app, "PHP-FPM workers are crashing", &format!(
-                "{crashes} crash line(s) in the last 20 seconds. Check Overview › php › Logs. If JIT is on, turn it off in cfg/php-ini-*/custom.ini."
+                "{crashes} crash line(s) in the last 35 seconds. Check Overview › php › Logs. If JIT is on, turn it off in cfg/php-ini-*/custom.ini."
             ));
         }
         watch.php_crashing = crashes > 0;
@@ -822,8 +873,22 @@ fn refresh_tray(app: &AppHandle) {
         },
     };
     if let Some(tray) = state.tray.lock().unwrap().as_ref() {
-        if let Ok(menu) = build_menu(app, &text, &toggle, &status) {
-            let _ = tray.set_menu(Some(menu));
+        // Rebuilding the menu replaces it while the user may have it open, so
+        // only do it when its contents actually changed.
+        let projects = root_or_err(&state).map(|r| projects_sync(&r)).unwrap_or_default();
+        let sig = format!(
+            "{text}|{toggle}|{}|{}",
+            status.iter().map(|s| format!("{}:{}:{}", s.service, s.state, s.health)).collect::<Vec<_>>().join(","),
+            projects.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(",")
+        );
+        let changed = {
+            let mut w = state.watch.lock().unwrap();
+            if w.menu_sig == sig { false } else { w.menu_sig = sig; true }
+        };
+        if changed {
+            if let Ok(menu) = build_menu(app, &text, &toggle, &status, &projects) {
+                let _ = tray.set_menu(Some(menu));
+            }
         }
         let _ = tray.set_tooltip(Some(format!("Devilbox Boost: {text}")));
         let (running, total) = summarize(&status);
@@ -841,10 +906,10 @@ fn tray_tools(env: &Environment, status: &[ServiceStatus]) -> Vec<(String, Strin
     };
     let mut v = vec![
         ("intranet".to_string(), "Intranet".to_string(), ui.clone()),
-        ("phpmyadmin".to_string(), "phpMyAdmin".to_string(), format!("{ui}/vendor/phpmyadmin-5.2.3/index.php")),
-        ("adminer".to_string(), "Adminer".to_string(), format!("{ui}/vendor/adminer-6.1.2-devilbox.php?username=root")),
-        ("phpcacheadmin".to_string(), "phpCacheAdmin".to_string(), format!("{ui}/vendor/phpcacheadmin-2.7.2/index.php")),
-        ("opcache".to_string(), "OPcache GUI".to_string(), format!("{ui}/vendor/opcache-gui-3.6.1.php")),
+        ("phpmyadmin".to_string(), "phpMyAdmin".to_string(), format!("{ui}{}", env.tool_pma)),
+        ("adminer".to_string(), "Adminer".to_string(), format!("{ui}{}?username=root", env.tool_adminer)),
+        ("phpcacheadmin".to_string(), "phpCacheAdmin".to_string(), format!("{ui}{}", env.tool_pca)),
+        ("opcache".to_string(), "OPcache GUI".to_string(), format!("{ui}{}", env.tool_opcache)),
     ];
     if let Some(p) = port(&["mailpit"], 8025) { v.push(("mailpit".into(), "Mailpit".into(), format!("http://localhost:{p}"))); }
     if let Some(p) = port(&["rabbitmq", "rabbit"], 15672) { v.push(("rabbitmq".into(), "RabbitMQ".into(), format!("http://localhost:{p}"))); }
@@ -853,7 +918,7 @@ fn tray_tools(env: &Environment, status: &[ServiceStatus]) -> Vec<(String, Strin
     v
 }
 
-fn build_menu(app: &AppHandle, status_text: &str, toggle_text: &str, status: &[ServiceStatus]) -> tauri::Result<Menu<tauri::Wry>> {
+fn build_menu(app: &AppHandle, status_text: &str, toggle_text: &str, status: &[ServiceStatus], projects: &[Project]) -> tauri::Result<Menu<tauri::Wry>> {
     let status_item = MenuItem::with_id(app, "status", status_text, false, None::<&str>)?;
     let open_item = MenuItem::with_id(app, "open", "Open Devilbox Boost", true, Some(QUICK_OPEN_SHORTCUT))?;
     let toggle_item = MenuItem::with_id(app, "toggle", toggle_text, true, None::<&str>)?;
@@ -873,7 +938,6 @@ fn build_menu(app: &AppHandle, status_text: &str, toggle_text: &str, status: &[S
         tools.append(&PredefinedMenuItem::separator(app)?)?;
         tools.append(&MenuItem::with_id(app, "intranet", "Open intranet in browser", true, None::<&str>)?)?;
         menu.append(&tools)?;
-        let projects = projects_sync(&root);
         if !projects.is_empty() {
             let sub = Submenu::new(app, format!("Projects ({})", projects.len()), true)?;
             for p in projects.iter().take(40) {
@@ -894,7 +958,7 @@ fn build_menu(app: &AppHandle, status_text: &str, toggle_text: &str, status: &[S
 }
 
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
-    let menu = build_menu(app, "Checking stack…", "Start stack", &[])?;
+    let menu = build_menu(app, "Checking stack…", "Start stack", &[], &[])?;
     let tray = TrayIconBuilder::with_id("main")
         .icon(app.default_window_icon().cloned().expect("app icon"))
         .icon_as_template(false)
@@ -1049,6 +1113,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .manage(ops::DevState::default())
+        .manage(ops::LogsState::default())
         .manage(term::TermState::default())
         .manage(AppState {
             settings: Mutex::new(Settings::default()),
@@ -1062,6 +1127,8 @@ pub fn run() {
             build_tray(&handle)?;
             #[cfg(desktop)]
             register_quick_open(&handle)?;
+            #[cfg(desktop)]
+            handle.plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))?;
 
             // Poll the stack in the background and keep tray + UI current.
             let poller = handle.clone();
@@ -1120,6 +1187,16 @@ pub fn run() {
             ops::detect_apps,
             ops::file_manager_name,
             ops::git_status,
+            ops::apply_fix,
+            ops::xdebug_status,
+            ops::xdebug_set,
+            ops::project_scripts,
+            ops::run_script,
+            ops::logs_follow_start,
+            ops::logs_follow_stop,
+            ops::app_update_check,
+            ops::autostart_get,
+            ops::autostart_set,
             term::terminal_open,
             term::terminal_write,
             term::terminal_resize,
@@ -1135,6 +1212,7 @@ pub fn run() {
         .run(|app, event| {
             if let tauri::RunEvent::Exit = event {
                 ops::stop_all_dev_servers(app);
+                ops::stop_all_log_follows(app);
                 term::close_all(app);
             }
         });
