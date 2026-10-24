@@ -894,7 +894,7 @@ async function renderFiles(path?: string) {
   v.innerHTML = `<h1>Files ${helpButton("files")}</h1>
     <p class="sub">Browse project folders and drop files or folders onto the zone below to copy them in. Handy for <code>wp-content/uploads</code>.</p>
     <div class="row">
-      <select class="text" id="files-project"><option value="">Jump to project…</option>${projectList.map((p) => `<option value="${esc(p.path)}" ${filesPath.startsWith(p.path) ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>
+      <select class="text" id="files-project"><option value="">Jump to project…</option>${projectList.map((p) => `<option value="${esc(p.path)}" ${filesPath === p.path || filesPath.startsWith(p.path + "/") ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>
       <button class="btn" id="files-up" ${listing.parent ? "" : "disabled"}>Up</button>
       <button class="btn" id="files-finder">Open in ${esc(fileManager)}</button>
       <button class="btn" id="files-editor">Open in editor</button>
