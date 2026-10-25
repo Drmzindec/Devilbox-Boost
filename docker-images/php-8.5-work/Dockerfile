@@ -155,6 +155,15 @@ RUN set -x \
     && sed -i "s/user = www-data/user = devilbox/g" /usr/local/etc/php-fpm.d/www.conf \
     && sed -i "s/group = www-data/group = ${ACTUAL_GROUP}/g" /usr/local/etc/php-fpm.d/www.conf
 
+# Playwright/Chromium system dependencies for browser testing (Pest v4
+# browser plugin). Only the apt libraries are baked in; the browser binaries
+# themselves land in the shared cache mounted at PLAYWRIGHT_BROWSERS_PATH
+# (cache/playwright), so each project's Playwright version fetches its own
+# matching build once and it survives container recreates.
+RUN npx -y playwright install-deps chromium \
+    && rm -rf /var/lib/apt/lists/*
+ENV PLAYWRIGHT_BROWSERS_PATH=/home/devilbox/.cache/ms-playwright
+
 # Load the stack's custom PHP-FPM pool config: cfg/php-fpm-X.Y/ is mounted at
 # /etc/php-fpm-custom.d, but the stock php-fpm.conf only includes
 # /usr/local/etc/php-fpm.d/*.conf, so without this include the pool runs with

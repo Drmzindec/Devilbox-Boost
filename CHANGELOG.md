@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Browser testing support (Playwright/Chromium) in the PHP work images** — the Chromium system libraries are baked into the 8.3/8.4/8.5 images (`npx playwright install-deps chromium`) and the browser binaries live in a new shared cache (`cache/playwright`, mounted as `PLAYWRIGHT_BROWSERS_PATH`), so each project's Playwright version downloads its matching build once and it survives container recreates. Made for Pest v4's browser plugin. Rebuild your image to get it. Note: Chromium does not trust the Devilbox CA, so point browser tests at `http://` or set `ignoreHTTPSErrors`
+
 ### Planned
 - Additional framework support (Symfony, CakePHP improvements)
 - Docker Hub images (optional)

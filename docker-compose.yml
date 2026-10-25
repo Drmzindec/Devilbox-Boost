@@ -149,6 +149,7 @@ services:
       - COMPOSER_MEMORY_LIMIT=-1
       - COMPOSER_CACHE_DIR=/home/devilbox/.cache/composer
       - npm_config_cache=/home/devilbox/.npm
+      - PLAYWRIGHT_BROWSERS_PATH=/home/devilbox/.cache/ms-playwright
 
       ##
       ## UserID and GroupID
@@ -218,6 +219,7 @@ services:
       # Shared Composer and npm caches so every project reuses downloads
       - ${DEVILBOX_PATH}/cache/composer:/home/devilbox/.cache/composer:rw${MOUNT_OPTIONS}
       - ${DEVILBOX_PATH}/cache/npm:/home/devilbox/.npm:rw${MOUNT_OPTIONS}
+      - ${DEVILBOX_PATH}/cache/playwright:/home/devilbox/.cache/ms-playwright:rw${MOUNT_OPTIONS}
 
       # Mount logs
       - ${DEVILBOX_PATH}/log/php-fpm-${PHP_SERVER}:/var/log/php:rw${MOUNT_OPTIONS}
