@@ -96,7 +96,7 @@ const HELP: Record<string, { title: string; body: string }> = {
   projects: { title: "Projects", body: `<p>Every folder in <code>data/www</code> is a site at <code>https://&lt;folder&gt;.${"${tld}"}</code>. The type is detected from the files (artisan, wp-content, composer.json …) and the database from <code>wp-config.php</code> or <code>.env</code>.</p><p>Click a project name for its detail panel: database and snapshots, workers and dev server, media fallback, logs and a terminal. <b>Editor</b>, <b>Terminal</b> and <b>Finder</b> use the apps chosen in Settings.</p><p><kbd>${"${shortcut}"}</kbd> opens this list from anywhere: type to filter, <kbd>Enter</kbd> opens the first match.</p>` },
   project: { title: "Project detail", body: `<p><b>Database</b>: open the project's database in your SQL client, Adminer or phpMyAdmin, import a dump (WordPress dumps get prefix and URL detection and a wp-config.php), and take or restore <b>snapshots</b>, which are compressed dumps in <code>backups/snapshots/&lt;db&gt;/</code>. A restore takes a safety snapshot first.</p><p><b>Workers &amp; dev server</b>: start <code>queue:work</code>, <code>schedule:work</code>, Horizon or Reverb inside the PHP container, and <code>npm run dev</code> on this Mac. The dev server is plain http, so browse the http URL while it runs.</p><p><b>Media fallback</b>: uploads are rarely in git. With this on, missing <code>/wp-content/uploads/…</code> files redirect to production so images keep working.</p><p><b>Git</b>: the daily rhythm without leaving the app — changed files with diffs, commit (stages everything), pull, push, switch or create branches, merge from another branch. A conflicted merge stops cleanly: resolve it in your editor or git client, or abort. There is no force-push. Clone new projects from the Projects page.</p><p><b>Scripts</b>: every script from composer.json and package.json as a button, run inside the PHP container with streamed output.</p><p><b>Logs</b>: web server and PHP errors for this host plus the application log — new lines stream in live. <b>Terminal</b>: bash in the PHP container, already in the project folder, with composer, artisan, wp and npm available.</p>` },
   databases: { title: "Databases", body: `<p>All MariaDB databases on <code>127.0.0.1:${"${port}"}</code> (user root). The Project column links back to the site using each database. Buttons open the database in your installed SQL client (only shown when one is detected in /Applications), in Adminer or in phpMyAdmin, each in its own window. <b>Import dump…</b> loads a <code>.sql</code>, <code>.sql.gz</code> or <code>.zip</code> into any database.</p><p><b>Create database…</b> makes an empty utf8mb4 database. <b>Drop</b> deletes one for good — you must retype its name to confirm, and a snapshot first is wise.</p>` },
-  ssh: { title: "SSH", body: `<p>Saved connections plus every Host block from <code>~/.ssh/config</code>, as a list or cards. <b>Connect</b> opens the session in a terminal inside this window; the second button hands it to your terminal app instead.</p><p>Auth prefers keys/agent. A connection can also save a <b>password</b> — it goes into the macOS Keychain (never a file) and the embedded terminal logs in with it automatically. Better still: <b>Install key</b> runs ssh-copy-id with that password once, after which the server takes your key and the password can be removed.</p><p>Saved connections live in <code>ssh.json</code> next to the app settings; a config entry can be copied into the saved list to add a port, key, start folder or password. The remote folder is a path on the server, so it stays a text field.</p>` },
+  ssh: { title: "SSH", body: `<p>Saved connections plus every Host block from <code>~/.ssh/config</code>, as a list or cards. <b>Connect</b> opens the session in a terminal tab inside this window — open as many as you need, to the same or different servers; tabs keep running while you use other pages and close with their × (or the row's Disconnect, which closes every tab of that connection). The second button hands the session to your terminal app instead.</p><p>Auth prefers keys/agent. A connection can also save a <b>password</b> — it goes into the macOS Keychain (never a file) and the embedded terminal logs in with it automatically. Better still: <b>Install key</b> runs ssh-copy-id with that password once, after which the server takes your key and the password can be removed.</p><p>Saved connections live in <code>ssh.json</code> next to the app settings; a config entry can be copied into the saved list to add a port, key, start folder or password. The remote folder is a path on the server, so it stays a text field.</p>` },
   tools: { title: "Tools", body: `<p>The bundled web tools, each opening in its own window inside the app rather than a browser tab. Services that are not running show as such. The same list sits under the menu bar icon → Tools.</p>` },
   doctor: { title: "Doctor", body: `<p>Runs <code>dbox doctor</code>. <b>Stack</b>: Docker, container health, the <code>.${"${tld}"}</code> DNS resolver, the Devilbox CA in your keychain, the intranet, <code>check-config.sh</code>, recent PHP-FPM crashes and reclaimable image space. <b>Sites</b>: each vhost is probed and a 5xx comes with the matching error-log line; the configured database must exist and have tables; WordPress plugins that are active in the database but missing or incomplete on disk are listed (the usual cause is a gitignored premium plugin), as are fatal errors in debug.log and missing uploads; Laravel projects report missing vendor/, missing builds and pending migrations.</p><p>Findings the app knows how to repair carry a <b>Fix</b> button: composer install, npm install + build, migrations, creating a missing database, deactivating plugins that are not in the repo, trusting the CA, writing the DNS resolver (asks for your password) and pruning images. After a fix the check runs again.</p>` },
   updates: { title: "Updates", body: `<p><b>Check</b> lists what is available without changing anything. <b>Update</b> applies it: for WordPress, plugins, themes, core, the database upgrade, translations and a cache flush via wp-cli; for Composer projects, <code>composer update</code>, migrations (<code>artisan migrate</code>, <code>please updates:run</code>, <code>drush updatedb</code>, <code>craft migrate/all</code>) and <code>npm install</code> + <code>npm run build</code> when there is a package.json.</p><p>The bulk buttons walk every site of that kind. The <b>schedule</b> runs the chosen scope once a day at the set time while the app is open and notifies you with the result. Take a snapshot first if a site matters.</p>` },
@@ -175,7 +175,8 @@ function activate(viewId: string, navButton?: HTMLElement | null) {
   document.querySelectorAll<HTMLElement>(".view").forEach((v) => v.classList.toggle("active", v.id === viewId));
   document.querySelectorAll<HTMLElement>(".nav-item").forEach((b) => b.classList.toggle("active", b === navButton));
   if (viewId !== "view-project") { closeTerminal(); stopLogFollow(); }
-  if (viewId !== "view-ssh") closeSshTerminal();
+  // SSH sessions deliberately survive view switches: their tabs live in a
+  // persistent host element that renderSsh re-attaches.
 }
 
 function showView(name: string) {
@@ -950,63 +951,109 @@ async function renderDetailTerminal(body: HTMLElement, p: Project) {
 // ----- ssh -----------------------------------------------------------------------------------------------
 interface SshConn { name: string; host: string; user: string; port: number; key: string; remote_dir: string; source: string; password_saved: boolean }
 
-let sshTerm: Terminal | null = null;
-let sshTermId: number | null = null;
-let sshUnlisten: (() => void)[] = [];
-let sshObserver: ResizeObserver | null = null;
 let sshEditing: SshConn | null = null;
-/** Name of the connection with a live embedded session, for the list badges. */
-let sshActiveName: string | null = null;
 
-/** Reflect the live session state on the connection rows without re-rendering
- *  (a re-render would destroy the open terminal). */
-function paintSshStatus() {
-  document.querySelectorAll<HTMLElement>("[data-ssh-status]").forEach((s) => {
-    s.hidden = s.dataset.sshStatus !== sshActiveName;
-  });
-  document.querySelectorAll<HTMLButtonElement>("[data-disconnect]").forEach((b) => {
-    b.hidden = b.dataset.disconnect !== sshActiveName;
-  });
+// ----- ssh terminal tabs: several live sessions at once, surviving view
+// switches and list re-renders (the host element is created once and
+// re-attached after every renderSsh).
+interface SshTab { key: number; ptyId: number | null; conn: SshConn; term: Terminal; fit: FitAddon; el: HTMLElement; unlisten: (() => void)[]; observer: ResizeObserver | null; exited: boolean }
+let sshTabs: SshTab[] = [];
+let sshTabSeq = 0;
+let sshActiveTab: number | null = null;
+let sshHost: HTMLElement | null = null;
+
+function ensureSshHost(): HTMLElement {
+  if (!sshHost) {
+    sshHost = document.createElement("div");
+    sshHost.innerHTML = `<div class="tabs" id="ssh-tabbar" style="margin-top:18px"></div><div id="ssh-terms"></div>`;
+  }
+  return sshHost;
 }
 
-async function closeSshTerminal() {
-  sshUnlisten.forEach((u) => u()); sshUnlisten = [];
-  sshObserver?.disconnect(); sshObserver = null;
-  if (sshTermId !== null) { const id = sshTermId; sshTermId = null; await call("terminal_close", { id }); }
-  sshTerm?.dispose(); sshTerm = null;
-  sshActiveName = null;
+/** Names with at least one live session, for the row badges. */
+function paintSshStatus() {
+  const live = new Set(sshTabs.filter((t) => !t.exited).map((t) => t.conn.name));
+  document.querySelectorAll<HTMLElement>("[data-ssh-status]").forEach((s) => { s.hidden = !live.has(s.dataset.sshStatus!); });
+  document.querySelectorAll<HTMLButtonElement>("[data-disconnect]").forEach((b) => { b.hidden = !live.has(b.dataset.disconnect!); });
+}
+
+function paintSshTabs() {
+  const bar = sshHost?.querySelector<HTMLElement>("#ssh-tabbar");
+  if (!bar) return;
+  bar.hidden = sshTabs.length === 0;
+  bar.innerHTML = sshTabs.map((t) => `<button class="tab ${t.key === sshActiveTab ? "active" : ""}" data-tabkey="${t.key}">${esc(t.conn.name)}${t.exited ? " (closed)" : ""} <span data-tabclose="${t.key}" style="margin-left:6px;opacity:.7">×</span></button>`).join("");
+  bar.querySelectorAll<HTMLElement>("[data-tabkey]").forEach((b) => b.addEventListener("click", (ev) => {
+    if ((ev.target as HTMLElement).dataset.tabclose) return;
+    activateSshTab(Number(b.dataset.tabkey));
+  }));
+  bar.querySelectorAll<HTMLElement>("[data-tabclose]").forEach((x) => x.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    closeSshTab(Number(x.dataset.tabclose!));
+  }));
+  sshTabs.forEach((t) => { t.el.style.display = t.key === sshActiveTab ? "" : "none"; });
   paintSshStatus();
+}
+
+function activateSshTab(key: number) {
+  sshActiveTab = key;
+  paintSshTabs();
+  const tab = sshTabs.find((t) => t.key === key);
+  if (tab) { requestAnimationFrame(() => { tab.fit.fit(); tab.term.focus(); }); }
+}
+
+async function closeSshTab(key: number) {
+  const i = sshTabs.findIndex((t) => t.key === key);
+  if (i < 0) return;
+  const t = sshTabs[i];
+  t.unlisten.forEach((u) => u());
+  t.observer?.disconnect();
+  if (t.ptyId !== null) { const id = t.ptyId; t.ptyId = null; await call("terminal_close", { id }); }
+  t.term.dispose();
+  t.el.remove();
+  sshTabs.splice(i, 1);
+  if (sshActiveTab === key) sshActiveTab = sshTabs.length ? sshTabs[Math.max(0, i - 1)].key : null;
+  paintSshTabs();
+}
+
+/** Close every tab of one connection (the row Disconnect button). */
+async function closeSshConnection(name: string) {
+  for (const t of [...sshTabs].filter((t) => t.conn.name === name)) {
+    await closeSshTab(t.key);
+  }
 }
 
 async function connectSsh(conn: SshConn) {
-  await closeSshTerminal();
-  const holder = $("#ssh-term-card");
-  holder.innerHTML = `<h2 style="margin-top:18px">${esc(conn.name)} <span class="kind">${esc(conn.user ? conn.user + "@" : "")}${esc(conn.host)}${conn.port && conn.port !== 22 ? ":" + conn.port : ""}</span></h2>
-    <div class="term" id="ssh-term"></div>
-    <div class="row" style="margin-top:8px"><button class="btn small" id="ssh-reconnect">Reconnect</button><button class="btn small" id="ssh-disconnect">Disconnect</button></div>`;
-  sshTerm = new Terminal({ cursorBlink: true, fontSize: 13, fontFamily: "SF Mono, Menlo, Monaco, monospace", theme: { background: "#0f1218", foreground: "#d7dce5", cursor: "#ff6a2b" } });
+  ensureSshHost();
+  const terms = sshHost!.querySelector<HTMLElement>("#ssh-terms")!;
+  const key = ++sshTabSeq;
+  const el = document.createElement("div");
+  el.innerHTML = `<p class="muted" style="margin:8px 0">${esc(conn.user ? conn.user + "@" : "")}${esc(conn.host)}${conn.port && conn.port !== 22 ? ":" + conn.port : ""}${conn.remote_dir ? " · " + esc(conn.remote_dir) : ""}</p><div class="term"></div>`;
+  terms.appendChild(el);
+  const term = new Terminal({ cursorBlink: true, fontSize: 13, fontFamily: "SF Mono, Menlo, Monaco, monospace", theme: { background: "#0f1218", foreground: "#d7dce5", cursor: "#ff6a2b" } });
   const fit = new FitAddon();
-  sshTerm.loadAddon(fit);
-  sshTerm.open($("#ssh-term", holder));
+  term.loadAddon(fit);
+  term.open(el.querySelector<HTMLElement>(".term")!);
+  const tab: SshTab = { key, ptyId: null, conn, term, fit, el, unlisten: [], observer: null, exited: false };
+  sshTabs.push(tab);
+  activateSshTab(key);
   fit.fit();
-  const id = await call<number>("ssh_open", { conn, cols: sshTerm.cols, rows: sshTerm.rows });
-  if (id === undefined) { holder.innerHTML = ""; return; }
-  sshTermId = id;
-  sshActiveName = conn.name;
+  const id = await call<number>("ssh_open", { conn, cols: term.cols, rows: term.rows });
+  if (id === undefined) { closeSshTab(key); return; }
+  tab.ptyId = id;
   paintSshStatus();
-  sshUnlisten.push(await listen<{ id: number; data: string }>("term-data", (e) => { if (e.payload.id === id) sshTerm?.write(e.payload.data); }));
-  sshUnlisten.push(await listen<{ id: number }>("term-exit", (e) => {
+  tab.unlisten.push(await listen<{ id: number; data: string }>("term-data", (e) => { if (e.payload.id === id) term.write(e.payload.data); }));
+  tab.unlisten.push(await listen<{ id: number }>("term-exit", (e) => {
     if (e.payload.id !== id) return;
-    sshTerm?.write("\r\n\x1b[2m[connection closed]\x1b[0m\r\n");
-    if (sshActiveName === conn.name) { sshActiveName = null; paintSshStatus(); }
+    term.write("\r\n\x1b[2m[connection closed]\x1b[0m\r\n");
+    tab.exited = true;
+    tab.ptyId = null;
+    paintSshTabs();
   }));
-  sshTerm.onData((data) => { if (sshTermId !== null) invoke("terminal_write", { id: sshTermId, data }).catch(() => {}); });
-  sshTerm.onResize(({ cols, rows }) => { if (sshTermId !== null) invoke("terminal_resize", { id: sshTermId, cols, rows }).catch(() => {}); });
-  sshObserver = new ResizeObserver(() => fit.fit());
-  sshObserver.observe($("#ssh-term", holder));
-  sshTerm.focus();
-  $("#ssh-reconnect", holder).addEventListener("click", () => connectSsh(conn));
-  $("#ssh-disconnect", holder).addEventListener("click", async () => { await closeSshTerminal(); holder.innerHTML = ""; });
+  term.onData((data) => { if (tab.ptyId !== null) invoke("terminal_write", { id: tab.ptyId, data }).catch(() => {}); });
+  term.onResize(({ cols, rows }) => { if (tab.ptyId !== null) invoke("terminal_resize", { id: tab.ptyId, cols, rows }).catch(() => {}); });
+  tab.observer = new ResizeObserver(() => { if (tab.key === sshActiveTab) tab.fit.fit(); });
+  tab.observer.observe(el.querySelector<HTMLElement>(".term")!);
+  term.focus();
 }
 
 let sshViewMode: "list" | "cards" = (() => { try { return localStorage.getItem("ssh-view") === "cards" ? "cards" : "list"; } catch { return "list"; } })();
@@ -1084,12 +1131,12 @@ async function renderSsh() {
   }));
   v.querySelectorAll<HTMLElement>("[data-connect]").forEach((b) => b.addEventListener("click", () => connectSsh(conns[Number(b.dataset.connect)])));
   v.querySelectorAll<HTMLButtonElement>("[data-disconnect]").forEach((b) => b.addEventListener("click", async () => {
-    await closeSshTerminal();
-    const holder = document.querySelector<HTMLElement>("#ssh-term-card");
-    if (holder) holder.innerHTML = "";
+    await closeSshConnection(b.dataset.disconnect!);
     toast("Disconnected");
   }));
-  paintSshStatus();
+  $("#ssh-term-card").appendChild(ensureSshHost());
+  paintSshTabs();
+  if (sshActiveTab !== null) activateSshTab(sshActiveTab);
   v.querySelectorAll<HTMLButtonElement>("[data-external]").forEach((b) => b.addEventListener("click", () => call("ssh_open_external", { conn: conns[Number(b.dataset.external)] })));
   v.querySelectorAll<HTMLButtonElement>("[data-edit]").forEach((b) => b.addEventListener("click", () => { sshEditing = { ...conns[Number(b.dataset.edit)], source: "" }; renderSsh(); }));
   v.querySelectorAll<HTMLButtonElement>("[data-installkey]").forEach((b) => b.addEventListener("click", async () => {
