@@ -955,12 +955,27 @@ let sshTermId: number | null = null;
 let sshUnlisten: (() => void)[] = [];
 let sshObserver: ResizeObserver | null = null;
 let sshEditing: SshConn | null = null;
+/** Name of the connection with a live embedded session, for the list badges. */
+let sshActiveName: string | null = null;
+
+/** Reflect the live session state on the connection rows without re-rendering
+ *  (a re-render would destroy the open terminal). */
+function paintSshStatus() {
+  document.querySelectorAll<HTMLElement>("[data-ssh-status]").forEach((s) => {
+    s.hidden = s.dataset.sshStatus !== sshActiveName;
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-disconnect]").forEach((b) => {
+    b.hidden = b.dataset.disconnect !== sshActiveName;
+  });
+}
 
 async function closeSshTerminal() {
   sshUnlisten.forEach((u) => u()); sshUnlisten = [];
   sshObserver?.disconnect(); sshObserver = null;
   if (sshTermId !== null) { const id = sshTermId; sshTermId = null; await call("terminal_close", { id }); }
   sshTerm?.dispose(); sshTerm = null;
+  sshActiveName = null;
+  paintSshStatus();
 }
 
 async function connectSsh(conn: SshConn) {
@@ -977,8 +992,14 @@ async function connectSsh(conn: SshConn) {
   const id = await call<number>("ssh_open", { conn, cols: sshTerm.cols, rows: sshTerm.rows });
   if (id === undefined) { holder.innerHTML = ""; return; }
   sshTermId = id;
+  sshActiveName = conn.name;
+  paintSshStatus();
   sshUnlisten.push(await listen<{ id: number; data: string }>("term-data", (e) => { if (e.payload.id === id) sshTerm?.write(e.payload.data); }));
-  sshUnlisten.push(await listen<{ id: number }>("term-exit", (e) => { if (e.payload.id === id) sshTerm?.write("\r\n\x1b[2m[connection closed]\x1b[0m\r\n"); }));
+  sshUnlisten.push(await listen<{ id: number }>("term-exit", (e) => {
+    if (e.payload.id !== id) return;
+    sshTerm?.write("\r\n\x1b[2m[connection closed]\x1b[0m\r\n");
+    if (sshActiveName === conn.name) { sshActiveName = null; paintSshStatus(); }
+  }));
   sshTerm.onData((data) => { if (sshTermId !== null) invoke("terminal_write", { id: sshTermId, data }).catch(() => {}); });
   sshTerm.onResize(({ cols, rows }) => { if (sshTermId !== null) invoke("terminal_resize", { id: sshTermId, cols, rows }).catch(() => {}); });
   sshObserver = new ResizeObserver(() => fit.fit());
@@ -997,7 +1018,9 @@ async function renderSsh() {
   const target = (c: SshConn) => `${esc(c.user ? c.user + "@" : "")}${esc(c.host)}${c.port && c.port !== 22 ? ":" + c.port : ""}`;
   const badges = (c: SshConn) => `${c.key ? ` <span class="kind" title="${esc(c.key)}">key</span>` : ""}${c.password_saved ? ` <span class="kind" title="Password in the macOS Keychain">password</span>` : ""}`;
   const actions = (c: SshConn, i: number) => `
+        <span class="badge ok" data-ssh-status="${esc(c.name)}" hidden>connected</span>
         <button class="btn small primary" data-connect="${i}">Connect</button>
+        <button class="btn small" data-disconnect="${esc(c.name)}" hidden>Disconnect</button>
         <button class="btn small" data-external="${i}">${esc(settings.terminal || "Terminal")}</button>
         <button class="btn small" data-edit="${i}">${c.source === "config" ? "Save a copy" : "Edit"}</button>
         ${c.password_saved ? `<button class="btn small" data-installkey="${i}" title="ssh-copy-id with the saved password, so this server takes your key from now on">Install key</button>` : ""}
@@ -1060,6 +1083,13 @@ async function renderSsh() {
     renderSsh();
   }));
   v.querySelectorAll<HTMLElement>("[data-connect]").forEach((b) => b.addEventListener("click", () => connectSsh(conns[Number(b.dataset.connect)])));
+  v.querySelectorAll<HTMLButtonElement>("[data-disconnect]").forEach((b) => b.addEventListener("click", async () => {
+    await closeSshTerminal();
+    const holder = document.querySelector<HTMLElement>("#ssh-term-card");
+    if (holder) holder.innerHTML = "";
+    toast("Disconnected");
+  }));
+  paintSshStatus();
   v.querySelectorAll<HTMLButtonElement>("[data-external]").forEach((b) => b.addEventListener("click", () => call("ssh_open_external", { conn: conns[Number(b.dataset.external)] })));
   v.querySelectorAll<HTMLButtonElement>("[data-edit]").forEach((b) => b.addEventListener("click", () => { sshEditing = { ...conns[Number(b.dataset.edit)], source: "" }; renderSsh(); }));
   v.querySelectorAll<HTMLButtonElement>("[data-installkey]").forEach((b) => b.addEventListener("click", async () => {
